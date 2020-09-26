@@ -232,32 +232,26 @@ int main(int argc, char** argv)
       float x_begin = begin * lineLength;
       float x_end = end * lineLength;
 
-      if (linear) {
-        auto linear_begin = as::mix(0.0f, lineLength, begin);
-        auto linear_end = as::mix(0.0f, lineLength, end);
+      auto sample_curve = [lineLength, begin, end, &debugLinesGraph, x_begin,
+                           x_end](float (*fn)(float)) {
+        auto sample_begin = as::mix(0.0f, lineLength, fn(begin));
+        auto sample_end = as::mix(0.0f, lineLength, fn(end));
 
         debugLinesGraph.addLine(
-          as::vec3(x_begin, linear_begin, 0.0f),
-          as::vec3(x_end, linear_end, 0.0f), 0xff000000);
+          as::vec3(x_begin, sample_begin, 0.0f),
+          as::vec3(x_end, sample_end, 0.0f), 0xff000000);
+      };
+
+      if (linear) {
+        sample_curve([](const float a) { return a; });
       }
 
       if (smooth_step) {
-        auto smooth_begin = as::mix(0.0f, lineLength, as::smooth_step(begin));
-        auto smooth_end = as::mix(0.0f, lineLength, as::smooth_step(end));
-
-        debugLinesGraph.addLine(
-          as::vec3(x_begin, smooth_begin, 0.0f),
-          as::vec3(x_end, smooth_end, 0.0f), 0xff000000);
+        sample_curve(as::smooth_step);
       }
 
       if (smoother_step) {
-        auto smoother_begin =
-          as::mix(0.0f, lineLength, as::smoother_step(begin));
-        auto smoother_end = as::mix(0.0f, lineLength, as::smoother_step(end));
-
-        debugLinesGraph.addLine(
-          as::vec3(x_begin, smoother_begin, 0.0f),
-          as::vec3(x_end, smoother_end, 0.0f), 0xff000000);
+        sample_curve(as::smoother_step);
       }
 
       if (smooth_stop_start_mix2) {
@@ -274,90 +268,43 @@ int main(int argc, char** argv)
 
         debugLinesGraph.addLine(
           as::vec3(x_begin, smooth_start_stop_begin, 0.0f),
-          as::vec3(x_end, smooth_start_stop_begin_end, 0.0f), 0xff000000);
+          as::vec3(x_end, smooth_start_stop_begin_end, 0.0f), 0xff00ff00);
       }
 
       if (smooth_start2) {
-        auto smooth_begin = as::mix(0.0f, lineLength, nlt::smoothStart2(begin));
-        auto smooth_end = as::mix(0.0f, lineLength, nlt::smoothStart2(end));
-
-        debugLinesGraph.addLine(
-          as::vec3(x_begin, smooth_begin, 0.0f),
-          as::vec3(x_end, smooth_end, 0.0f), 0xff000000);
+        sample_curve(nlt::smoothStart2);
       }
 
       if (smooth_start3) {
-        auto smooth_begin = as::mix(0.0f, lineLength, nlt::smoothStart3(begin));
-        auto smooth_end = as::mix(0.0f, lineLength, nlt::smoothStart3(end));
-
-        debugLinesGraph.addLine(
-          as::vec3(x_begin, smooth_begin, 0.0f),
-          as::vec3(x_end, smooth_end, 0.0f), 0xff000000);
+        sample_curve(nlt::smoothStart3);
       }
 
       if (smooth_start4) {
-        auto smooth_begin = as::mix(0.0f, lineLength, nlt::smoothStart4(begin));
-        auto smooth_end = as::mix(0.0f, lineLength, nlt::smoothStart4(end));
-
-        debugLinesGraph.addLine(
-          as::vec3(x_begin, smooth_begin, 0.0f),
-          as::vec3(x_end, smooth_end, 0.0f), 0xff000000);
+        sample_curve(nlt::smoothStart4);
       }
 
       if (smooth_start5) {
-        auto smooth_begin = as::mix(0.0f, lineLength, nlt::smoothStart5(begin));
-        auto smooth_end = as::mix(0.0f, lineLength, nlt::smoothStart5(end));
-
-        debugLinesGraph.addLine(
-          as::vec3(x_begin, smooth_begin, 0.0f),
-          as::vec3(x_end, smooth_end, 0.0f), 0xff000000);
+        sample_curve(nlt::smoothStart5);
       }
 
       if (smooth_stop2) {
-        auto smooth_begin = as::mix(0.0f, lineLength, nlt::smoothStop2(begin));
-        auto smooth_end = as::mix(0.0f, lineLength, nlt::smoothStop2(end));
-
-        debugLinesGraph.addLine(
-          as::vec3(x_begin, smooth_begin, 0.0f),
-          as::vec3(x_end, smooth_end, 0.0f), 0xff000000);
+        sample_curve(nlt::smoothStop2);
       }
 
       if (smooth_stop3) {
-        auto smooth_begin = as::mix(0.0f, lineLength, nlt::smoothStop3(begin));
-        auto smooth_end = as::mix(0.0f, lineLength, nlt::smoothStop3(end));
-
-        debugLinesGraph.addLine(
-          as::vec3(x_begin, smooth_begin, 0.0f),
-          as::vec3(x_end, smooth_end, 0.0f), 0xff000000);
+        sample_curve(nlt::smoothStop3);
       }
 
       if (smooth_stop4) {
-        auto smooth_begin = as::mix(0.0f, lineLength, nlt::smoothStop4(begin));
-        auto smooth_end = as::mix(0.0f, lineLength, nlt::smoothStop4(end));
-
-        debugLinesGraph.addLine(
-          as::vec3(x_begin, smooth_begin, 0.0f),
-          as::vec3(x_end, smooth_end, 0.0f), 0xff000000);
+        sample_curve(nlt::smoothStop4);
       }
 
       if (smooth_stop5) {
-        auto smooth_begin = as::mix(0.0f, lineLength, nlt::smoothStop5(begin));
-        auto smooth_end = as::mix(0.0f, lineLength, nlt::smoothStop5(end));
-
-        debugLinesGraph.addLine(
-          as::vec3(x_begin, smooth_begin, 0.0f),
-          as::vec3(x_end, smooth_end, 0.0f), 0xff000000);
+        sample_curve(nlt::smoothStop5);
       }
 
       if (bezier_smoother_step) {
-        auto smooth_begin =
-          as::mix(0.0f, lineLength, nlt::bezierSmootherStep(begin));
-        auto smooth_end =
-          as::mix(0.0f, lineLength, nlt::bezierSmootherStep(end));
-
-        debugLinesGraph.addLine(
-          as::vec3(x_begin, smooth_begin, 0.0f),
-          as::vec3(x_end, smooth_end, 0.0f), 0xff000000);
+        sample_curve(nlt::bezierSmootherStep);
       }
     }
 
