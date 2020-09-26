@@ -135,6 +135,21 @@ int main(int argc, char** argv)
   camera_props.translate_speed = 10.0f;
   camera_props.look_smoothness = 5.0f;
 
+  // debug settings
+  bool linear = false;
+  bool smooth_step = false;
+  bool smoother_step = false;
+  bool smooth_stop_start_mix2 = false;
+  bool smooth_start2 = false;
+  bool smooth_start3 = false;
+  bool smooth_start4 = false;
+  bool smooth_start5 = false;
+  bool smooth_stop2 = false;
+  bool smooth_stop3 = false;
+  bool smooth_stop4 = false;
+  bool smooth_stop5 = false;
+  bool bezier_smooth_step = false;
+
   auto prev = bx::getHPCounter();
 
   fps::Fps fps;
@@ -181,45 +196,29 @@ int main(int argc, char** argv)
     as::mat_to_arr(perspective_projection, proj);
     bgfx::setViewTransform(main_view, view, proj);
 
-    static bool linear = false;
     ImGui::Checkbox("Linear", &linear);
-    static bool smooth_step = false;
     ImGui::Checkbox("Smooth Step", &smooth_step);
-    static bool smoother_step = false;
     ImGui::Checkbox("Smoother Step", &smoother_step);
     static float smooth_stop_start_mix_t = 0.0f;
     ImGui::SliderFloat("t", &smooth_stop_start_mix_t, 0.0f, 1.0f);
-    static bool smooth_stop_start_mix2 = false;
     ImGui::Checkbox("Smooth Stop Start Mix 2", &smooth_stop_start_mix2);
-
     const float smooth_stop_start_mix = as::mix(
       nlt::smoothStart2(smooth_stop_start_mix_t),
       nlt::smoothStop2(smooth_stop_start_mix_t), smooth_stop_start_mix_t);
-
     ImGui::Text("Smooth Stop Start Mix 2: ");
     ImGui::SameLine(180);
     ImGui::Text("%f", smooth_stop_start_mix);
     ImGui::Text("Smooth Step: ");
     ImGui::SameLine(100);
     ImGui::Text("%f", as::smooth_step(smooth_stop_start_mix_t));
-
-    static bool smooth_start2 = false;
-    static bool smooth_start3 = false;
-    static bool smooth_start4 = false;
-    static bool smooth_start5 = false;
     ImGui::Checkbox("Smooth Start 2", &smooth_start2);
     ImGui::Checkbox("Smooth Start 3", &smooth_start3);
     ImGui::Checkbox("Smooth Start 4", &smooth_start4);
     ImGui::Checkbox("Smooth Start 5", &smooth_start5);
-    static bool smooth_stop2 = false;
-    static bool smooth_stop3 = false;
-    static bool smooth_stop4 = false;
-    static bool smooth_stop5 = false;
     ImGui::Checkbox("Smooth Stop 2", &smooth_stop2);
     ImGui::Checkbox("Smooth Stop 3", &smooth_stop3);
     ImGui::Checkbox("Smooth Stop 4", &smooth_stop4);
     ImGui::Checkbox("Smooth Stop 5", &smooth_stop5);
-    static bool bezier_smooth_step = false;
     ImGui::Checkbox("Bezier Smooth Step", &bezier_smooth_step);
 
     auto debugLinesGraph = dbg::DebugLines(main_view, program_col);
