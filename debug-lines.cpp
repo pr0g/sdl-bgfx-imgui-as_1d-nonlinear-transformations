@@ -20,9 +20,12 @@ void DebugLines::addLine(
 void DebugLines::submit()
 {
   const auto requestedVertexCount = lines_.size() * 2;
+  if (requestedVertexCount == 0) {
+    return;
+  }
+
   const auto availableVertexCount = bgfx::getAvailTransientVertexBuffer(
     requestedVertexCount, DebugVertex::Layout);
-
   if (availableVertexCount != requestedVertexCount) {
     return;
   }

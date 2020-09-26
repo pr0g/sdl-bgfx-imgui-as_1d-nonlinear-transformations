@@ -1,3 +1,4 @@
+#include "1d-nonlinear-transformations.h"
 #include "SDL.h"
 #include "SDL_syswm.h"
 #include "as-camera-sdl/as-camera-sdl.h"
@@ -118,7 +119,7 @@ int main(int argc, char** argv)
 
   asc::Camera camera{};
   // initial camera position and orientation
-  camera.look_at = as::point3::zero();
+  camera.look_at = as::point3(14.5f, 9.2f, -21.0f);
 
   // initial mouse state
   MouseState mouse_state = mouseState();
@@ -180,17 +181,181 @@ int main(int argc, char** argv)
     as::mat_to_arr(perspective_projection, proj);
     bgfx::setViewTransform(main_view, view, proj);
 
-    // example code
-    auto debugLines = dbg::DebugLines(main_view, program_col);
-    debugLines.addLine(
-      as::vec3(-2.0f, 0.0f, 5.0f), as::vec3(2.0f, 0.0f, 5.0f), 0xff000000);
-    debugLines.addLine(
-      as::vec3(0.0f, 2.0f, 5.0f), as::vec3(0.0f, -2.0f, 5.0f), 0xff000000);
-    debugLines.submit();
+    static bool linear = false;
+    ImGui::Checkbox("Linear", &linear);
+    static bool smooth_step = false;
+    ImGui::Checkbox("Smooth Step", &smooth_step);
+    static bool smoother_step = false;
+    ImGui::Checkbox("Smoother Step", &smoother_step);
+    static float smooth_stop_start_mix_t = 0.0f;
+    ImGui::SliderFloat("t", &smooth_stop_start_mix_t, 0.0f, 1.0f);
+    static bool smooth_stop_start_mix2 = false;
+    ImGui::Checkbox("Smooth Stop Start Mix 2", &smooth_stop_start_mix2);
+
+    const float smooth_stop_start_mix = as::mix(
+      nlt::smoothStart2(smooth_stop_start_mix_t),
+      nlt::smoothStop2(smooth_stop_start_mix_t), smooth_stop_start_mix_t);
+
+    ImGui::Text("Smooth Stop Start Mix 2: ");
+    ImGui::SameLine(180);
+    ImGui::Text("%f", smooth_stop_start_mix);
+    ImGui::Text("Smooth Step: ");
+    ImGui::SameLine(100);
+    ImGui::Text("%f", as::smooth_step(smooth_stop_start_mix_t));
+
+    static bool smooth_start2 = false;
+    static bool smooth_start3 = false;
+    static bool smooth_start4 = false;
+    static bool smooth_start5 = false;
+    ImGui::Checkbox("Smooth Start 2", &smooth_start2);
+    ImGui::Checkbox("Smooth Start 3", &smooth_start3);
+    ImGui::Checkbox("Smooth Start 4", &smooth_start4);
+    ImGui::Checkbox("Smooth Start 5", &smooth_start5);
+    static bool smooth_stop2 = false;
+    static bool smooth_stop3 = false;
+    static bool smooth_stop4 = false;
+    static bool smooth_stop5 = false;
+    ImGui::Checkbox("Smooth Stop 2", &smooth_stop2);
+    ImGui::Checkbox("Smooth Stop 3", &smooth_stop3);
+    ImGui::Checkbox("Smooth Stop 4", &smooth_stop4);
+    ImGui::Checkbox("Smooth Stop 5", &smooth_stop5);
+
+    auto debugLinesGraph = dbg::DebugLines(main_view, program_col);
+    const auto lineGranularity = 20;
+    const auto lineLength = 20.0f;
+    for (auto i = 0; i < lineGranularity; ++i) {
+      float begin = i / float(lineGranularity);
+      float end = (i + 1) / float(lineGranularity);
+
+      float x_begin = begin * lineLength;
+      float x_end = end * lineLength;
+
+      if (linear) {
+        auto linear_begin = as::mix(0.0f, lineLength, begin);
+        auto linear_end = as::mix(0.0f, lineLength, end);
+
+        debugLinesGraph.addLine(
+          as::vec3(x_begin, linear_begin, 0.0f),
+          as::vec3(x_end, linear_end, 0.0f), 0xff000000);
+      }
+
+      if (smooth_step) {
+        auto smooth_begin = as::mix(0.0f, lineLength, as::smooth_step(begin));
+        auto smooth_end = as::mix(0.0f, lineLength, as::smooth_step(end));
+
+        debugLinesGraph.addLine(
+          as::vec3(x_begin, smooth_begin, 0.0f),
+          as::vec3(x_end, smooth_end, 0.0f), 0xff000000);
+      }
+
+      if (smoother_step) {
+        auto smoother_begin =
+          as::mix(0.0f, lineLength, as::smoother_step(begin));
+        auto smoother_end = as::mix(0.0f, lineLength, as::smoother_step(end));
+
+        debugLinesGraph.addLine(
+          as::vec3(x_begin, smoother_begin, 0.0f),
+          as::vec3(x_end, smoother_end, 0.0f), 0xff000000);
+      }
+
+      if (smooth_stop_start_mix2) {
+        auto smooth_start_stop_begin = as::mix(
+          0.0f, lineLength,
+          as::mix(
+            nlt::smoothStart2(begin), nlt::smoothStop2(begin),
+            smooth_stop_start_mix_t));
+        auto smooth_start_stop_begin_end = as::mix(
+          0.0f, lineLength,
+          as::mix(
+            nlt::smoothStart2(end), nlt::smoothStop2(end),
+            smooth_stop_start_mix_t));
+
+        debugLinesGraph.addLine(
+          as::vec3(x_begin, smooth_start_stop_begin, 0.0f),
+          as::vec3(x_end, smooth_start_stop_begin_end, 0.0f), 0xff000000);
+      }
+
+      if (smooth_start2) {
+        auto smooth_begin = as::mix(0.0f, lineLength, nlt::smoothStart2(begin));
+        auto smooth_end = as::mix(0.0f, lineLength, nlt::smoothStart2(end));
+
+        debugLinesGraph.addLine(
+          as::vec3(x_begin, smooth_begin, 0.0f),
+          as::vec3(x_end, smooth_end, 0.0f), 0xff000000);
+      }
+
+      if (smooth_start3) {
+        auto smooth_begin = as::mix(0.0f, lineLength, nlt::smoothStart3(begin));
+        auto smooth_end = as::mix(0.0f, lineLength, nlt::smoothStart3(end));
+
+        debugLinesGraph.addLine(
+          as::vec3(x_begin, smooth_begin, 0.0f),
+          as::vec3(x_end, smooth_end, 0.0f), 0xff000000);
+      }
+
+      if (smooth_start4) {
+        auto smooth_begin = as::mix(0.0f, lineLength, nlt::smoothStart4(begin));
+        auto smooth_end = as::mix(0.0f, lineLength, nlt::smoothStart4(end));
+
+        debugLinesGraph.addLine(
+          as::vec3(x_begin, smooth_begin, 0.0f),
+          as::vec3(x_end, smooth_end, 0.0f), 0xff000000);
+      }
+
+      if (smooth_start5) {
+        auto smooth_begin = as::mix(0.0f, lineLength, nlt::smoothStart5(begin));
+        auto smooth_end = as::mix(0.0f, lineLength, nlt::smoothStart5(end));
+
+        debugLinesGraph.addLine(
+          as::vec3(x_begin, smooth_begin, 0.0f),
+          as::vec3(x_end, smooth_end, 0.0f), 0xff000000);
+      }
+
+      if (smooth_stop2) {
+        auto smooth_begin = as::mix(0.0f, lineLength, nlt::smoothStop2(begin));
+        auto smooth_end = as::mix(0.0f, lineLength, nlt::smoothStop2(end));
+
+        debugLinesGraph.addLine(
+          as::vec3(x_begin, smooth_begin, 0.0f),
+          as::vec3(x_end, smooth_end, 0.0f), 0xff000000);
+      }
+
+      if (smooth_stop3) {
+        auto smooth_begin = as::mix(0.0f, lineLength, nlt::smoothStop3(begin));
+        auto smooth_end = as::mix(0.0f, lineLength, nlt::smoothStop3(end));
+
+        debugLinesGraph.addLine(
+          as::vec3(x_begin, smooth_begin, 0.0f),
+          as::vec3(x_end, smooth_end, 0.0f), 0xff000000);
+      }
+
+      if (smooth_stop4) {
+        auto smooth_begin = as::mix(0.0f, lineLength, nlt::smoothStop4(begin));
+        auto smooth_end = as::mix(0.0f, lineLength, nlt::smoothStop4(end));
+
+        debugLinesGraph.addLine(
+          as::vec3(x_begin, smooth_begin, 0.0f),
+          as::vec3(x_end, smooth_end, 0.0f), 0xff000000);
+      }
+
+      if (smooth_stop5) {
+        auto smooth_begin = as::mix(0.0f, lineLength, nlt::smoothStop5(begin));
+        auto smooth_end = as::mix(0.0f, lineLength, nlt::smoothStop5(end));
+
+        debugLinesGraph.addLine(
+          as::vec3(x_begin, smooth_begin, 0.0f),
+          as::vec3(x_end, smooth_end, 0.0f), 0xff000000);
+      }
+    }
+
+    debugLinesGraph.submit();
 
     ImGui::Text("Framerate: ");
     ImGui::SameLine(100);
     ImGui::Text("%f", framerate);
+
+    // include this in case nothing was submitted to draw
+    bgfx::touch(main_view);
 
     ImGui::Render();
     bgfx::frame();

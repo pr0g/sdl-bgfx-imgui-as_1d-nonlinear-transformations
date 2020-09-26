@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 
-project(sdl-bgfx-imgui-as LANGUAGES CXX)
+project(sdl-bgfx-imgui-as_1d-nonlinear-transformations LANGUAGES CXX)
 
 find_package(SDL2 REQUIRED CONFIG)
 find_package(bgfx REQUIRED CONFIG)
