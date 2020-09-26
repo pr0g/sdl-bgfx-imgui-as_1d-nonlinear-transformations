@@ -219,6 +219,8 @@ int main(int argc, char** argv)
     ImGui::Checkbox("Smooth Stop 3", &smooth_stop3);
     ImGui::Checkbox("Smooth Stop 4", &smooth_stop4);
     ImGui::Checkbox("Smooth Stop 5", &smooth_stop5);
+    static bool bezier_smoother_step = false;
+    ImGui::Checkbox("Bezier Smoother Step", &bezier_smoother_step);
 
     auto debugLinesGraph = dbg::DebugLines(main_view, program_col);
     const auto lineGranularity = 20;
@@ -341,6 +343,17 @@ int main(int argc, char** argv)
       if (smooth_stop5) {
         auto smooth_begin = as::mix(0.0f, lineLength, nlt::smoothStop5(begin));
         auto smooth_end = as::mix(0.0f, lineLength, nlt::smoothStop5(end));
+
+        debugLinesGraph.addLine(
+          as::vec3(x_begin, smooth_begin, 0.0f),
+          as::vec3(x_end, smooth_end, 0.0f), 0xff000000);
+      }
+
+      if (bezier_smoother_step) {
+        auto smooth_begin =
+          as::mix(0.0f, lineLength, nlt::bezierSmootherStep(begin));
+        auto smooth_end =
+          as::mix(0.0f, lineLength, nlt::bezierSmootherStep(end));
 
         debugLinesGraph.addLine(
           as::vec3(x_begin, smooth_begin, 0.0f),
