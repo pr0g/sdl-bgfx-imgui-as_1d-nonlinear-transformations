@@ -50,7 +50,7 @@ inline float smoothStop5(const float x)
   return flip(flip(x) * flip(x) * flip(x) * flip(x) * flip(x));
 }
 
-inline float bezierSmootherStep(const float x)
+inline float bezierSmoothStep(const float x)
 {
   return (3 * x * x) - (2 * x * x * x);
 }

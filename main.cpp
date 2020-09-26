@@ -219,8 +219,8 @@ int main(int argc, char** argv)
     ImGui::Checkbox("Smooth Stop 3", &smooth_stop3);
     ImGui::Checkbox("Smooth Stop 4", &smooth_stop4);
     ImGui::Checkbox("Smooth Stop 5", &smooth_stop5);
-    static bool bezier_smoother_step = false;
-    ImGui::Checkbox("Bezier Smoother Step", &bezier_smoother_step);
+    static bool bezier_smooth_step = false;
+    ImGui::Checkbox("Bezier Smooth Step", &bezier_smooth_step);
 
     auto debugLinesGraph = dbg::DebugLines(main_view, program_col);
     const auto lineGranularity = 20;
@@ -303,8 +303,8 @@ int main(int argc, char** argv)
         sample_curve(nlt::smoothStop5);
       }
 
-      if (bezier_smoother_step) {
-        sample_curve(nlt::bezierSmootherStep);
+      if (bezier_smooth_step) {
+        sample_curve(nlt::bezierSmoothStep);
       }
     }
 
