@@ -1,4 +1,4 @@
-# sdl-bgfx-imgui-as
+# sdl-bgfx-imgui-as - 1d-nonlinear-transformations
 
 This repo is spawned from [sdl-bgfx-imgui-starter](https://github.com/pr0g/sdl-bgfx-imgui-starter) (please see the original repo for full details on project setup).
 
