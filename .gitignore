@@ -1,0 +1,7 @@
+build*/
+install/
+third-party/libs/*
+!third-party/libs/README.md
+imgui.ini
+*.bin
+.vscode/
