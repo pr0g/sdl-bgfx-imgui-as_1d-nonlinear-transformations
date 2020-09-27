@@ -249,13 +249,11 @@ int main(int argc, char** argv)
       float x_end = end * lineLength;
 
       auto sample_curve = [lineLength, begin, end, &debugLinesGraph, x_begin,
-                           x_end](float (*fn)(float)) {
-        auto sample_begin = as::mix(0.0f, lineLength, fn(begin));
-        auto sample_end = as::mix(0.0f, lineLength, fn(end));
-
+                           x_end](auto fn, const uint32_t col = 0xff000000) {
         debugLinesGraph.addLine(
-          as::vec3(x_begin, sample_begin, 0.0f),
-          as::vec3(x_end, sample_end, 0.0f), 0xff000000);
+          as::vec3(x_begin, as::mix(0.0f, lineLength, fn(begin)), 0.0f),
+          as::vec3(x_end, as::mix(0.0f, lineLength, fn(end)), 0.0f),
+          col);
       };
 
       if (linear) {
@@ -263,11 +261,11 @@ int main(int argc, char** argv)
       }
 
       if (smooth_step) {
-        sample_curve(as::smooth_step);
+        sample_curve(as::smooth_step<float>);
       }
 
       if (smoother_step) {
-        sample_curve(as::smoother_step);
+        sample_curve(as::smoother_step<float>);
       }
 
       if (smooth_stop_start_mix2) {
@@ -324,63 +322,36 @@ int main(int argc, char** argv)
       }
 
       if (normalized_bezier2) {
-        auto sample_begin = as::mix(
-          0.0f, lineLength, nlt::normalizedBezier2(normalized_bezier_b, begin));
-        auto sample_end = as::mix(
-          0.0f, lineLength, nlt::normalizedBezier2(normalized_bezier_b, end));
-
-        debugLinesGraph.addLine(
-          as::vec3(x_begin, sample_begin, 0.0f),
-          as::vec3(x_end, sample_end, 0.0f), 0xff0000ff);
+        sample_curve([normalized_bezier_b](const float sample) {
+          return nlt::normalizedBezier2(normalized_bezier_b, sample);
+        }, 0xff0000ff);
       }
 
       if (normalized_bezier3) {
-        auto sample_begin = as::mix(
-          0.0f, lineLength,
-          nlt::normalizedBezier3(
-            normalized_bezier_b, normalized_bezier_c, begin));
-        auto sample_end = as::mix(
-          0.0f, lineLength,
-          nlt::normalizedBezier3(
-            normalized_bezier_b, normalized_bezier_c, end));
-
-        debugLinesGraph.addLine(
-          as::vec3(x_begin, sample_begin, 0.0f),
-          as::vec3(x_end, sample_end, 0.0f), 0xff0000ff);
+        sample_curve(
+          [normalized_bezier_b, normalized_bezier_c](const float sample) {
+            return nlt::normalizedBezier3(
+              normalized_bezier_b, normalized_bezier_c, sample);
+          }, 0xff0000ff);
       }
 
       if (normalized_bezier4) {
-        auto sample_begin = as::mix(
-          0.0f, lineLength,
-          nlt::normalizedBezier4(
+        sample_curve([normalized_bezier_b, normalized_bezier_c,
+                      normalized_bezier_d](const float sample) {
+          return nlt::normalizedBezier4(
             normalized_bezier_b, normalized_bezier_c, normalized_bezier_d,
-            begin));
-        auto sample_end = as::mix(
-          0.0f, lineLength,
-          nlt::normalizedBezier4(
-            normalized_bezier_b, normalized_bezier_c, normalized_bezier_d,
-            end));
-
-        debugLinesGraph.addLine(
-          as::vec3(x_begin, sample_begin, 0.0f),
-          as::vec3(x_end, sample_end, 0.0f), 0xff0000ff);
+            sample);
+        }, 0xff0000ff);
       }
 
       if (normalized_bezier5) {
-        auto sample_begin = as::mix(
-          0.0f, lineLength,
-          nlt::normalizedBezier5(
+        sample_curve([normalized_bezier_b, normalized_bezier_c,
+                      normalized_bezier_d,
+                      normalized_bezier_e](const float sample) {
+          return nlt::normalizedBezier5(
             normalized_bezier_b, normalized_bezier_c, normalized_bezier_d,
-            normalized_bezier_e, begin));
-        auto sample_end = as::mix(
-          0.0f, lineLength,
-          nlt::normalizedBezier5(
-            normalized_bezier_b, normalized_bezier_c, normalized_bezier_d,
-            normalized_bezier_e, end));
-
-        debugLinesGraph.addLine(
-          as::vec3(x_begin, sample_begin, 0.0f),
-          as::vec3(x_end, sample_end, 0.0f), 0xff0000ff);
+            normalized_bezier_e, sample);
+        }, 0xff0000ff);
       }
     }
 
