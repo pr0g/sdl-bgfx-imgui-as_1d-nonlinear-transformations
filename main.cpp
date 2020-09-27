@@ -119,7 +119,7 @@ int main(int argc, char** argv)
 
   asc::Camera camera{};
   // initial camera position and orientation
-  camera.look_at = as::point3(14.5f, 9.2f, -21.0f);
+  camera.look_at = as::point3(15.06f, 10.0f, -20.74f);
 
   // initial mouse state
   MouseState mouse_state = mouseState();
@@ -136,23 +136,23 @@ int main(int argc, char** argv)
   camera_props.look_smoothness = 5.0f;
 
   // debug settings
-  bool linear = false;
-  bool smooth_step = false;
-  bool smoother_step = false;
-  bool smooth_stop_start_mix2 = false;
-  bool smooth_start2 = false;
-  bool smooth_start3 = false;
-  bool smooth_start4 = false;
-  bool smooth_start5 = false;
-  bool smooth_stop2 = false;
-  bool smooth_stop3 = false;
-  bool smooth_stop4 = false;
-  bool smooth_stop5 = false;
-  bool bezier_smooth_step = false;
-  bool normalized_bezier2 = false;
-  bool normalized_bezier3 = false;
-  bool normalized_bezier4 = false;
-  bool normalized_bezier5 = false;
+  bool linear = true;
+  bool smooth_step = true;
+  bool smoother_step = true;
+  bool smooth_stop_start_mix2 = true;
+  bool smooth_start2 = true;
+  bool smooth_start3 = true;
+  bool smooth_start4 = true;
+  bool smooth_start5 = true;
+  bool smooth_stop2 = true;
+  bool smooth_stop3 = true;
+  bool smooth_stop4 = true;
+  bool smooth_stop5 = true;
+  bool bezier_smooth_step = true;
+  bool normalized_bezier2 = true;
+  bool normalized_bezier3 = true;
+  bool normalized_bezier4 = true;
+  bool normalized_bezier5 = true;
 
   float smooth_stop_start_mix_t = 0.0f;
   float normalized_bezier_b = 0.0f;
