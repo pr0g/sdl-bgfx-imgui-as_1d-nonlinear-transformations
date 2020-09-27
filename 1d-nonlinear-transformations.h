@@ -57,19 +57,48 @@ inline float bezierSmoothStep(const float x)
 
 inline float normalizedBezier2(const float b, const float t)
 {
-    const float s = 1.0f - t;
-    const float t2 = t * t;
-    const float st = t * s;
-    return 2.0f * st * b + t2;
+  const float s = 1.0f - t;
+  const float t2 = t * t;
+  const float st = t * s;
+  return 2.0f * st * b + t2;
 }
 
 inline float normalizedBezier3(const float b, const float c, const float t)
 {
-    const float s = 1.0f - t;
-    const float t2 = t * t;
-    const float t3 = t2 * t;
-    const float s2 = s * s;
-    return (3.0f * b * s2 * t) + (3.0f * c * s * t2) + t3;
+  const float s = 1.0f - t;
+  const float t2 = t * t;
+  const float t3 = t2 * t;
+  const float s2 = s * s;
+  return (3.0f * b * s2 * t) + (3.0f * c * s * t2) + t3;
+}
+
+inline float normalizedBezier4(
+  const float b, const float c, const float d, const float t)
+{
+  const float s = 1.0f - t;
+  const float t2 = t * t;
+  const float t3 = t2 * t;
+  const float t4 = t3 * t;
+  const float s2 = s * s;
+  const float s3 = s2 * s;
+  return (4.0f * b * s3 * t) + (6.0f * c * s2 * t2) + (4.0f * s * t3 * d) + t4;
+}
+
+inline float normalizedBezier5(
+  const float b, const float c, const float d, const float e, const float t)
+{
+  const float s = 1.0f - t;
+  const float t2 = t * t;
+  const float t3 = t2 * t;
+  const float t4 = t3 * t;
+  const float t5 = t4 * t;
+  const float s2 = s * s;
+  const float s3 = s2 * s;
+  const float s4 = s3 * s;
+  const float s5 = s4 * s;
+
+  return (5.0f * s4 * t * b) + (10.0f * s3 * t2 * c) + (10.0f * s2 * t3 * d)
+       + (5.0f * s * t4 * e) + t5;
 }
 
 // returns binomial coefficient without explicit use of factorials,

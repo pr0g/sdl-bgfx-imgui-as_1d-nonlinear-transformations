@@ -151,10 +151,14 @@ int main(int argc, char** argv)
   bool bezier_smooth_step = false;
   bool normalized_bezier2 = false;
   bool normalized_bezier3 = false;
+  bool normalized_bezier4 = false;
+  bool normalized_bezier5 = false;
 
   float smooth_stop_start_mix_t = 0.0f;
   float normalized_bezier_b = 0.0f;
   float normalized_bezier_c = 0.0f;
+  float normalized_bezier_d = 0.0f;
+  float normalized_bezier_e = 0.0f;
 
   auto prev = bx::getHPCounter();
 
@@ -227,8 +231,12 @@ int main(int argc, char** argv)
     ImGui::Checkbox("Bezier Smooth Step", &bezier_smooth_step);
     ImGui::Checkbox("Normalized Bezier 2", &normalized_bezier2);
     ImGui::Checkbox("Normalized Bezier 3", &normalized_bezier3);
+    ImGui::Checkbox("Normalized Bezier 4", &normalized_bezier4);
+    ImGui::Checkbox("Normalized Bezier 5", &normalized_bezier5);
     ImGui::SliderFloat("b", &normalized_bezier_b, 0.0f, 1.0f);
     ImGui::SliderFloat("c", &normalized_bezier_c, 0.0f, 1.0f);
+    ImGui::SliderFloat("d", &normalized_bezier_d, 0.0f, 1.0f);
+    ImGui::SliderFloat("e", &normalized_bezier_e, 0.0f, 1.0f);
 
     auto debugLinesGraph = dbg::DebugLines(main_view, program_col);
     const auto lineGranularity = 20;
@@ -335,6 +343,40 @@ int main(int argc, char** argv)
           0.0f, lineLength,
           nlt::normalizedBezier3(
             normalized_bezier_b, normalized_bezier_c, end));
+
+        debugLinesGraph.addLine(
+          as::vec3(x_begin, sample_begin, 0.0f),
+          as::vec3(x_end, sample_end, 0.0f), 0xff0000ff);
+      }
+
+      if (normalized_bezier4) {
+        auto sample_begin = as::mix(
+          0.0f, lineLength,
+          nlt::normalizedBezier4(
+            normalized_bezier_b, normalized_bezier_c, normalized_bezier_d,
+            begin));
+        auto sample_end = as::mix(
+          0.0f, lineLength,
+          nlt::normalizedBezier4(
+            normalized_bezier_b, normalized_bezier_c, normalized_bezier_d,
+            end));
+
+        debugLinesGraph.addLine(
+          as::vec3(x_begin, sample_begin, 0.0f),
+          as::vec3(x_end, sample_end, 0.0f), 0xff0000ff);
+      }
+
+      if (normalized_bezier5) {
+        auto sample_begin = as::mix(
+          0.0f, lineLength,
+          nlt::normalizedBezier5(
+            normalized_bezier_b, normalized_bezier_c, normalized_bezier_d,
+            normalized_bezier_e, begin));
+        auto sample_end = as::mix(
+          0.0f, lineLength,
+          nlt::normalizedBezier5(
+            normalized_bezier_b, normalized_bezier_c, normalized_bezier_d,
+            normalized_bezier_e, end));
 
         debugLinesGraph.addLine(
           as::vec3(x_begin, sample_begin, 0.0f),
