@@ -239,7 +239,7 @@ int main(int argc, char** argv)
     ImGui::SliderFloat("e", &normalized_bezier_e, 0.0f, 1.0f);
 
     auto debugLinesGraph = dbg::DebugLines(main_view, program_col);
-    const auto lineGranularity = 20;
+    const auto lineGranularity = 50;
     const auto lineLength = 20.0f;
     for (auto i = 0; i < lineGranularity; ++i) {
       float begin = i / float(lineGranularity);
