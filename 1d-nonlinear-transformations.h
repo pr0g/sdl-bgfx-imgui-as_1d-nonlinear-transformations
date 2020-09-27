@@ -52,7 +52,16 @@ inline float smoothStop5(const float x)
 
 inline float bezierSmoothStep(const float x)
 {
-  return (3 * x * x) - (2 * x * x * x);
+  return (3.0f * x * x) - (2.0f * x * x * x);
+}
+
+inline float normalizedBezier3(const float b, const float c, const float t)
+{
+    const float s = 1.0f - t;
+    const float t2 = t * t;
+    const float t3 = t2 * t;
+    const float s2 = s * s;
+    return (3.0f * b * s2 * t) + (3.0f * c * s * t2) + t3;
 }
 
 // returns binomial coefficient without explicit use of factorials,
