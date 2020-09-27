@@ -55,6 +55,14 @@ inline float bezierSmoothStep(const float x)
   return (3.0f * x * x) - (2.0f * x * x * x);
 }
 
+inline float normalizedBezier2(const float b, const float t)
+{
+    const float s = 1.0f - t;
+    const float t2 = t * t;
+    const float st = t * s;
+    return 2.0f * st * b + t2;
+}
+
 inline float normalizedBezier3(const float b, const float c, const float t)
 {
     const float s = 1.0f - t;

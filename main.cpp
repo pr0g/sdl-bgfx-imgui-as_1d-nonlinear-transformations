@@ -149,6 +149,7 @@ int main(int argc, char** argv)
   bool smooth_stop4 = false;
   bool smooth_stop5 = false;
   bool bezier_smooth_step = false;
+  bool normalized_bezier2 = false;
   bool normalized_bezier3 = false;
 
   float smooth_stop_start_mix_t = 0.0f;
@@ -224,6 +225,7 @@ int main(int argc, char** argv)
     ImGui::Checkbox("Smooth Stop 4", &smooth_stop4);
     ImGui::Checkbox("Smooth Stop 5", &smooth_stop5);
     ImGui::Checkbox("Bezier Smooth Step", &bezier_smooth_step);
+    ImGui::Checkbox("Normalized Bezier 2", &normalized_bezier2);
     ImGui::Checkbox("Normalized Bezier 3", &normalized_bezier3);
     ImGui::SliderFloat("b", &normalized_bezier_b, 0.0f, 1.0f);
     ImGui::SliderFloat("c", &normalized_bezier_c, 0.0f, 1.0f);
@@ -313,13 +315,26 @@ int main(int argc, char** argv)
         sample_curve(nlt::bezierSmoothStep);
       }
 
+      if (normalized_bezier2) {
+        auto sample_begin = as::mix(
+          0.0f, lineLength, nlt::normalizedBezier2(normalized_bezier_b, begin));
+        auto sample_end = as::mix(
+          0.0f, lineLength, nlt::normalizedBezier2(normalized_bezier_b, end));
+
+        debugLinesGraph.addLine(
+          as::vec3(x_begin, sample_begin, 0.0f),
+          as::vec3(x_end, sample_end, 0.0f), 0xff0000ff);
+      }
+
       if (normalized_bezier3) {
         auto sample_begin = as::mix(
           0.0f, lineLength,
-          nlt::normalizedBezier3(normalized_bezier_b, normalized_bezier_c, begin));
+          nlt::normalizedBezier3(
+            normalized_bezier_b, normalized_bezier_c, begin));
         auto sample_end = as::mix(
           0.0f, lineLength,
-          nlt::normalizedBezier3(normalized_bezier_b, normalized_bezier_c, end));
+          nlt::normalizedBezier3(
+            normalized_bezier_b, normalized_bezier_c, end));
 
         debugLinesGraph.addLine(
           as::vec3(x_begin, sample_begin, 0.0f),
