@@ -42,10 +42,7 @@ public:
   {
   }
 
-  void setTransform(const as::mat4& transform)
-  {
-    transform_ = transform;
-  }
+  void setTransform(const as::mat4& transform) { transform_ = transform; }
 
   void addLine(const as::vec3& begin, const as::vec3& end, const uint32_t col);
   void submit();
