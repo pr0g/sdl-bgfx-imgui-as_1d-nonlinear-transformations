@@ -394,40 +394,6 @@ int main(int argc, char** argv)
       float x_begin = begin * lineLength;
       float x_end = end * lineLength;
 
-      if (order == 0) {
-        // bezier1 (linear)
-        debugLinesGraph.addLine(
-          nlt::bezier1(p0, p1, begin), nlt::bezier1(p0, p1, end), 0xff000000);
-      }
-
-      if (order == 1) {
-        // bezier2
-        debugLinesGraph.addLine(
-          nlt::bezier2(p0, p1, c0, begin), nlt::bezier2(p0, p1, c0, end),
-          0xff000000);
-      }
-
-      if (order == 2) {
-        // bezier3
-        debugLinesGraph.addLine(
-          nlt::bezier3(p0, p1, c0, c1, begin),
-          nlt::bezier3(p0, p1, c0, c1, end), 0xff000000);
-      }
-
-      if (order == 3) {
-        // bezier4
-        debugLinesGraph.addLine(
-          nlt::bezier4(p0, p1, c0, c1, c2, begin),
-          nlt::bezier4(p0, p1, c0, c1, c2, end), 0xff000000);
-      }
-
-      if (order == 4) {
-        // bezier5
-        debugLinesGraph.addLine(
-          nlt::bezier5(p0, p1, c0, c1, c2, c3, begin),
-          nlt::bezier5(p0, p1, c0, c1, c2, c3, end), 0xff000000);
-      }
-
       const auto sample_curve =
         [lineLength, begin, end, &debugLinesGraph, x_begin,
          x_end](auto fn, const uint32_t col = 0xff000000) {
@@ -435,6 +401,35 @@ int main(int argc, char** argv)
             as::vec3(x_begin, as::mix(0.0f, lineLength, fn(begin)), 0.0f),
             as::vec3(x_end, as::mix(0.0f, lineLength, fn(end)), 0.0f), col);
         };
+
+      if (order == 0) {
+        debugLinesGraph.addLine(
+          nlt::bezier1(p0, p1, begin), nlt::bezier1(p0, p1, end), 0xff000000);
+      }
+
+      if (order == 1) {
+        debugLinesGraph.addLine(
+          nlt::bezier2(p0, p1, c0, begin), nlt::bezier2(p0, p1, c0, end),
+          0xff000000);
+      }
+
+      if (order == 2) {
+        debugLinesGraph.addLine(
+          nlt::bezier3(p0, p1, c0, c1, begin),
+          nlt::bezier3(p0, p1, c0, c1, end), 0xff000000);
+      }
+
+      if (order == 3) {
+        debugLinesGraph.addLine(
+          nlt::bezier4(p0, p1, c0, c1, c2, begin),
+          nlt::bezier4(p0, p1, c0, c1, c2, end), 0xff000000);
+      }
+
+      if (order == 4) {
+        debugLinesGraph.addLine(
+          nlt::bezier5(p0, p1, c0, c1, c2, c3, begin),
+          nlt::bezier5(p0, p1, c0, c1, c2, c3, end), 0xff000000);
+      }
 
       if (linear) {
         sample_curve([](const float a) { return a; });
