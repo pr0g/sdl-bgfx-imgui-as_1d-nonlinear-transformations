@@ -40,7 +40,7 @@ public:
     }
   }
 
-  as::vec3 getHandle(const as::index index) const
+  [[nodiscard]] as::vec3 getHandle(const as::index index) const
   {
     if (index >= next_handle_) {
       return as::vec3::zero();
@@ -60,8 +60,8 @@ public:
     drag_handle_ = -1;
   }
 
-  bool dragging() const { return drag_; }
-  as::index size() const { return next_handle_; }
+  [[nodiscard]] bool dragging() const { return drag_; }
+  [[nodiscard]] as::index size() const { return next_handle_; }
 };
 
 } // namespace dbg

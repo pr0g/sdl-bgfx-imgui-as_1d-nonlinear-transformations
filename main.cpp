@@ -71,7 +71,7 @@ as::vec3 screenToWorld(
 {
   const as::vec2 normalized_screen = as::vec2(
     screen_position.x / static_cast<as::vec2::value_type>(screen_dimension.x),
-    (screen_dimension.y - screen_position.y)
+    static_cast<as::vec2::value_type>(screen_dimension.y - screen_position.y)
       / static_cast<as::vec2::value_type>(screen_dimension.y));
   const as::vec2 ndc = (normalized_screen * 2.0f) - as::vec2(1.0f);
   as::vec4 world_position = as::mat4_from_affine(as::affine_inverse(view))
@@ -109,7 +109,7 @@ int main(int argc, char** argv)
 
   SDL_SysWMinfo wmi;
   SDL_VERSION(&wmi.version);
-  if (!SDL_GetWindowWMInfo(window, &wmi)) {
+  if (SDL_GetWindowWMInfo(window, &wmi) == 0) {
     return 1;
   }
 
@@ -221,7 +221,8 @@ int main(int argc, char** argv)
   fps::Fps fps;
   for (bool quit = false; !quit;) {
 
-    int x, y;
+    int x;
+    int y;
     SDL_GetMouseState(&x, &y);
     const auto orientation = as::affine_inverse(camera.view()).rotation;
     const auto world_position = screenToWorld(
@@ -275,10 +276,10 @@ int main(int argc, char** argv)
     const auto delta = now - prev;
     prev = now;
 
-    const float dt = delta / freq;
+    const float delta_time = delta / static_cast<float>(freq);
 
     asc::updateCamera(
-      camera, camera_control, camera_props, dt, asc::Handedness::Left);
+      camera, camera_control, camera_props, delta_time, asc::Handedness::Left);
 
     float view[16];
     as::mat_to_arr(as::mat4_from_affine(camera.view()), view);
@@ -389,7 +390,7 @@ int main(int argc, char** argv)
     const auto line_length = 20.0f;
     for (auto i = 0; i < line_granularity; ++i) {
       float begin = i / float(line_granularity);
-      float end = (i + 1) / float(line_granularity);
+      float end = float(i + 1) / float(line_granularity);
 
       float x_begin = begin * line_length;
       float x_end = end * line_length;
@@ -541,7 +542,7 @@ int main(int argc, char** argv)
     static float direction = 1.0f;
     static float time = 2.0f;
     static float t = 0.0f;
-    t += dt / time * direction;
+    t += delta_time / time * direction;
     if (t >= 1.0f || t <= 0.0f) {
       t = as::clamp(t, 0.0f, 1.0f);
       direction *= -1.0f;
