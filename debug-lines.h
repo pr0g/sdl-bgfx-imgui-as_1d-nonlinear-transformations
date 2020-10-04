@@ -36,22 +36,20 @@ struct DebugLine
 
 class DebugLines
 {
+  as::mat4 transform_ = as::mat4::identity();
+  bgfx::ProgramHandle program_handle_;
+  bgfx::ViewId view_;
+  std::vector<DebugLine> lines_;
+
 public:
-  DebugLines(const bgfx::ViewId view, const bgfx::ProgramHandle programHandle)
-    : view_(view), programHandle_(programHandle)
+  DebugLines(const bgfx::ViewId view, const bgfx::ProgramHandle program_handle)
+    : view_(view), program_handle_(program_handle)
   {
   }
 
   void setTransform(const as::mat4& transform) { transform_ = transform; }
-
   void addLine(const as::vec3& begin, const as::vec3& end, const uint32_t col);
   void submit();
-
-private:
-  as::mat4 transform_ = as::mat4::identity();
-  bgfx::ProgramHandle programHandle_;
-  bgfx::ViewId view_;
-  std::vector<DebugLine> lines_;
 };
 
 } // namespace dbg

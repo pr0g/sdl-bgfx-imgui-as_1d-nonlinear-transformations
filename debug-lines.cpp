@@ -19,24 +19,24 @@ void DebugLines::addLine(
 
 void DebugLines::submit()
 {
-  const auto requestedVertexCount = lines_.size() * 2;
-  if (requestedVertexCount == 0) {
+  const auto requested_vertex_count = lines_.size() * 2;
+  if (requested_vertex_count == 0) {
     return;
   }
 
-  const auto availableVertexCount = bgfx::getAvailTransientVertexBuffer(
-    requestedVertexCount, DebugVertex::Layout);
-  if (availableVertexCount != requestedVertexCount) {
+  const auto available_vertex_count = bgfx::getAvailTransientVertexBuffer(
+    requested_vertex_count, DebugVertex::Layout);
+  if (available_vertex_count != requested_vertex_count) {
     return;
   }
 
   bgfx::TransientVertexBuffer line_tvb;
   bgfx::allocTransientVertexBuffer(
-    &line_tvb, requestedVertexCount, DebugVertex::Layout);
+    &line_tvb, requested_vertex_count, DebugVertex::Layout);
 
   std::memcpy(
     line_tvb.data, lines_.data(),
-    DebugVertex::Layout.getStride() * requestedVertexCount);
+    DebugVertex::Layout.getStride() * requested_vertex_count);
 
   float transform[16];
   as::mat_to_arr(transform_, transform);
@@ -44,8 +44,8 @@ void DebugLines::submit()
 
   bgfx::setState(BGFX_STATE_DEFAULT | BGFX_STATE_PT_LINES);
 
-  bgfx::setVertexBuffer(0, &line_tvb, 0, requestedVertexCount);
-  bgfx::submit(view_, programHandle_);
+  bgfx::setVertexBuffer(0, &line_tvb, 0, requested_vertex_count);
+  bgfx::submit(view_, program_handle_);
 }
 
 } // namespace dbg

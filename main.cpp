@@ -50,35 +50,35 @@ std::optional<bgfx::ProgramHandle> createShaderProgram(
 }
 
 as::vec2i worldToScreen(
-  const as::vec3 worldPosition, const as::mat4& projection,
-  const as::affine& view, const as::vec2i& screenDimension)
+  const as::vec3 world_position, const as::mat4& projection,
+  const as::affine& view, const as::vec2i& screen_dimension)
 {
   const as::vec4 clip = projection * as::mat4_from_affine(view)
-                      * as::vec4_from_vec3(worldPosition, 1.0f);
+                      * as::vec4_from_vec3(world_position, 1.0f);
   const as::vec3 ndc = as::vec3_from_vec4(clip / clip.w);
   const as::vec2 screen = (as::vec2_from_vec3(ndc) + as::vec2(1.0f)) * 0.5f;
   return as::vec2i(
     static_cast<as::vec2i::value_type>(
-      screen.x * static_cast<as::vec2::value_type>(screenDimension.x)),
+      screen.x * static_cast<as::vec2::value_type>(screen_dimension.x)),
     static_cast<as::vec2i::value_type>(
       (1.0f - screen.y)
-      * static_cast<as::vec2::value_type>(screenDimension.y)));
+      * static_cast<as::vec2::value_type>(screen_dimension.y)));
 }
 
 as::vec3 screenToWorld(
-  const as::vec2i screenPosition, const as::mat4& projection,
-  const as::affine& view, const as::vec2i& screenDimension)
+  const as::vec2i screen_position, const as::mat4& projection,
+  const as::affine& view, const as::vec2i& screen_dimension)
 {
-  const as::vec2 normalizedScreen = as::vec2(
-    screenPosition.x / static_cast<as::vec2::value_type>(screenDimension.x),
-    (screenDimension.y - screenPosition.y)
-      / static_cast<as::vec2::value_type>(screenDimension.y));
-  const as::vec2 ndc = (normalizedScreen * 2.0f) - as::vec2(1.0f);
-  as::vec4 worldPosition = as::mat4_from_affine(as::affine_inverse(view))
-                         * as::mat_inverse(projection)
-                         * as::vec4(ndc.x, ndc.y, 0.0f, 1.0f);
-  worldPosition /= worldPosition.w;
-  return as::vec3_from_vec4(worldPosition);
+  const as::vec2 normalized_screen = as::vec2(
+    screen_position.x / static_cast<as::vec2::value_type>(screen_dimension.x),
+    (screen_dimension.y - screen_position.y)
+      / static_cast<as::vec2::value_type>(screen_dimension.y));
+  const as::vec2 ndc = (normalized_screen * 2.0f) - as::vec2(1.0f);
+  as::vec4 world_position = as::mat4_from_affine(as::affine_inverse(view))
+                          * as::mat_inverse(projection)
+                          * as::vec4(ndc.x, ndc.y, 0.0f, 1.0f);
+  world_position /= world_position.w;
+  return as::vec3_from_vec4(world_position);
 }
 
 float intersectPlane(
@@ -224,13 +224,13 @@ int main(int argc, char** argv)
     int x, y;
     SDL_GetMouseState(&x, &y);
     const auto orientation = as::affine_inverse(camera.view()).rotation;
-    const auto worldPosition = screenToWorld(
+    const auto world_position = screenToWorld(
       as::vec2i(x, y), perspective_projection, camera.view(), screen_dimension);
-    const auto rayOrigin = camera.look_at;
-    const auto rayDirection = as::vec_normalize(worldPosition - rayOrigin);
+    const auto ray_origin = camera.look_at;
+    const auto ray_direction = as::vec_normalize(world_position - ray_origin);
 
-    const auto hitDistance = intersectPlane(
-      rayOrigin, rayDirection, as::vec4(as::vec3::axis_z(), 0.0f));
+    const auto hit_distance = intersectPlane(
+      ray_origin, ray_direction, as::vec4(as::vec3::axis_z(), 0.0f));
 
     SDL_Event current_event;
     while (SDL_PollEvent(&current_event) != 0) {
@@ -243,8 +243,8 @@ int main(int argc, char** argv)
       }
 
       if (current_event.type == SDL_MOUSEBUTTONDOWN) {
-        if (hitDistance >= 0.0f) {
-          const auto hit = rayOrigin + rayDirection * hitDistance;
+        if (hit_distance >= 0.0f) {
+          const auto hit = ray_origin + ray_direction * hit_distance;
           curve_handles.tryBeginDrag(hit);
         }
       }
@@ -254,9 +254,9 @@ int main(int argc, char** argv)
       }
     }
 
-    if (curve_handles.dragging() && hitDistance > 0.0f) {
-      const auto nextHit = rayOrigin + rayDirection * hitDistance;
-      curve_handles.updateDrag(nextHit);
+    if (curve_handles.dragging() && hit_distance > 0.0f) {
+      const auto next_hit = ray_origin + ray_direction * hit_distance;
+      curve_handles.updateDrag(next_hit);
     }
 
     updateCameraControlMouseSdl(camera_control, camera_props, mouse_state);
@@ -348,7 +348,7 @@ int main(int argc, char** argv)
     ImGui::SliderFloat("d", &normalized_bezier_d, 0.0f, 1.0f);
     ImGui::SliderFloat("e", &normalized_bezier_e, 0.0f, 1.0f);
 
-    auto debugLinesGraph = dbg::DebugLines(main_view, program_col);
+    auto debug_lines_graph = dbg::DebugLines(main_view, program_col);
 
     const auto p0 = curve_handles.getHandle(p0_index);
     const auto p1 = curve_handles.getHandle(p1_index);
@@ -372,7 +372,7 @@ int main(int argc, char** argv)
 
     // control lines
     for (as::index i = 0; i < points[order].size(); i += 2) {
-      debugLinesGraph.addLine(
+      debug_lines_graph.addLine(
         points[order][i], points[order][i + 1], 0xffaaaaaa);
     }
 
@@ -385,48 +385,48 @@ int main(int argc, char** argv)
       circle.draw();
     }
 
-    const auto lineGranularity = 50;
-    const auto lineLength = 20.0f;
-    for (auto i = 0; i < lineGranularity; ++i) {
-      float begin = i / float(lineGranularity);
-      float end = (i + 1) / float(lineGranularity);
+    const auto line_granularity = 50;
+    const auto line_length = 20.0f;
+    for (auto i = 0; i < line_granularity; ++i) {
+      float begin = i / float(line_granularity);
+      float end = (i + 1) / float(line_granularity);
 
-      float x_begin = begin * lineLength;
-      float x_end = end * lineLength;
+      float x_begin = begin * line_length;
+      float x_end = end * line_length;
 
       const auto sample_curve =
-        [lineLength, begin, end, &debugLinesGraph, x_begin,
+        [line_length, begin, end, &debug_lines_graph, x_begin,
          x_end](auto fn, const uint32_t col = 0xff000000) {
-          debugLinesGraph.addLine(
-            as::vec3(x_begin, as::mix(0.0f, lineLength, fn(begin)), 0.0f),
-            as::vec3(x_end, as::mix(0.0f, lineLength, fn(end)), 0.0f), col);
+          debug_lines_graph.addLine(
+            as::vec3(x_begin, as::mix(0.0f, line_length, fn(begin)), 0.0f),
+            as::vec3(x_end, as::mix(0.0f, line_length, fn(end)), 0.0f), col);
         };
 
       if (order == 0) {
-        debugLinesGraph.addLine(
+        debug_lines_graph.addLine(
           nlt::bezier1(p0, p1, begin), nlt::bezier1(p0, p1, end), 0xff000000);
       }
 
       if (order == 1) {
-        debugLinesGraph.addLine(
+        debug_lines_graph.addLine(
           nlt::bezier2(p0, p1, c0, begin), nlt::bezier2(p0, p1, c0, end),
           0xff000000);
       }
 
       if (order == 2) {
-        debugLinesGraph.addLine(
+        debug_lines_graph.addLine(
           nlt::bezier3(p0, p1, c0, c1, begin),
           nlt::bezier3(p0, p1, c0, c1, end), 0xff000000);
       }
 
       if (order == 3) {
-        debugLinesGraph.addLine(
+        debug_lines_graph.addLine(
           nlt::bezier4(p0, p1, c0, c1, c2, begin),
           nlt::bezier4(p0, p1, c0, c1, c2, end), 0xff000000);
       }
 
       if (order == 4) {
-        debugLinesGraph.addLine(
+        debug_lines_graph.addLine(
           nlt::bezier5(p0, p1, c0, c1, c2, c3, begin),
           nlt::bezier5(p0, p1, c0, c1, c2, c3, end), 0xff000000);
       }
@@ -550,8 +550,8 @@ int main(int argc, char** argv)
     const auto start = as::vec3(2.0f, -1.5, 0.0f);
     const auto end = as::vec3(18.0f, -1.5, 0.0f);
 
-    debugLinesGraph.addLine(start, end, 0xff000000);
-    debugLinesGraph.submit();
+    debug_lines_graph.addLine(start, end, 0xff000000);
+    debug_lines_graph.submit();
 
     static float (*interpolations[])(float) = {
       [](float t) { return t; }, as::smooth_step,   as::smoother_step,
