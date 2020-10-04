@@ -211,10 +211,10 @@ int main(int argc, char** argv)
   dbg::CurveHandles curve_handles;
   const auto p0_index = curve_handles.addHandle(as::vec3(5.0f, -8.0f, 0.0f));
   const auto p1_index = curve_handles.addHandle(as::vec3(15.0f, -8.0f, 0.0f));
-  const auto c0_index = curve_handles.addHandle(as::vec3(7.0f, -3.0f, 0.0f));
-  const auto c1_index = curve_handles.addHandle(as::vec3(9.0f, -3.0f, 0.0f));
-  const auto c2_index = curve_handles.addHandle(as::vec3(11.0f, -3.0f, 0.0f));
-  const auto c3_index = curve_handles.addHandle(as::vec3(13.0f, -3.0f, 0.0f));
+  const auto c0_index = curve_handles.addHandle(as::vec3(7.0f, -4.0f, 0.0f));
+  const auto c1_index = curve_handles.addHandle(as::vec3(9.0f, -4.0f, 0.0f));
+  const auto c2_index = curve_handles.addHandle(as::vec3(11.0f, -4.0f, 0.0f));
+  const auto c3_index = curve_handles.addHandle(as::vec3(13.0f, -4.0f, 0.0f));
 
   auto prev = bx::getHPCounter();
 
@@ -348,14 +348,6 @@ int main(int argc, char** argv)
     ImGui::SliderFloat("d", &normalized_bezier_d, 0.0f, 1.0f);
     ImGui::SliderFloat("e", &normalized_bezier_e, 0.0f, 1.0f);
 
-    for (as::index index = 0; index < curve_handles.size(); ++index) {
-      const auto circle = dbg::DebugCircle(
-        as::mat4_from_mat3_vec3(
-          as::mat3::identity(), curve_handles.getHandle(index)),
-        dbg::CurveHandles::HandleRadius, main_view, program_col);
-      circle.draw();
-    }
-
     auto debugLinesGraph = dbg::DebugLines(main_view, program_col);
 
     const auto p0 = curve_handles.getHandle(p0_index);
@@ -365,12 +357,33 @@ int main(int argc, char** argv)
     const auto c2 = curve_handles.getHandle(c2_index);
     const auto c3 = curve_handles.getHandle(c3_index);
 
+    std::vector<std::vector<as::vec3>> points = {
+      {},
+      {p0, c0, c0, p1},
+      {p0, c0, c0, c1, c1, p1},
+      {p0, c0, c0, c1, c1, c2, c2, p1},
+      {p0, c0, c0, c1, c1, c2, c2, c3, c3, p1}};
+
+    static int order = 4;
+    static const char* orders[] = {
+      "First", "Second", "Third", "Fourth", "Fifth"};
+
+    ImGui::Combo("Curve Order", &order, orders, std::size(orders));
+
     // control lines
-    debugLinesGraph.addLine(p0, c0, 0xffaaaaaa);
-    debugLinesGraph.addLine(c0, c1, 0xffaaaaaa);
-    debugLinesGraph.addLine(c1, c2, 0xffaaaaaa);
-    debugLinesGraph.addLine(c2, c3, 0xffaaaaaa);
-    debugLinesGraph.addLine(c3, p1, 0xffaaaaaa);
+    for (as::index i = 0; i < points[order].size(); i += 2) {
+      debugLinesGraph.addLine(
+        points[order][i], points[order][i + 1], 0xffaaaaaa);
+    }
+
+    // control handles
+    for (as::index index = 0; index < order + 2; ++index) {
+      const auto circle = dbg::DebugCircle(
+        as::mat4_from_mat3_vec3(
+          as::mat3::identity(), curve_handles.getHandle(index)),
+        dbg::CurveHandles::HandleRadius, main_view, program_col);
+      circle.draw();
+    }
 
     const auto lineGranularity = 50;
     const auto lineLength = 20.0f;
@@ -381,29 +394,39 @@ int main(int argc, char** argv)
       float x_begin = begin * lineLength;
       float x_end = end * lineLength;
 
-      // bezier1 (linear)
-      debugLinesGraph.addLine(
-        nlt::bezier1(p0, p1, begin), nlt::bezier1(p0, p1, end), 0xff000000);
+      if (order == 0) {
+        // bezier1 (linear)
+        debugLinesGraph.addLine(
+          nlt::bezier1(p0, p1, begin), nlt::bezier1(p0, p1, end), 0xff000000);
+      }
 
-      // bezier2
-      debugLinesGraph.addLine(
-        nlt::bezier2(p0, p1, c0, begin), nlt::bezier2(p0, p1, c0, end),
-        0xff000000);
+      if (order == 1) {
+        // bezier2
+        debugLinesGraph.addLine(
+          nlt::bezier2(p0, p1, c0, begin), nlt::bezier2(p0, p1, c0, end),
+          0xff000000);
+      }
 
-      // bezier3
-      debugLinesGraph.addLine(
-        nlt::bezier3(p0, p1, c0, c1, begin), nlt::bezier3(p0, p1, c0, c1, end),
-        0xff000000);
+      if (order == 2) {
+        // bezier3
+        debugLinesGraph.addLine(
+          nlt::bezier3(p0, p1, c0, c1, begin),
+          nlt::bezier3(p0, p1, c0, c1, end), 0xff000000);
+      }
 
-      // bezier4
-      debugLinesGraph.addLine(
-        nlt::bezier4(p0, p1, c0, c1, c2, begin),
-        nlt::bezier4(p0, p1, c0, c1, c2, end), 0xff000000);
+      if (order == 3) {
+        // bezier4
+        debugLinesGraph.addLine(
+          nlt::bezier4(p0, p1, c0, c1, c2, begin),
+          nlt::bezier4(p0, p1, c0, c1, c2, end), 0xff000000);
+      }
 
-      // bezier5
-      debugLinesGraph.addLine(
-        nlt::bezier5(p0, p1, c0, c1, c2, c3, begin),
-        nlt::bezier5(p0, p1, c0, c1, c2, c3, end), 0xff000000);
+      if (order == 4) {
+        // bezier5
+        debugLinesGraph.addLine(
+          nlt::bezier5(p0, p1, c0, c1, c2, c3, begin),
+          nlt::bezier5(p0, p1, c0, c1, c2, c3, end), 0xff000000);
+      }
 
       const auto sample_curve =
         [lineLength, begin, end, &debugLinesGraph, x_begin,
