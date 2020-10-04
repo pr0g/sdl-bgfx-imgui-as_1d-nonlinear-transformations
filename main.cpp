@@ -568,11 +568,36 @@ int main(int argc, char** argv)
 
     ImGui::Combo("Interpolation", &item, types, std::size(types));
 
-    const auto position = as::vec_mix(start, end, interpolations[item](t));
-    auto moving_circle = dbg::DebugCircle(
-      as::mat4_from_mat3_vec3(as::mat3::identity(), position),
+    const auto horizontal_position =
+      as::vec_mix(start, end, interpolations[item](t));
+    auto horizontal_moving_circle = dbg::DebugCircle(
+      as::mat4_from_mat3_vec3(as::mat3::identity(), horizontal_position),
       dbg::CurveHandles::HandleRadius, main_view, program_col);
-    moving_circle.draw();
+    horizontal_moving_circle.draw();
+
+    const auto curve_position = [p0, p1, c0, c1, c2, c3] {
+      if (order == 0) {
+        return nlt::bezier1(p0, p1, t);
+      }
+      if (order == 1) {
+        return nlt::bezier2(p0, p1, c0, t);
+      }
+      if (order == 2) {
+        return nlt::bezier3(p0, p1, c0, c1, t);
+      }
+      if (order == 3) {
+        return nlt::bezier4(p0, p1, c0, c1, c2, t);
+      }
+      if (order == 4) {
+        return nlt::bezier5(p0, p1, c0, c1, c2, c3, t);
+      }
+      return as::vec3::zero();
+    }();
+
+    auto curve_moving_circle = dbg::DebugCircle(
+      as::mat4_from_mat3_vec3(as::mat3::identity(), curve_position),
+      dbg::CurveHandles::HandleRadius, main_view, program_col);
+    curve_moving_circle.draw();
     // animation end
 
     // screen space drawing
