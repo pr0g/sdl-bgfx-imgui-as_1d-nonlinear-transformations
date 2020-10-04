@@ -209,12 +209,12 @@ int main(int argc, char** argv)
   float normalized_bezier_e = 0.0f;
 
   dbg::CurveHandles curve_handles;
-  const auto p0_index = curve_handles.addHandle(as::vec3(5.0f, -8.0f, 0.0f));
-  const auto p1_index = curve_handles.addHandle(as::vec3(15.0f, -8.0f, 0.0f));
-  const auto c0_index = curve_handles.addHandle(as::vec3(7.0f, -4.0f, 0.0f));
-  const auto c1_index = curve_handles.addHandle(as::vec3(9.0f, -4.0f, 0.0f));
-  const auto c2_index = curve_handles.addHandle(as::vec3(11.0f, -4.0f, 0.0f));
-  const auto c3_index = curve_handles.addHandle(as::vec3(13.0f, -4.0f, 0.0f));
+  const auto p0_index = curve_handles.addHandle(as::vec3(2.0f, -8.0f, 0.0f));
+  const auto p1_index = curve_handles.addHandle(as::vec3(18.0f, -8.0f, 0.0f));
+  const auto c0_index = curve_handles.addHandle(as::vec3(5.2f, -4.0f, 0.0f));
+  const auto c1_index = curve_handles.addHandle(as::vec3(8.4f, -4.0f, 0.0f));
+  const auto c2_index = curve_handles.addHandle(as::vec3(11.6f, -4.0f, 0.0f));
+  const auto c3_index = curve_handles.addHandle(as::vec3(14.8f, -4.0f, 0.0f));
 
   auto prev = bx::getHPCounter();
 
