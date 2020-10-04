@@ -1,6 +1,6 @@
 @echo off
 
-REM compiler shaders
+REM compile shaders
 
 REM normal shader
 third-party\libs\bgfx\install\bin\shaderc.exe ^
