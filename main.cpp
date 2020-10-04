@@ -10,13 +10,14 @@
 #include "bgfx/platform.h"
 #include "bx/math.h"
 #include "bx/timer.h"
+#include "curve-handles.h"
+#include "debug-circle.h"
 #include "debug-lines.h"
 #include "file-ops.h"
 #include "fps.h"
 #include "imgui.h"
 #include "sdl-imgui/imgui_impl_sdl.h"
 
-#include <algorithm>
 #include <optional>
 #include <tuple>
 
@@ -48,6 +49,45 @@ std::optional<bgfx::ProgramHandle> createShaderProgram(
   return bgfx::createProgram(vsh, fsh, true);
 }
 
+as::vec2i worldToScreen(
+  const as::vec3 worldPosition, const as::mat4& projection,
+  const as::affine& view, const as::vec2i& screenDimension)
+{
+  const as::vec4 clip = projection * as::mat4_from_affine(view)
+                      * as::vec4_from_vec3(worldPosition, 1.0f);
+  const as::vec3 ndc = as::vec3_from_vec4(clip / clip.w);
+  const as::vec2 screen = (as::vec2_from_vec3(ndc) + as::vec2(1.0f)) * 0.5f;
+  return as::vec2i(
+    static_cast<as::vec2i::value_type>(
+      screen.x * static_cast<as::vec2::value_type>(screenDimension.x)),
+    static_cast<as::vec2i::value_type>(
+      (1.0f - screen.y)
+      * static_cast<as::vec2::value_type>(screenDimension.y)));
+}
+
+as::vec3 screenToWorld(
+  const as::vec2i screenPosition, const as::mat4& projection,
+  const as::affine& view, const as::vec2i& screenDimension)
+{
+  const as::vec2 normalizedScreen = as::vec2(
+    screenPosition.x / static_cast<as::vec2::value_type>(screenDimension.x),
+    (screenDimension.y - screenPosition.y)
+      / static_cast<as::vec2::value_type>(screenDimension.y));
+  const as::vec2 ndc = (normalizedScreen * 2.0f) - as::vec2(1.0f);
+  as::vec4 worldPosition = as::mat4_from_affine(as::affine_inverse(view))
+                         * as::mat_inverse(projection)
+                         * as::vec4(ndc.x, ndc.y, 0.0f, 1.0f);
+  worldPosition /= worldPosition.w;
+  return as::vec3_from_vec4(worldPosition);
+}
+
+float intersectPlane(
+  const as::vec3& origin, const as::vec3& direction, const as::vec4& plane)
+{
+  return -(as::vec_dot(origin, as::vec3_from_vec4(plane)) + plane.w)
+       / as::vec_dot(direction, as::vec3_from_vec4(plane));
+}
+
 int main(int argc, char** argv)
 {
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -55,8 +95,8 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  const int width = 800;
-  const int height = 600;
+  const int width = 1024;
+  const int height = 768;
   const float aspect = float(width) / float(height);
   SDL_Window* window = SDL_CreateWindow(
     argv[0], SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height,
@@ -92,15 +132,20 @@ int main(int argc, char** argv)
 
   dbg::DebugVertex::init();
 
+  const auto screen_dimension = as::vec2i(width, height);
   const bgfx::ViewId main_view = 0;
+  const bgfx::ViewId ortho_view = 1;
 
   // cornflower clear color
   bgfx::setViewClear(
     main_view, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x6495EDFF, 1.0f, 0);
   bgfx::setViewRect(main_view, 0, 0, width, height);
+  bgfx::setViewClear(ortho_view, BGFX_CLEAR_DEPTH);
+  bgfx::setViewRect(ortho_view, 0, 0, width, height);
   // dummy draw call to make sure main_view is cleared if no other draw calls
   // are submitted
   bgfx::touch(main_view);
+  bgfx::touch(ortho_view);
 
   ImGui::CreateContext();
   ImGuiIO& io = ImGui::GetIO();
@@ -119,7 +164,7 @@ int main(int argc, char** argv)
 
   asc::Camera camera{};
   // initial camera position and orientation
-  camera.look_at = as::point3(15.06f, 10.0f, -20.74f);
+  camera.look_at = as::vec3(19.44f, 5.57f, -26.54f);
 
   // initial mouse state
   MouseState mouse_state = mouseState();
@@ -135,11 +180,15 @@ int main(int argc, char** argv)
   camera_props.translate_speed = 10.0f;
   camera_props.look_smoothness = 5.0f;
 
+  const as::mat4 perspective_projection = as::perspective_d3d_lh(
+    as::radians(60.0f), float(width) / float(height), 0.01f, 100.0f);
+
   // debug settings
   bool linear = true;
   bool smooth_step = true;
   bool smoother_step = true;
   bool smooth_stop_start_mix2 = true;
+  bool smooth_stop_start_mix3 = true;
   bool smooth_start2 = true;
   bool smooth_start3 = true;
   bool smooth_start4 = true;
@@ -153,17 +202,36 @@ int main(int argc, char** argv)
   bool normalized_bezier3 = true;
   bool normalized_bezier4 = true;
   bool normalized_bezier5 = true;
-
   float smooth_stop_start_mix_t = 0.0f;
   float normalized_bezier_b = 0.0f;
   float normalized_bezier_c = 0.0f;
   float normalized_bezier_d = 0.0f;
   float normalized_bezier_e = 0.0f;
 
+  dbg::CurveHandles curve_handles;
+  const auto p0_index = curve_handles.addHandle(as::vec3(5.0f, -8.0f, 0.0f));
+  const auto p1_index = curve_handles.addHandle(as::vec3(15.0f, -8.0f, 0.0f));
+  const auto c0_index = curve_handles.addHandle(as::vec3(7.0f, -3.0f, 0.0f));
+  const auto c1_index = curve_handles.addHandle(as::vec3(9.0f, -3.0f, 0.0f));
+  const auto c2_index = curve_handles.addHandle(as::vec3(11.0f, -3.0f, 0.0f));
+  const auto c3_index = curve_handles.addHandle(as::vec3(13.0f, -3.0f, 0.0f));
+
   auto prev = bx::getHPCounter();
 
   fps::Fps fps;
   for (bool quit = false; !quit;) {
+
+    int x, y;
+    SDL_GetMouseState(&x, &y);
+    const auto orientation = as::affine_inverse(camera.view()).rotation;
+    const auto worldPosition = screenToWorld(
+      as::vec2i(x, y), perspective_projection, camera.view(), screen_dimension);
+    const auto rayOrigin = camera.look_at;
+    const auto rayDirection = as::vec_normalize(worldPosition - rayOrigin);
+
+    const auto hitDistance = intersectPlane(
+      rayOrigin, rayDirection, as::vec4(as::vec3::axis_z(), 0.0f));
+
     SDL_Event current_event;
     while (SDL_PollEvent(&current_event) != 0) {
       updateCameraControlKeyboardSdl(
@@ -173,6 +241,22 @@ int main(int argc, char** argv)
         quit = true;
         break;
       }
+
+      if (current_event.type == SDL_MOUSEBUTTONDOWN) {
+        if (hitDistance >= 0.0f) {
+          const auto hit = rayOrigin + rayDirection * hitDistance;
+          curve_handles.tryBeginDrag(hit);
+        }
+      }
+
+      if (current_event.type == SDL_MOUSEBUTTONUP) {
+        curve_handles.clearDrag();
+      }
+    }
+
+    if (curve_handles.dragging() && hitDistance > 0.0f) {
+      const auto nextHit = rayOrigin + rayDirection * hitDistance;
+      curve_handles.updateDrag(nextHit);
     }
 
     updateCameraControlMouseSdl(camera_control, camera_props, mouse_state);
@@ -199,27 +283,53 @@ int main(int argc, char** argv)
     float view[16];
     as::mat_to_arr(as::mat4_from_affine(camera.view()), view);
 
-    const as::mat4 perspective_projection = as::perspective_d3d_lh(
-      as::radians(60.0f), float(width) / float(height), 0.01f, 100.0f);
+    float proj_p[16];
+    as::mat_to_arr(perspective_projection, proj_p);
+    bgfx::setViewTransform(main_view, view, proj_p);
 
-    float proj[16];
-    as::mat_to_arr(perspective_projection, proj);
-    bgfx::setViewTransform(main_view, view, proj);
+    const float smooth_stop_start_mix = as::mix(
+      nlt::smoothStart2(smooth_stop_start_mix_t),
+      nlt::smoothStop2(smooth_stop_start_mix_t), smooth_stop_start_mix_t);
+    const float smoother_stop_start_mix = as::mix(
+      nlt::smoothStart3(smooth_stop_start_mix_t),
+      nlt::smoothStop3(smooth_stop_start_mix_t),
+      as::smooth_step(smooth_stop_start_mix_t));
+    const float bezier3_1d =
+      nlt::bezier3(
+        as::vec3::zero(), as::vec3::axis_x(1.0f), as::vec3::axis_x(0.0f),
+        as::vec3::axis_x(1.0f), smooth_stop_start_mix_t)
+        .x;
+    const float bezier5_1d =
+      nlt::bezier5(
+        as::vec3::zero(), as::vec3::axis_x(1.0f), as::vec3::axis_x(0.0f),
+        as::vec3::axis_x(0.0f), as::vec3::axis_x(1.0f), as::vec3::axis_x(1.0f),
+        smooth_stop_start_mix_t)
+        .x;
 
     ImGui::Checkbox("Linear", &linear);
     ImGui::Checkbox("Smooth Step", &smooth_step);
     ImGui::Checkbox("Smoother Step", &smoother_step);
-    ImGui::SliderFloat("t", &smooth_stop_start_mix_t, 0.0f, 1.0f);
     ImGui::Checkbox("Smooth Stop Start Mix 2", &smooth_stop_start_mix2);
-    const float smooth_stop_start_mix = as::mix(
-      nlt::smoothStart2(smooth_stop_start_mix_t),
-      nlt::smoothStop2(smooth_stop_start_mix_t), smooth_stop_start_mix_t);
+    ImGui::Checkbox("Smooth Stop Start Mix 3", &smooth_stop_start_mix3);
+    ImGui::SliderFloat("t", &smooth_stop_start_mix_t, 0.0f, 1.0f);
+    ImGui::Text("Smooth Step: ");
+    ImGui::SameLine(180);
+    ImGui::Text("%f", as::smooth_step(smooth_stop_start_mix_t));
     ImGui::Text("Smooth Stop Start Mix 2: ");
     ImGui::SameLine(180);
     ImGui::Text("%f", smooth_stop_start_mix);
-    ImGui::Text("Smooth Step: ");
-    ImGui::SameLine(100);
-    ImGui::Text("%f", as::smooth_step(smooth_stop_start_mix_t));
+    ImGui::Text("Bezier3 1d: ");
+    ImGui::SameLine(180);
+    ImGui::Text("%f", bezier3_1d);
+    ImGui::Text("Smoother Step: ");
+    ImGui::SameLine(180);
+    ImGui::Text("%f", as::smoother_step(smooth_stop_start_mix_t));
+    ImGui::Text("Smooth Stop Start Mix 3: ");
+    ImGui::SameLine(180);
+    ImGui::Text("%f", smoother_stop_start_mix);
+    ImGui::Text("Bezier5 1d: ");
+    ImGui::SameLine(180);
+    ImGui::Text("%f", bezier5_1d);
     ImGui::Checkbox("Smooth Start 2", &smooth_start2);
     ImGui::Checkbox("Smooth Start 3", &smooth_start3);
     ImGui::Checkbox("Smooth Start 4", &smooth_start4);
@@ -238,7 +348,30 @@ int main(int argc, char** argv)
     ImGui::SliderFloat("d", &normalized_bezier_d, 0.0f, 1.0f);
     ImGui::SliderFloat("e", &normalized_bezier_e, 0.0f, 1.0f);
 
+    for (as::index index = 0; index < curve_handles.size(); ++index) {
+      const auto circle = dbg::DebugCircle(
+        as::mat4_from_mat3_vec3(
+          as::mat3::identity(), curve_handles.getHandle(index)),
+        dbg::CurveHandles::HandleRadius, main_view, program_col);
+      circle.draw();
+    }
+
     auto debugLinesGraph = dbg::DebugLines(main_view, program_col);
+
+    const auto p0 = curve_handles.getHandle(p0_index);
+    const auto p1 = curve_handles.getHandle(p1_index);
+    const auto c0 = curve_handles.getHandle(c0_index);
+    const auto c1 = curve_handles.getHandle(c1_index);
+    const auto c2 = curve_handles.getHandle(c2_index);
+    const auto c3 = curve_handles.getHandle(c3_index);
+
+    // control lines
+    debugLinesGraph.addLine(p0, c0, 0xffaaaaaa);
+    debugLinesGraph.addLine(c0, c1, 0xffaaaaaa);
+    debugLinesGraph.addLine(c1, c2, 0xffaaaaaa);
+    debugLinesGraph.addLine(c2, c3, 0xffaaaaaa);
+    debugLinesGraph.addLine(c3, p1, 0xffaaaaaa);
+
     const auto lineGranularity = 50;
     const auto lineLength = 20.0f;
     for (auto i = 0; i < lineGranularity; ++i) {
@@ -248,13 +381,37 @@ int main(int argc, char** argv)
       float x_begin = begin * lineLength;
       float x_end = end * lineLength;
 
-      auto sample_curve = [lineLength, begin, end, &debugLinesGraph, x_begin,
-                           x_end](auto fn, const uint32_t col = 0xff000000) {
-        debugLinesGraph.addLine(
-          as::vec3(x_begin, as::mix(0.0f, lineLength, fn(begin)), 0.0f),
-          as::vec3(x_end, as::mix(0.0f, lineLength, fn(end)), 0.0f),
-          col);
-      };
+      // bezier1 (linear)
+      debugLinesGraph.addLine(
+        nlt::bezier1(p0, p1, begin), nlt::bezier1(p0, p1, end), 0xff000000);
+
+      // bezier2
+      debugLinesGraph.addLine(
+        nlt::bezier2(p0, p1, c0, begin), nlt::bezier2(p0, p1, c0, end),
+        0xff000000);
+
+      // bezier3
+      debugLinesGraph.addLine(
+        nlt::bezier3(p0, p1, c0, c1, begin), nlt::bezier3(p0, p1, c0, c1, end),
+        0xff000000);
+
+      // bezier4
+      debugLinesGraph.addLine(
+        nlt::bezier4(p0, p1, c0, c1, c2, begin),
+        nlt::bezier4(p0, p1, c0, c1, c2, end), 0xff000000);
+
+      // bezier5
+      debugLinesGraph.addLine(
+        nlt::bezier5(p0, p1, c0, c1, c2, c3, begin),
+        nlt::bezier5(p0, p1, c0, c1, c2, c3, end), 0xff000000);
+
+      const auto sample_curve =
+        [lineLength, begin, end, &debugLinesGraph, x_begin,
+         x_end](auto fn, const uint32_t col = 0xff000000) {
+          debugLinesGraph.addLine(
+            as::vec3(x_begin, as::mix(0.0f, lineLength, fn(begin)), 0.0f),
+            as::vec3(x_end, as::mix(0.0f, lineLength, fn(end)), 0.0f), col);
+        };
 
       if (linear) {
         sample_curve([](const float a) { return a; });
@@ -269,20 +426,21 @@ int main(int argc, char** argv)
       }
 
       if (smooth_stop_start_mix2) {
-        auto smooth_start_stop_begin = as::mix(
-          0.0f, lineLength,
-          as::mix(
-            nlt::smoothStart2(begin), nlt::smoothStop2(begin),
-            smooth_stop_start_mix_t));
-        auto smooth_start_stop_begin_end = as::mix(
-          0.0f, lineLength,
-          as::mix(
-            nlt::smoothStart2(end), nlt::smoothStop2(end),
-            smooth_stop_start_mix_t));
+        sample_curve(nlt::smoothStepMixed);
+        sample_curve(
+          [smooth_stop_start_mix_t](const float sample) {
+            return nlt::smoothStepMixer(sample, smooth_stop_start_mix_t);
+          },
+          0xff00ff00);
+      }
 
-        debugLinesGraph.addLine(
-          as::vec3(x_begin, smooth_start_stop_begin, 0.0f),
-          as::vec3(x_end, smooth_start_stop_begin_end, 0.0f), 0xff00ff00);
+      if (smooth_stop_start_mix3) {
+        sample_curve(nlt::smootherStepMixed);
+        sample_curve(
+          [smooth_stop_start_mix_t](const float sample) {
+            return nlt::smootherStepMixer(sample, smooth_stop_start_mix_t);
+          },
+          0xff00ff00);
       }
 
       if (smooth_start2) {
@@ -322,9 +480,11 @@ int main(int argc, char** argv)
       }
 
       if (normalized_bezier2) {
-        sample_curve([normalized_bezier_b](const float sample) {
-          return nlt::normalizedBezier2(normalized_bezier_b, sample);
-        }, 0xff0000ff);
+        sample_curve(
+          [normalized_bezier_b](const float sample) {
+            return nlt::normalizedBezier2(normalized_bezier_b, sample);
+          },
+          0xff0000ff);
       }
 
       if (normalized_bezier3) {
@@ -332,30 +492,95 @@ int main(int argc, char** argv)
           [normalized_bezier_b, normalized_bezier_c](const float sample) {
             return nlt::normalizedBezier3(
               normalized_bezier_b, normalized_bezier_c, sample);
-          }, 0xff0000ff);
+          },
+          0xff0000ff);
       }
 
       if (normalized_bezier4) {
-        sample_curve([normalized_bezier_b, normalized_bezier_c,
-                      normalized_bezier_d](const float sample) {
-          return nlt::normalizedBezier4(
-            normalized_bezier_b, normalized_bezier_c, normalized_bezier_d,
-            sample);
-        }, 0xff0000ff);
+        sample_curve(
+          [normalized_bezier_b, normalized_bezier_c,
+           normalized_bezier_d](const float sample) {
+            return nlt::normalizedBezier4(
+              normalized_bezier_b, normalized_bezier_c, normalized_bezier_d,
+              sample);
+          },
+          0xff0000ff);
       }
 
       if (normalized_bezier5) {
-        sample_curve([normalized_bezier_b, normalized_bezier_c,
-                      normalized_bezier_d,
-                      normalized_bezier_e](const float sample) {
-          return nlt::normalizedBezier5(
-            normalized_bezier_b, normalized_bezier_c, normalized_bezier_d,
-            normalized_bezier_e, sample);
-        }, 0xff0000ff);
+        sample_curve(
+          [normalized_bezier_b, normalized_bezier_c, normalized_bezier_d,
+           normalized_bezier_e](const float sample) {
+            return nlt::normalizedBezier5(
+              normalized_bezier_b, normalized_bezier_c, normalized_bezier_d,
+              normalized_bezier_e, sample);
+          },
+          0xff0000ff);
       }
     }
 
+    // animation begin
+    static float direction = 1.0f;
+    static float time = 2.0f;
+    static float t = 0.0f;
+    t += dt / time * direction;
+    if (t >= 1.0f || t <= 0.0f) {
+      t = as::clamp(t, 0.0f, 1.0f);
+      direction *= -1.0f;
+    }
+
+    const auto start = as::vec3(2.0f, -1.5, 0.0f);
+    const auto end = as::vec3(18.0f, -1.5, 0.0f);
+
+    debugLinesGraph.addLine(start, end, 0xff000000);
     debugLinesGraph.submit();
+
+    static float (*interpolations[])(float) = {
+      [](float t) { return t; }, as::smooth_step,   as::smoother_step,
+      nlt::smoothStart2,         nlt::smoothStart3, nlt::smoothStart4,
+      nlt::smoothStart5,         nlt::smoothStop2,  nlt::smoothStop3,
+      nlt::smoothStop4,          nlt::smoothStop5};
+
+    static int item = 0;
+    static const char* types[] = {
+      "Linear",         "Smooth Step",    "Smoother Step",  "Smooth Start 2",
+      "Smooth Start 3", "Smooth Start 4", "Smooth Start 5", "Smooth Stop 2",
+      "Smooth Stop 3",  "Smooth Stop 4",  "Smooth Stop 5",
+    };
+
+    ImGui::Combo("Interpolation", &item, types, std::size(types));
+
+    const auto position = as::vec_mix(start, end, interpolations[item](t));
+    auto moving_circle = dbg::DebugCircle(
+      as::mat4_from_mat3_vec3(as::mat3::identity(), position),
+      dbg::CurveHandles::HandleRadius, main_view, program_col);
+    moving_circle.draw();
+    // animation end
+
+    // screen space drawing
+    float view_o[16];
+    as::mat_to_arr(as::mat4::identity(), view_o);
+
+    const as::mat4 orthographic_projection =
+      as::ortho_d3d_lh(0.0f, width, height, 0.0f, 0.0f, 1.0f);
+
+    float proj_o[16];
+    as::mat_to_arr(orthographic_projection, proj_o);
+    bgfx::setViewTransform(ortho_view, view_o, proj_o);
+
+    const auto start_screen = worldToScreen(
+      start, perspective_projection, camera.view(), screen_dimension);
+    const auto end_screen = worldToScreen(
+      end, perspective_projection, camera.view(), screen_dimension);
+
+    dbg::DebugLines dl_screen(ortho_view, program_col);
+    dl_screen.addLine(
+      as::vec3(start_screen.x, start_screen.y - 10.0f, 0.0f),
+      as::vec3(start_screen.x, start_screen.y + 10.0f, 0.0f), 0xff555555);
+    dl_screen.addLine(
+      as::vec3(end_screen.x, end_screen.y - 10.0f, 0.0f),
+      as::vec3(end_screen.x, end_screen.y + 10.0f, 0.0f), 0xff555555);
+    dl_screen.submit();
 
     ImGui::Text("Framerate: ");
     ImGui::SameLine(100);
@@ -363,6 +588,7 @@ int main(int argc, char** argv)
 
     // include this in case nothing was submitted to draw
     bgfx::touch(main_view);
+    bgfx::touch(ortho_view);
 
     ImGui::Render();
     bgfx::frame();

@@ -5,3 +5,4 @@ third-party/libs/*
 imgui.ini
 *.bin
 .vscode/
+vc140.pdb
