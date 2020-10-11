@@ -16,7 +16,9 @@
 #include "file-ops.h"
 #include "fps.h"
 #include "imgui.h"
+#include "noise.h"
 #include "sdl-imgui/imgui_impl_sdl.h"
+#include "smooth-line.h"
 
 #include <optional>
 #include <tuple>
@@ -164,7 +166,7 @@ int main(int argc, char** argv)
 
   asc::Camera camera{};
   // initial camera position and orientation
-  camera.look_at = as::vec3(19.44f, 5.57f, -26.54f);
+  camera.look_at = as::vec3(24.3f, 1.74f, -33.0f);
 
   // initial mouse state
   MouseState mouse_state = mouseState();
@@ -215,6 +217,9 @@ int main(int argc, char** argv)
   const auto c1_index = curve_handles.addHandle(as::vec3(8.4f, -4.0f, 0.0f));
   const auto c2_index = curve_handles.addHandle(as::vec3(11.6f, -4.0f, 0.0f));
   const auto c3_index = curve_handles.addHandle(as::vec3(14.8f, -4.0f, 0.0f));
+
+  const auto smooth_line_begin_index = curve_handles.addHandle(as::vec3::axis_x(22.0f));
+  const auto smooth_line_end_index = curve_handles.addHandle(as::vec3(25.0f, 4.0f, 0.0f));
 
   auto prev = bx::getHPCounter();
 
@@ -548,11 +553,38 @@ int main(int argc, char** argv)
       direction *= -1.0f;
     }
 
-    const auto start = as::vec3(2.0f, -1.5, 0.0f);
-    const auto end = as::vec3(18.0f, -1.5, 0.0f);
+    const auto start = as::vec3(2.0f, -1.5f, 0.0f);
+    const auto end = as::vec3(18.0f, -1.5f, 0.0f);
 
     debug_lines_graph.addLine(start, end, 0xff000000);
+
+    // draw noise
+    for (int64_t i = 0; i < 160; ++i) {
+      const float offset = (i * 0.1f) + 2.0f;
+      debug_lines_graph.addLine(
+        as::vec3(static_cast<float>(offset), -10.0f, 0.0f),
+        as::vec3(static_cast<float>(offset), -10.0f + ns::noise1dZeroToOne(i), 0.0f), 0xff000000);
+      debug_lines_graph.addLine(
+        as::vec3(static_cast<float>(offset), -12.0f, 0.0f),
+        as::vec3(static_cast<float>(offset), -12.0f + ns::noise1dMinusOneToOne(i), 0.0f), 0xff000000);
+    }
+
     debug_lines_graph.submit();
+
+    // draw smooth line handles
+    for (auto index : {smooth_line_begin_index, smooth_line_end_index}) {
+      const auto circle = dbg::DebugCircle(
+        as::mat4_from_mat3_vec3(
+          as::mat3::identity(), curve_handles.getHandle(index)),
+        dbg::CurveHandles::HandleRadius, main_view, program_col);
+      circle.draw();
+    }
+
+    // draw smooth line
+    const auto smoothLineBegin = curve_handles.getHandle(smooth_line_begin_index);
+    const auto smoothLineEnd = curve_handles.getHandle(smooth_line_end_index);
+    auto smooth_line = dbg::SmoothLine(main_view, program_col);
+    smooth_line.draw(smoothLineBegin, smoothLineEnd);
 
     static float (*interpolations[])(float) = {
       [](float t) { return t; }, as::smooth_step,   as::smoother_step,
@@ -620,10 +652,10 @@ int main(int argc, char** argv)
     dbg::DebugLines dl_screen(ortho_view, program_col);
     dl_screen.addLine(
       as::vec3(start_screen.x, start_screen.y - 10.0f, 0.0f),
-      as::vec3(start_screen.x, start_screen.y + 10.0f, 0.0f), 0xff555555);
+      as::vec3(start_screen.x, start_screen.y + 10.0f, 0.0f), 0xff000000);
     dl_screen.addLine(
       as::vec3(end_screen.x, end_screen.y - 10.0f, 0.0f),
-      as::vec3(end_screen.x, end_screen.y + 10.0f, 0.0f), 0xff555555);
+      as::vec3(end_screen.x, end_screen.y + 10.0f, 0.0f), 0xff000000);
     dl_screen.submit();
 
     ImGui::Text("Framerate: ");
