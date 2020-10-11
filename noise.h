@@ -14,16 +14,16 @@ inline uint32_t noise1d(int x_position, uint32_t seed = 0)
   constexpr uint32_t BitNoise2 = 0xB5297a4d;
   constexpr uint32_t BitNoise3 = 0x1b56c4e9;
 
-  uint32_t mangledBits = static_cast<uint32_t>(x_position);
-  mangledBits *= BitNoise1;
-  mangledBits += seed;
-  mangledBits ^= mangledBits >> 8;
-  mangledBits += BitNoise2;
-  mangledBits ^= mangledBits << 8;
-  mangledBits *= BitNoise3;
-  mangledBits ^= mangledBits >> 8;
+  auto mangled_bits = static_cast<uint32_t>(x_position);
+  mangled_bits *= BitNoise1;
+  mangled_bits += seed;
+  mangled_bits ^= mangled_bits >> 8;
+  mangled_bits += BitNoise2;
+  mangled_bits ^= mangled_bits << 8;
+  mangled_bits *= BitNoise3;
+  mangled_bits ^= mangled_bits >> 8;
 
-  return mangledBits;
+  return mangled_bits;
 }
 
 inline float noise1dZeroToOne(int x_position, uint32_t seed = 0)

@@ -10,7 +10,7 @@
 namespace fileops
 {
 
-inline static std::streamoff stream_size(std::istream& file)
+inline static std::streamoff streamSize(std::istream& file)
 {
   std::istream::pos_type current_pos = file.tellg();
   if (current_pos == std::istream::pos_type(-1)) {
@@ -22,20 +22,20 @@ inline static std::streamoff stream_size(std::istream& file)
   return end_pos - current_pos;
 }
 
-inline bool stream_read_string(std::istream& file, std::string& fileContents)
+inline bool streamReadString(std::istream& file, std::string& file_contents)
 {
-  std::streamoff len = stream_size(file);
+  std::streamoff len = streamSize(file);
   if (len == -1) {
     return false;
   }
 
-  fileContents.resize(static_cast<std::string::size_type>(len));
+  file_contents.resize(static_cast<std::string::size_type>(len));
 
-  file.read(&fileContents[0], fileContents.length());
+  file.read(&file_contents[0], file_contents.length());
   return true;
 }
 
-inline bool read_file(const std::string& filename, std::string& fileContents)
+inline bool readFile(const std::string& filename, std::string& file_contents)
 {
   std::ifstream file(filename, std::ios::binary);
 
@@ -43,7 +43,7 @@ inline bool read_file(const std::string& filename, std::string& fileContents)
     return false;
   }
 
-  return stream_read_string(file, fileContents);
+  return streamReadString(file, file_contents);
 }
 
 } // namespace fileops

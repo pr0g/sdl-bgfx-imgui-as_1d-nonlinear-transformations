@@ -36,12 +36,12 @@ std::optional<bgfx::ProgramHandle> createShaderProgram(
   const char* vert_shader_path, const char* frag_shader_path)
 {
   std::string vshader;
-  if (!fileops::read_file(vert_shader_path, vshader)) {
+  if (!fileops::readFile(vert_shader_path, vshader)) {
     return {};
   }
 
   std::string fshader;
-  if (!fileops::read_file(frag_shader_path, fshader)) {
+  if (!fileops::readFile(frag_shader_path, fshader)) {
     return {};
   }
 
