@@ -588,11 +588,11 @@ int main(int argc, char** argv)
     }
 
     // draw smooth line
-    const auto smoothLineBegin =
+    const auto smooth_line_begin =
       curve_handles.getHandle(smooth_line_begin_index);
-    const auto smoothLineEnd = curve_handles.getHandle(smooth_line_end_index);
+    const auto smooth_line_end = curve_handles.getHandle(smooth_line_end_index);
     auto smooth_line = dbg::SmoothLine(main_view, program_col);
-    smooth_line.draw(smoothLineBegin, smoothLineEnd);
+    smooth_line.draw(smooth_line_begin, smooth_line_end);
 
     static float (*interpolations[])(float) = {
       [](float t) { return t; }, as::smooth_step,   as::smoother_step,
