@@ -218,8 +218,10 @@ int main(int argc, char** argv)
   const auto c2_index = curve_handles.addHandle(as::vec3(11.6f, -4.0f, 0.0f));
   const auto c3_index = curve_handles.addHandle(as::vec3(14.8f, -4.0f, 0.0f));
 
-  const auto smooth_line_begin_index = curve_handles.addHandle(as::vec3::axis_x(22.0f));
-  const auto smooth_line_end_index = curve_handles.addHandle(as::vec3(25.0f, 4.0f, 0.0f));
+  const auto smooth_line_begin_index =
+    curve_handles.addHandle(as::vec3::axis_x(22.0f));
+  const auto smooth_line_end_index =
+    curve_handles.addHandle(as::vec3(25.0f, 4.0f, 0.0f));
 
   auto prev = bx::getHPCounter();
 
@@ -563,10 +565,15 @@ int main(int argc, char** argv)
       const float offset = (i * 0.1f) + 2.0f;
       debug_lines_graph.addLine(
         as::vec3(static_cast<float>(offset), -10.0f, 0.0f),
-        as::vec3(static_cast<float>(offset), -10.0f + ns::noise1dZeroToOne(i), 0.0f), 0xff000000);
+        as::vec3(
+          static_cast<float>(offset), -10.0f + ns::noise1dZeroToOne(i), 0.0f),
+        0xff000000);
       debug_lines_graph.addLine(
         as::vec3(static_cast<float>(offset), -12.0f, 0.0f),
-        as::vec3(static_cast<float>(offset), -12.0f + ns::noise1dMinusOneToOne(i), 0.0f), 0xff000000);
+        as::vec3(
+          static_cast<float>(offset), -12.0f + ns::noise1dMinusOneToOne(i),
+          0.0f),
+        0xff000000);
     }
 
     debug_lines_graph.submit();
@@ -581,7 +588,8 @@ int main(int argc, char** argv)
     }
 
     // draw smooth line
-    const auto smoothLineBegin = curve_handles.getHandle(smooth_line_begin_index);
+    const auto smoothLineBegin =
+      curve_handles.getHandle(smooth_line_begin_index);
     const auto smoothLineEnd = curve_handles.getHandle(smooth_line_end_index);
     auto smooth_line = dbg::SmoothLine(main_view, program_col);
     smooth_line.draw(smoothLineBegin, smoothLineEnd);
