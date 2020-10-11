@@ -564,16 +564,15 @@ int main(int argc, char** argv)
     for (int64_t i = 0; i < 160; ++i) {
       const float offset = (i * 0.1f) + 2.0f;
       debug_lines_graph.addLine(
-        as::vec3(static_cast<float>(offset), -10.0f, 0.0f),
-        as::vec3(
-          static_cast<float>(offset), -10.0f + ns::noise1dZeroToOne(i), 0.0f),
+        as::vec3(offset, -10.0f, 0.0f),
+        as::vec3(offset, -10.0f + ns::noise1dZeroToOne(i), 0.0f), 0xff000000);
+      debug_lines_graph.addLine(
+        as::vec3(offset, -12.0f, 0.0f),
+        as::vec3(offset, -12.0f + ns::noise1dMinusOneToOne(i), 0.0f),
         0xff000000);
       debug_lines_graph.addLine(
-        as::vec3(static_cast<float>(offset), -12.0f, 0.0f),
-        as::vec3(
-          static_cast<float>(offset), -12.0f + ns::noise1dMinusOneToOne(i),
-          0.0f),
-        0xff000000);
+        as::vec3(offset, -14.0f, 0.0f),
+        as::vec3(offset, -14.0f + ns::perlinNoise1d(offset), 0.0f), 0xff000000);
     }
 
     debug_lines_graph.submit();
