@@ -43,8 +43,8 @@ inline float perlinNoise1d(float x_position, uint32_t seed = 0)
   const float p1 = p0 + 1.0f;
   const float t = x_position - p0;
   const float inv_t = -nlt::flip(t);
-  const float g0 = as::sign(noise1dMinusOneToOne(static_cast<int>(p0), seed));
-  const float g1 = as::sign(noise1dMinusOneToOne(static_cast<int>(p1), seed));
+  const float g0 = noise1dMinusOneToOne(static_cast<int>(p0), seed);
+  const float g1 = noise1dMinusOneToOne(static_cast<int>(p1), seed);
   return as::mix(g0 * t, g1 * inv_t, as::smoother_step(t));
 }
 

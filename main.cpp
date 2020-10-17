@@ -314,6 +314,7 @@ int main(int argc, char** argv)
         smooth_stop_start_mix_t)
         .x;
 
+    ImGui::Begin("Curves");
     ImGui::Checkbox("Linear", &linear);
     ImGui::Checkbox("Smooth Step", &smooth_step);
     ImGui::Checkbox("Smoother Step", &smoother_step);
@@ -560,23 +561,6 @@ int main(int argc, char** argv)
 
     debug_lines_graph.addLine(start, end, 0xff000000);
 
-    // draw noise
-    for (int64_t i = 0; i < 160; ++i) {
-      const float offset = (i * 0.1f) + 2.0f;
-      debug_lines_graph.addLine(
-        as::vec3(offset, -10.0f, 0.0f),
-        as::vec3(offset, -10.0f + ns::noise1dZeroToOne(i), 0.0f), 0xff000000);
-      debug_lines_graph.addLine(
-        as::vec3(offset, -12.0f, 0.0f),
-        as::vec3(offset, -12.0f + ns::noise1dMinusOneToOne(i), 0.0f),
-        0xff000000);
-      debug_lines_graph.addLine(
-        as::vec3(offset, -14.0f, 0.0f),
-        as::vec3(offset, -14.0f + ns::perlinNoise1d(offset), 0.0f), 0xff000000);
-    }
-
-    debug_lines_graph.submit();
-
     // draw smooth line handles
     for (auto index : {smooth_line_begin_index, smooth_line_end_index}) {
       const auto circle = dbg::DebugCircle(
@@ -668,6 +652,70 @@ int main(int argc, char** argv)
     ImGui::Text("Framerate: ");
     ImGui::SameLine(100);
     ImGui::Text("%f", framerate);
+    ImGui::End();
+
+    ImGui::Begin("Noise");
+    static float noise1_freq = 0.5f;
+    ImGui::SliderFloat("Noise 1 Freq", &noise1_freq, 0.0f, 5.0f);
+    static float noise1_amp = 1.25f;
+    ImGui::SliderFloat("Noise 1 Amp", &noise1_amp, 0.0f, 5.0f);
+    static int noise1_offset = 0;
+    ImGui::SliderInt("Noise 1 Offset", &noise1_offset, 0, 100);
+    static float noise2_freq = 2.0f;
+    ImGui::SliderFloat("Noise 2 Freq", &noise2_freq, 0.0f, 5.0f);
+    static float noise2_amp = 0.5f;
+    ImGui::SliderFloat("Noise 2 Amp", &noise2_amp, 0.0f, 5.0f);
+    static int noise2_offset = 1;
+    ImGui::SliderInt("Noise 2 Offset", &noise2_offset, 0, 100);
+    static float noise3_freq = 4.0f;
+    ImGui::SliderFloat("Noise 3 Freq", &noise3_freq, 0.0f, 5.0f);
+    static float noise3_amp = 0.2f;
+    ImGui::SliderFloat("Noise 3 Amp", &noise3_amp, 0.0f, 5.0f);
+    static int noise3_offset = 2;
+    ImGui::SliderInt("Noise 3 Offset", &noise3_offset, 0, 100);
+    ImGui::End();
+
+    // draw random noise
+    for (int64_t i = 0; i < 160; ++i) {
+      const float offset = (i * 0.1f) + 2.0f;
+      debug_lines_graph.addLine(
+        as::vec3(offset, -10.0f, 0.0f),
+        as::vec3(offset, -10.0f + ns::noise1dZeroToOne(i), 0.0f), 0xff000000);
+      debug_lines_graph.addLine(
+        as::vec3(offset, -12.0f, 0.0f),
+        as::vec3(offset, -12.0f + ns::noise1dMinusOneToOne(i), 0.0f),
+        0xff000000);
+    }
+
+    // draw perlin noise
+    for (int64_t i = 0; i < 320; ++i) {
+      const float offset = (i * 0.05f) + 2.0f;
+      const float next_offset = ((i + 1) * 0.05f) + 2.0f;
+      debug_lines_graph.addLine(
+        as::vec3(
+          offset,
+          -14.0f
+            + ns::perlinNoise1d(offset * noise1_freq, noise1_offset)
+                * noise1_amp
+            + ns::perlinNoise1d(offset * noise2_freq, noise2_offset)
+                * noise2_amp
+            + ns::perlinNoise1d(offset * noise3_freq, noise3_offset)
+                * noise3_amp,
+          0.0f),
+        as::vec3(
+          next_offset,
+          -14.0f
+            + ns::perlinNoise1d(next_offset * noise1_freq, noise1_offset)
+                * noise1_amp
+            + ns::perlinNoise1d(next_offset * noise2_freq, noise2_offset)
+                * noise2_amp
+            + ns::perlinNoise1d(next_offset * noise3_freq, noise3_offset)
+                * noise3_amp,
+          0.0f),
+        0xff000000);
+    }
+
+    debug_lines_graph.submit();
 
     // include this in case nothing was submitted to draw
     bgfx::touch(main_view);
