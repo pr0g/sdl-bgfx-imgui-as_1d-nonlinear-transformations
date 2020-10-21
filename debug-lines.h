@@ -34,6 +34,38 @@ struct DebugLine
   DebugVertex end_;
 };
 
+class DebugQuads
+{
+  static const DebugVertex QuadVertices[];
+  static const uint16_t QuadIndices[];
+
+  bgfx::VertexBufferHandle quad_vbh_;
+  bgfx::IndexBufferHandle quad_ibh_;
+  bgfx::ProgramHandle program_handle_;
+  bgfx::ViewId view_;
+
+  struct QuadInstance
+  {
+    QuadInstance() = default;
+    QuadInstance(const as::mat4& transform, const as::vec4 color)
+      : transform_(transform), color_(color)
+    {
+    }
+
+    as::mat4 transform_;
+    as::vec4 color_;
+  };
+
+  std::vector<QuadInstance> instances_;
+
+public:
+  DebugQuads(bgfx::ViewId view, bgfx::ProgramHandle program_handle);
+  ~DebugQuads();
+
+  void addQuad(const as::mat4& transform, const as::vec4& color);
+  void submit();
+};
+
 class DebugLines
 {
   as::mat4 transform_ = as::mat4::identity();

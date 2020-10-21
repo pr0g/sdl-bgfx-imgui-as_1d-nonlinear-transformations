@@ -132,6 +132,11 @@ int main(int argc, char** argv)
       "shader/simple/v_simple.bin", "shader/simple/f_simple.bin")
       .value_or(bgfx::ProgramHandle(BGFX_INVALID_HANDLE));
 
+  const bgfx::ProgramHandle program_inst =
+    createShaderProgram(
+      "shader/instance/v_instance.bin", "shader/instance/f_instance.bin")
+      .value_or(bgfx::ProgramHandle(BGFX_INVALID_HANDLE));
+
   asc::Camera camera{};
   // initial camera position and orientation
   camera.look_at = as::vec3(24.3f, 1.74f, -33.0f);
@@ -685,6 +690,20 @@ int main(int argc, char** argv)
 
     debug_lines_graph.submit();
 
+    dbg::DebugQuads debug_quads(main_view, program_inst);
+    const auto starting_offset = as::vec3::axis_x(-12.0f);
+    for (size_t r = 0; r < 10; ++r) {
+      for (size_t c = 0; c < 10; ++c) {
+        const float grey = (float(r) * 10.0f + float(c)) / 100.0f;
+        debug_quads.addQuad(
+          as::mat4_from_vec3(
+            as::vec3(float(c), float(r), 0.0f) + starting_offset),
+          as::vec4(as::vec3(grey), 1.0f));
+      }
+    }
+
+    debug_quads.submit();
+
     // include this in case nothing was submitted to draw
     bgfx::touch(main_view);
     bgfx::touch(ortho_view);
@@ -694,6 +713,7 @@ int main(int argc, char** argv)
   }
 
   bgfx::destroy(program_col);
+  bgfx::destroy(program_inst);
 
   ImGui_ImplSDL2_Shutdown();
   ImGui_Implbgfx_Shutdown();
