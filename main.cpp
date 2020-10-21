@@ -646,6 +646,14 @@ int main(int argc, char** argv)
     ImGui::SliderFloat("Noise 3 Amp", &noise3_amp, 0.0f, 5.0f);
     static int noise3_offset = 2;
     ImGui::SliderInt("Noise 3 Offset", &noise3_offset, 0, 100);
+    static float noise2d_freq = 1.0f;
+    ImGui::SliderFloat("Noise 2d Freq", &noise2d_freq, 0.0f, 10.0f);
+    static float noise2d_amp = 1.0f;
+    ImGui::SliderFloat("Noise 2d Amp", &noise2d_amp, 0.0f, 10.0f);
+    static int noise2d_offset = 0;
+    ImGui::SliderInt("Noise 2d Offset", &noise2d_offset, 0, 100);
+    static bool draw_gradients = false;
+    ImGui::Checkbox("Draw Gradients", &draw_gradients);
     ImGui::End();
 
     // draw random noise
@@ -688,20 +696,35 @@ int main(int argc, char** argv)
         0xff000000);
     }
 
-    debug_lines_graph.submit();
-
     dbg::DebugQuads debug_quads(main_view, program_inst);
     const auto starting_offset = as::vec3::axis_x(-12.0f);
-    for (size_t r = 0; r < 10; ++r) {
-      for (size_t c = 0; c < 10; ++c) {
-        const float grey = (float(r) * 10.0f + float(c)) / 100.0f;
+    for (size_t r = 0; r < 100; ++r) {
+      for (size_t c = 0; c < 100; ++c) {
+        const as::vec2 p = as::vec2(float(c) * 0.1f, float(r) * 0.1f);
+        const float grey =
+          ns::perlinNoise2d(p * noise2d_freq, noise2d_offset) * noise2d_amp
+          + 0.5f;
+
+        if (draw_gradients && c % 10 == 0 && r % 10 == 0) {
+          const as::vec2 p0 = as::vec_floor(p);
+          const as::vec2 g0 = ns::gradient(ns::angle(p0, noise2d_offset));
+          debug_lines_graph.addLine(
+            starting_offset + as::vec3(p0, 0.0f) / noise2d_freq,
+            starting_offset
+              + (as::vec3(p0, 0.0f) + as::vec3(g0, 0.0f)) / noise2d_freq,
+            0xff000000);
+        }
+
+        const auto translation =
+          as::mat4_from_vec3(as::vec3(p, 0.0f) + starting_offset);
+        const auto scale = as::mat4_from_mat3(as::mat3_scale(0.1f));
+
         debug_quads.addQuad(
-          as::mat4_from_vec3(
-            as::vec3(float(c), float(r), 0.0f) + starting_offset),
-          as::vec4(as::vec3(grey), 1.0f));
+          as::mat_mul(scale, translation), as::vec4(as::vec3(grey), 1.0f));
       }
     }
 
+    debug_lines_graph.submit();
     debug_quads.submit();
 
     // include this in case nothing was submitted to draw

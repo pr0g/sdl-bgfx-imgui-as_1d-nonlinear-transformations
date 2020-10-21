@@ -35,8 +35,7 @@ DebugQuads::~DebugQuads()
   bgfx::destroy(quad_ibh_);
 }
 
-void DebugQuads::addQuad(
-  const as::mat4& transform, const as::vec4& color)
+void DebugQuads::addQuad(const as::mat4& transform, const as::vec4& color)
 {
   instances_.emplace_back(transform, color);
 }
@@ -47,8 +46,9 @@ void DebugQuads::submit()
   const uint16_t instance_stride = 80;
 
   if (
-    bgfx::getAvailInstanceDataBuffer(instances_.size(), instance_stride)
-    == instances_.size()) {
+    !instances_.empty()
+    && bgfx::getAvailInstanceDataBuffer(instances_.size(), instance_stride)
+         == instances_.size()) {
     bgfx::InstanceDataBuffer idb;
     bgfx::allocInstanceDataBuffer(&idb, instances_.size(), instance_stride);
 
