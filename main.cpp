@@ -51,38 +51,6 @@ std::optional<bgfx::ProgramHandle> createShaderProgram(
   return bgfx::createProgram(vsh, fsh, true);
 }
 
-as::vec2i worldToScreen(
-  const as::vec3 world_position, const as::mat4& projection,
-  const as::affine& view, const as::vec2i& screen_dimension)
-{
-  const as::vec4 clip = projection * as::mat4_from_affine(view)
-                      * as::vec4_from_vec3(world_position, 1.0f);
-  const as::vec3 ndc = as::vec3_from_vec4(clip / clip.w);
-  const as::vec2 screen = (as::vec2_from_vec3(ndc) + as::vec2(1.0f)) * 0.5f;
-  return as::vec2i(
-    static_cast<as::vec2i::value_type>(
-      screen.x * static_cast<as::vec2::value_type>(screen_dimension.x)),
-    static_cast<as::vec2i::value_type>(
-      (1.0f - screen.y)
-      * static_cast<as::vec2::value_type>(screen_dimension.y)));
-}
-
-as::vec3 screenToWorld(
-  const as::vec2i screen_position, const as::mat4& projection,
-  const as::affine& view, const as::vec2i& screen_dimension)
-{
-  const as::vec2 normalized_screen = as::vec2(
-    screen_position.x / static_cast<as::vec2::value_type>(screen_dimension.x),
-    static_cast<as::vec2::value_type>(screen_dimension.y - screen_position.y)
-      / static_cast<as::vec2::value_type>(screen_dimension.y));
-  const as::vec2 ndc = (normalized_screen * 2.0f) - as::vec2(1.0f);
-  as::vec4 world_position = as::mat4_from_affine(as::affine_inverse(view))
-                          * as::mat_inverse(projection)
-                          * as::vec4(ndc.x, ndc.y, 0.0f, 1.0f);
-  world_position /= world_position.w;
-  return as::vec3_from_vec4(world_position);
-}
-
 float intersectPlane(
   const as::vec3& origin, const as::vec3& direction, const as::vec4& plane)
 {
@@ -232,7 +200,7 @@ int main(int argc, char** argv)
     int y;
     SDL_GetMouseState(&x, &y);
     const auto orientation = as::affine_inverse(camera.view()).rotation;
-    const auto world_position = screenToWorld(
+    const auto world_position = as::screen_to_world(
       as::vec2i(x, y), perspective_projection, camera.view(), screen_dimension);
     const auto ray_origin = camera.look_at;
     const auto ray_direction = as::vec_normalize(world_position - ray_origin);
@@ -635,9 +603,9 @@ int main(int argc, char** argv)
     as::mat_to_arr(orthographic_projection, proj_o);
     bgfx::setViewTransform(ortho_view, view_o, proj_o);
 
-    const auto start_screen = worldToScreen(
+    const auto start_screen = as::world_to_screen(
       start, perspective_projection, camera.view(), screen_dimension);
-    const auto end_screen = worldToScreen(
+    const auto end_screen = as::world_to_screen(
       end, perspective_projection, camera.view(), screen_dimension);
 
     dbg::DebugLines dl_screen(ortho_view, program_col);
@@ -690,7 +658,7 @@ int main(int argc, char** argv)
     // draw perlin noise
     for (int64_t i = 0; i < 320; ++i) {
       const float offset = (i * 0.05f) + 2.0f;
-      const float next_offset = ((i + 1) * 0.05f) + 2.0f;
+      const float next_offset = ((float(i + 1)) * 0.05f) + 2.0f;
       debug_lines_graph.addLine(
         as::vec3(
           offset,
