@@ -211,7 +211,7 @@ int main(int argc, char** argv)
     const auto ray_direction = as::vec_normalize(world_position - ray_origin);
 
     const auto hit_distance = intersectPlane(
-      ray_origin, ray_direction, as::vec4(as::vec3::axis_z(), 0.0f));
+      ray_origin, ray_direction, as::vec4(as::vec3::axis_z()));
 
     SDL_Event current_event;
     while (SDL_PollEvent(&current_event) != 0) {
@@ -709,14 +709,14 @@ int main(int argc, char** argv)
           const as::vec2 p0 = as::vec_floor(p);
           const as::vec2 g0 = ns::gradient(ns::angle(p0, noise2d_offset));
           debug_lines_graph.addLine(
-            starting_offset + as::vec3(p0, 0.0f) / noise2d_freq,
+            starting_offset + as::vec3(p0) / noise2d_freq,
             starting_offset
-              + (as::vec3(p0, 0.0f) + as::vec3(g0, 0.0f)) / noise2d_freq,
+              + (as::vec3(p0) + as::vec3(g0)) / noise2d_freq,
             0xff000000);
         }
 
         const auto translation =
-          as::mat4_from_vec3(as::vec3(p, 0.0f) + starting_offset);
+          as::mat4_from_vec3(as::vec3(p) + starting_offset);
         const auto scale = as::mat4_from_mat3(as::mat3_scale(0.1f));
 
         debug_quads.addQuad(
