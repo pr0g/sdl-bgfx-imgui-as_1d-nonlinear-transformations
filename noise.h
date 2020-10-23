@@ -82,7 +82,7 @@ as::vec2 gradient(as::real radians)
 
 as::real angle(const as::vec2& position, uint32_t seed = 0)
 {
-  return noise2dZeroToOne(vec2i_from_vec2(position), seed) * 2.0f * as::kPi;
+  return noise2dZeroToOne(vec2i_from_vec2(position), seed) * 2.0f * as::k_pi;
 }
 
 inline float perlinNoise2d(const as::vec2& position, uint32_t seed = 0)

@@ -18,7 +18,7 @@ public:
     : debug_lines_(view, program_handle), transform_(transform)
   {
     float rot = 0.0f;
-    const float increment = (as::kPi * 2.0f) / 20.0f;
+    const float increment = (as::k_pi * 2.0f) / 20.0f;
     for (size_t i = 0; i < 20; ++i) {
       debug_lines_.addLine(
         as::vec3(std::cos(rot), std::sin(rot), 0.0f) * size,
