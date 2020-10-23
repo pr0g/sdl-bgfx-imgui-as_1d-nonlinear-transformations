@@ -12,10 +12,10 @@ void DebugVertex::init()
 }
 
 const DebugVertex DebugQuads::QuadVertices[] = {
-  {as::vec3{-0.5f, -0.5f, 0.0f}, 0xffffffff},
-  {as::vec3{0.5f, -0.5f, 0.0}, 0xffffffff},
-  {as::vec3{0.5f, 0.5f, 0.0f}, 0xffffffff},
-  {as::vec3{-0.5f, 0.5f, 0.0f}, 0xffffffff}};
+  {as::vec3{0.0f, 0.0f, 0.0f}, 0xffffffff},
+  {as::vec3{1.0f, 0.0f, 0.0}, 0xffffffff},
+  {as::vec3{1.0f, 1.0f, 0.0f}, 0xffffffff},
+  {as::vec3{0.0f, 1.0f, 0.0f}, 0xffffffff}};
 
 const uint16_t DebugQuads::QuadIndices[] = {0, 1, 2, 0, 2, 3};
 
