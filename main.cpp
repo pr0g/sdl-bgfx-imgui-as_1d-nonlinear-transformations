@@ -210,8 +210,8 @@ int main(int argc, char** argv)
     const auto ray_origin = camera.look_at;
     const auto ray_direction = as::vec_normalize(world_position - ray_origin);
 
-    const auto hit_distance = intersectPlane(
-      ray_origin, ray_direction, as::vec4(as::vec3::axis_z()));
+    const auto hit_distance =
+      intersectPlane(ray_origin, ray_direction, as::vec4(as::vec3::axis_z()));
 
     SDL_Event current_event;
     while (SDL_PollEvent(&current_event) != 0) {
@@ -597,6 +597,11 @@ int main(int argc, char** argv)
     curve_moving_circle.draw();
     // animation end
 
+    auto sphere = dbg::DebugSphere(
+      as::mat4_from_mat3_vec3(as::mat3::identity(), as::vec3::axis_x(20.0f)),
+      dbg::CurveHandles::HandleRadius, main_view, program_col);
+    sphere.draw();
+
     // screen space drawing
     float view_o[16];
     as::mat_to_arr(as::mat4::identity(), view_o);
@@ -696,7 +701,10 @@ int main(int argc, char** argv)
         0xff000000);
     }
 
+    const size_t quad_dimension = 100;
     dbg::DebugQuads debug_quads(main_view, program_inst);
+    debug_quads.reserveQuads(quad_dimension * quad_dimension);
+
     const auto starting_offset = as::vec3::axis_x(-12.0f);
     for (size_t r = 0; r < 100; ++r) {
       for (size_t c = 0; c < 100; ++c) {
@@ -710,8 +718,7 @@ int main(int argc, char** argv)
           const as::vec2 g0 = ns::gradient(ns::angle(p0, noise2d_offset));
           debug_lines_graph.addLine(
             starting_offset + as::vec3(p0) / noise2d_freq,
-            starting_offset
-              + (as::vec3(p0) + as::vec3(g0)) / noise2d_freq,
+            starting_offset + (as::vec3(p0) + as::vec3(g0)) / noise2d_freq,
             0xff000000);
         }
 

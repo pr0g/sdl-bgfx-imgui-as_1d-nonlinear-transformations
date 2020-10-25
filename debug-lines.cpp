@@ -35,9 +35,9 @@ DebugQuads::~DebugQuads()
   bgfx::destroy(quad_ibh_);
 }
 
-void DebugQuads::addQuad(const as::mat4& transform, const as::vec4& color)
+void DebugQuads::reserveQuads(const size_t count)
 {
-  instances_.emplace_back(transform, color);
+  instances_.reserve(count);
 }
 
 void DebugQuads::submit()

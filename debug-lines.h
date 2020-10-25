@@ -62,9 +62,16 @@ public:
   DebugQuads(bgfx::ViewId view, bgfx::ProgramHandle program_handle);
   ~DebugQuads();
 
+  void reserveQuads(size_t count);
   void addQuad(const as::mat4& transform, const as::vec4& color);
   void submit();
 };
+
+inline void DebugQuads::addQuad(
+  const as::mat4& transform, const as::vec4& color)
+{
+  instances_.emplace_back(transform, color);
+}
 
 class DebugLines
 {
