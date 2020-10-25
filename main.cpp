@@ -657,6 +657,8 @@ int main(int argc, char** argv)
     ImGui::SliderFloat("Noise 2d Amp", &noise2d_amp, 0.0f, 10.0f);
     static int noise2d_offset = 0;
     ImGui::SliderInt("Noise 2d Offset", &noise2d_offset, 0, 100);
+    static float noise2d_position[] = {0.0f, 0.0f};
+    ImGui::SliderFloat2("Noise 2d Position", noise2d_position, -10.0f, 10.0f);
     static bool draw_gradients = false;
     ImGui::Checkbox("Draw Gradients", &draw_gradients);
     ImGui::End();
@@ -705,12 +707,13 @@ int main(int argc, char** argv)
     dbg::DebugQuads debug_quads(main_view, program_inst);
     debug_quads.reserveQuads(quad_dimension * quad_dimension);
 
+    const auto noise_position = as::vec2_from_arr(noise2d_position);
     const auto starting_offset = as::vec3::axis_x(-12.0f);
     for (size_t r = 0; r < 100; ++r) {
       for (size_t c = 0; c < 100; ++c) {
         const as::vec2 p = as::vec2(float(c) * 0.1f, float(r) * 0.1f);
         const float grey =
-          ns::perlinNoise2d(p * noise2d_freq, noise2d_offset) * noise2d_amp
+          ns::perlinNoise2d((p + noise_position) * noise2d_freq, noise2d_offset) * noise2d_amp
           + 0.5f;
 
         if (draw_gradients && c % 10 == 0 && r % 10 == 0) {
