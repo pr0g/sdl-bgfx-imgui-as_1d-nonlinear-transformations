@@ -599,7 +599,7 @@ int main(int argc, char** argv)
 
     auto sphere = dbg::DebugSphere(
       as::mat4_from_mat3_vec3(as::mat3::identity(), as::vec3::axis_x(20.0f)),
-      dbg::CurveHandles::HandleRadius, main_view, program_col);
+      1.0f, main_view, program_col);
     sphere.draw();
 
     // screen space drawing
