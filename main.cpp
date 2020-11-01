@@ -742,6 +742,8 @@ int main(int argc, char** argv)
     bgfx::touch(ortho_view);
 
     ImGui::Render();
+    ImGui_Implbgfx_RenderDrawLists(ImGui::GetDrawData());
+
     bgfx::frame();
   }
 
