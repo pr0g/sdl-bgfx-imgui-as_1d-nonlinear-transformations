@@ -10,8 +10,14 @@ include(FetchContent)
 FetchContent_Declare(
     as-camera
     GIT_REPOSITORY https://github.com/pr0g/as-camera.git
-    GIT_TAG        origin/main)
+    GIT_TAG        origin/camera-experiments)
 FetchContent_MakeAvailable(as-camera)
+
+FetchContent_Declare(
+    EasyIterator
+    GIT_REPOSITORY https://github.com/TheLartians/EasyIterator.git
+)
+FetchContent_MakeAvailable(EasyIterator)
 
 add_executable(${PROJECT_NAME})
 target_sources(
@@ -30,7 +36,8 @@ target_link_libraries(
     SDL2::SDL2main
     bgfx::bgfx
     imgui::imgui
-    as-camera)
+    as-camera
+    EasyIterator)
 
 # required by as library
 target_compile_definitions(

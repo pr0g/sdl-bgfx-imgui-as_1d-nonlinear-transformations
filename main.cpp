@@ -13,6 +13,7 @@
 #include "curve-handles.h"
 #include "debug-circle.h"
 #include "debug-lines.h"
+#include "easy_iterator.h"
 #include "file-ops.h"
 #include "fps.h"
 #include "imgui.h"
@@ -148,6 +149,7 @@ int main(int argc, char** argv)
   asc::CameraControl camera_control{};
   camera_control.pitch = camera.pitch;
   camera_control.yaw = camera.yaw;
+  camera_control.look_at = camera.look_at;
 
   // camera properties
   asc::CameraProperties camera_props{};
@@ -156,7 +158,7 @@ int main(int argc, char** argv)
   camera_props.look_smoothness = 5.0f;
 
   const as::mat4 perspective_projection = as::perspective_d3d_lh(
-    as::radians(60.0f), float(width) / float(height), 0.01f, 100.0f);
+    as::radians(60.0f), float(width) / float(height), 0.01f, 1000.0f);
 
   // debug settings
   bool linear = true;
@@ -200,14 +202,13 @@ int main(int argc, char** argv)
 
   fps::Fps fps;
   for (bool quit = false; !quit;) {
-
     int x;
     int y;
     SDL_GetMouseState(&x, &y);
     const auto orientation = as::affine_inverse(camera.view()).rotation;
     const auto world_position = as::screen_to_world(
       as::vec2i(x, y), perspective_projection, camera.view(), screen_dimension);
-    const auto ray_origin = camera.look_at;
+    const auto ray_origin = camera.transform().translation;
     const auto ray_direction = as::vec_normalize(world_position - ray_origin);
 
     const auto hit_distance =
@@ -221,6 +222,18 @@ int main(int argc, char** argv)
       if (current_event.type == SDL_QUIT) {
         quit = true;
         break;
+      }
+
+      // camera hack
+      if (current_event.type == SDL_MOUSEBUTTONDOWN) {
+        const auto* mouse_button_event = (SDL_MouseButtonEvent*)&current_event;
+        if (mouse_button_event->clicks == 2) {
+          float hit_distance = intersectPlane(
+            ray_origin, ray_direction, as::vec4(as::vec3::axis_y()));
+          if (hit_distance >= 0.0f) {
+            camera_control.look_at = ray_origin + ray_direction * hit_distance;
+          }
+        }
       }
 
       if (current_event.type == SDL_MOUSEBUTTONDOWN) {
@@ -330,7 +343,29 @@ int main(int argc, char** argv)
     ImGui::SliderFloat("d", &normalized_bezier_d, 0.0f, 1.0f);
     ImGui::SliderFloat("e", &normalized_bezier_e, 0.0f, 1.0f);
 
-    auto debug_lines_graph = dbg::DebugLines(main_view, program_col);
+    auto debug_lines = dbg::DebugLines(main_view, program_col);
+
+    // grid
+    const auto grid_scale = 10.0f;
+    const auto grid_camera_offset = as::vec_snap(camera.look_at, grid_scale);
+    const auto grid_dimension = 20;
+    const auto grid_size = static_cast<float>(grid_dimension) * grid_scale;
+    const auto grid_offset = grid_size * 0.5f;
+    namespace ei = easy_iterator;
+    for (auto line : ei::range(grid_dimension + 1)) {
+      const auto start = (static_cast<float>(line) * grid_scale) - grid_offset;
+      const auto flattened_offset = as::vec3(grid_camera_offset.x, 0.0f, grid_camera_offset.z);
+      debug_lines.addLine(as::vec3(-grid_offset, 0.0f, start) + flattened_offset, as::vec3(0.0f + grid_offset, 0.0f, start) + flattened_offset, 0xff000000);
+      debug_lines.addLine(as::vec3(start, 0.0f, -grid_offset) + flattened_offset, as::vec3(start, 0.0f, grid_offset) + flattened_offset, 0xff000000);
+    }
+
+    // draw camera look at
+    if (!as::almost_equal(camera.focal_dist, 0.0f, 0.01f)) {
+      auto sphere = dbg::DebugSphere(
+        as::mat4_from_mat3_vec3(as::mat3::identity(), camera.look_at),
+        1.0f, main_view, program_col);
+      sphere.draw();
+    }
 
     const auto p0 = curve_handles.getHandle(p0_index);
     const auto p1 = curve_handles.getHandle(p1_index);
@@ -354,7 +389,7 @@ int main(int argc, char** argv)
 
     // control lines
     for (as::index i = 0; i < points[order].size(); i += 2) {
-      debug_lines_graph.addLine(
+      debug_lines.addLine(
         points[order][i], points[order][i + 1], 0xffaaaaaa);
     }
 
@@ -377,38 +412,38 @@ int main(int argc, char** argv)
       float x_end = end * line_length;
 
       const auto sample_curve =
-        [line_length, begin, end, &debug_lines_graph, x_begin,
+        [line_length, begin, end, &debug_lines, x_begin,
          x_end](auto fn, const uint32_t col = 0xff000000) {
-          debug_lines_graph.addLine(
+          debug_lines.addLine(
             as::vec3(x_begin, as::mix(0.0f, line_length, fn(begin)), 0.0f),
             as::vec3(x_end, as::mix(0.0f, line_length, fn(end)), 0.0f), col);
         };
 
       if (order == 0) {
-        debug_lines_graph.addLine(
+        debug_lines.addLine(
           nlt::bezier1(p0, p1, begin), nlt::bezier1(p0, p1, end), 0xff000000);
       }
 
       if (order == 1) {
-        debug_lines_graph.addLine(
+        debug_lines.addLine(
           nlt::bezier2(p0, p1, c0, begin), nlt::bezier2(p0, p1, c0, end),
           0xff000000);
       }
 
       if (order == 2) {
-        debug_lines_graph.addLine(
+        debug_lines.addLine(
           nlt::bezier3(p0, p1, c0, c1, begin),
           nlt::bezier3(p0, p1, c0, c1, end), 0xff000000);
       }
 
       if (order == 3) {
-        debug_lines_graph.addLine(
+        debug_lines.addLine(
           nlt::bezier4(p0, p1, c0, c1, c2, begin),
           nlt::bezier4(p0, p1, c0, c1, c2, end), 0xff000000);
       }
 
       if (order == 4) {
-        debug_lines_graph.addLine(
+        debug_lines.addLine(
           nlt::bezier5(p0, p1, c0, c1, c2, c3, begin),
           nlt::bezier5(p0, p1, c0, c1, c2, c3, end), 0xff000000);
       }
@@ -532,7 +567,7 @@ int main(int argc, char** argv)
     const auto start = as::vec3(2.0f, -1.5f, 0.0f);
     const auto end = as::vec3(18.0f, -1.5f, 0.0f);
 
-    debug_lines_graph.addLine(start, end, 0xff000000);
+    debug_lines.addLine(start, end, 0xff000000);
 
     // draw smooth line handles
     for (auto index : {smooth_line_begin_index, smooth_line_end_index}) {
@@ -666,10 +701,10 @@ int main(int argc, char** argv)
     // draw random noise
     for (int64_t i = 0; i < 160; ++i) {
       const float offset = (i * 0.1f) + 2.0f;
-      debug_lines_graph.addLine(
+      debug_lines.addLine(
         as::vec3(offset, -10.0f, 0.0f),
         as::vec3(offset, -10.0f + ns::noise1dZeroToOne(i), 0.0f), 0xff000000);
-      debug_lines_graph.addLine(
+      debug_lines.addLine(
         as::vec3(offset, -12.0f, 0.0f),
         as::vec3(offset, -12.0f + ns::noise1dMinusOneToOne(i), 0.0f),
         0xff000000);
@@ -679,7 +714,7 @@ int main(int argc, char** argv)
     for (int64_t i = 0; i < 320; ++i) {
       const float offset = (i * 0.05f) + 2.0f;
       const float next_offset = ((float(i + 1)) * 0.05f) + 2.0f;
-      debug_lines_graph.addLine(
+      debug_lines.addLine(
         as::vec3(
           offset,
           -14.0f
@@ -719,7 +754,7 @@ int main(int argc, char** argv)
         if (draw_gradients && c % 10 == 0 && r % 10 == 0) {
           const as::vec2 p0 = as::vec_floor(p);
           const as::vec2 g0 = ns::gradient(ns::angle(p0, noise2d_offset));
-          debug_lines_graph.addLine(
+          debug_lines.addLine(
             starting_offset + as::vec3(p0) / noise2d_freq,
             starting_offset + (as::vec3(p0) + as::vec3(g0)) / noise2d_freq,
             0xff000000);
@@ -734,7 +769,7 @@ int main(int argc, char** argv)
       }
     }
 
-    debug_lines_graph.submit();
+    debug_lines.submit();
     debug_quads.submit();
 
     // include this in case nothing was submitted to draw

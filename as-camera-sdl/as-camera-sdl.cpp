@@ -17,6 +17,12 @@ asc::MotionType motionFromKey(int key)
       return asc::MotionType::Down;
     case SDL_SCANCODE_E:
       return asc::MotionType::Up;
+    case SDL_SCANCODE_UP:
+      return asc::MotionType::ScrollIn;
+    case SDL_SCANCODE_DOWN:
+      return asc::MotionType::ScrollOut;
+    case SDL_SCANCODE_R:
+      return asc::MotionType::ScrollReset;
     default:
       return asc::MotionType::None;
   }
