@@ -23,6 +23,10 @@ asc::MotionType motionFromKey(int key)
       return asc::MotionType::ScrollOut;
     case SDL_SCANCODE_R:
       return asc::MotionType::ScrollReset;
+    case SDL_SCANCODE_RIGHT:
+      return asc::MotionType::PushOut;
+    case SDL_SCANCODE_LEFT:
+      return asc::MotionType::PullIn;
     default:
       return asc::MotionType::None;
   }

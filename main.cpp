@@ -231,6 +231,7 @@ int main(int argc, char** argv)
           float hit_distance = intersectPlane(
             ray_origin, ray_direction, as::vec4(as::vec3::axis_y()));
           if (hit_distance >= 0.0f) {
+            camera_control.dolly = -hit_distance;
             camera_control.look_at = ray_origin + ray_direction * hit_distance;
           }
         }
