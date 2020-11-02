@@ -59,6 +59,39 @@ float intersectPlane(
        / as::vec_dot(direction, as::vec3_from_vec4(plane));
 }
 
+// https://www.geometrictools.com/Documentation/EulerAngles.pdf
+std::tuple<float, float, float> eulerAngles(const as::mat3& orientation)
+{
+  float x;
+  float y;
+  float z;
+
+  // 2.4 Factor as RyRzRx
+  if (orientation[as::mat3_rc(1, 0)] < 1.0f)
+  {
+    if (orientation[as::mat3_rc(1, 0)] > -1.0f)
+    {
+      x = std::atan2(-orientation[as::mat3_rc(1, 2)], orientation[as::mat3_rc(1, 1)]);
+      y = std::atan2(-orientation[as::mat3_rc(2, 0)], orientation[as::mat3_rc(0, 0)]);
+      z = std::asin(orientation[as::mat3_rc(1, 0)]);
+    }
+    else
+    {
+      x = 0.0f;
+      y = -std::atan2(orientation[as::mat3_rc(2, 1)], orientation[as::mat3_rc(2, 2)]);
+      z = -as::k_pi * 0.5f;
+    }
+  }
+  else
+  {
+      x = 0.0f;
+      y = std::atan2(orientation[as::mat3_rc(2, 1)], orientation[as::mat3_rc(2, 2)]);
+      z = as::k_pi * 0.5f;
+  }
+  
+  return {x, y, z};
+}
+
 int main(int argc, char** argv)
 {
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -214,6 +247,8 @@ int main(int argc, char** argv)
     const auto hit_distance =
       intersectPlane(ray_origin, ray_direction, as::vec4(as::vec3::axis_z()));
 
+    static as::mat3 m = as::mat3::identity();
+
     SDL_Event current_event;
     while (SDL_PollEvent(&current_event) != 0) {
       updateCameraControlKeyboardSdl(
@@ -231,6 +266,22 @@ int main(int argc, char** argv)
           float hit_distance = intersectPlane(
             ray_origin, ray_direction, as::vec4(as::vec3::axis_y()));
           if (hit_distance >= 0.0f) {
+
+            as::vec3 across, up;
+            as::vec3_right_and_up_lh(ray_direction, across, up);
+            as::mat3 alignment = as::mat3(across, up, ray_direction);
+
+            m = alignment;
+
+            const auto[x, y, _] = eulerAngles(alignment);
+
+            std::clog
+              << "x: " << as::degrees(x) << " y: " << as::degrees(y)
+              << " pitch: " << as::degrees(camera_control.pitch)
+              << " yaw: " << as::degrees(camera_control.yaw) << "\n";
+
+            camera_control.pitch = x;
+            camera_control.yaw = y;
             camera_control.dolly = -hit_distance;
             camera_control.look_at = ray_origin + ray_direction * hit_distance;
           }
@@ -345,6 +396,11 @@ int main(int argc, char** argv)
     ImGui::SliderFloat("e", &normalized_bezier_e, 0.0f, 1.0f);
 
     auto debug_lines = dbg::DebugLines(main_view, program_col);
+
+    // draw alignment transform
+    debug_lines.addLine(camera.look_at, camera.look_at + as::mat3_basis_x(m), 0xff0000ff);
+    debug_lines.addLine(camera.look_at, camera.look_at + as::mat3_basis_y(m), 0xff00ff00);
+    debug_lines.addLine(camera.look_at, camera.look_at + as::mat3_basis_z(m), 0xffff0000);
 
     // grid
     const auto grid_scale = 10.0f;
@@ -632,11 +688,6 @@ int main(int argc, char** argv)
       dbg::CurveHandles::HandleRadius, main_view, program_col);
     curve_moving_circle.draw();
     // animation end
-
-    auto sphere = dbg::DebugSphere(
-      as::mat4_from_mat3_vec3(as::mat3::identity(), as::vec3::axis_x(20.0f)),
-      1.0f, main_view, program_col);
-    sphere.draw();
 
     // screen space drawing
     float view_o[16];
