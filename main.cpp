@@ -67,28 +67,26 @@ std::tuple<float, float, float> eulerAngles(const as::mat3& orientation)
   float z;
 
   // 2.4 Factor as RyRzRx
-  if (orientation[as::mat3_rc(1, 0)] < 1.0f)
-  {
-    if (orientation[as::mat3_rc(1, 0)] > -1.0f)
-    {
-      x = std::atan2(-orientation[as::mat3_rc(1, 2)], orientation[as::mat3_rc(1, 1)]);
-      y = std::atan2(-orientation[as::mat3_rc(2, 0)], orientation[as::mat3_rc(0, 0)]);
+  if (orientation[as::mat3_rc(1, 0)] < 1.0f) {
+    if (orientation[as::mat3_rc(1, 0)] > -1.0f) {
+      x = std::atan2(
+        -orientation[as::mat3_rc(1, 2)], orientation[as::mat3_rc(1, 1)]);
+      y = std::atan2(
+        -orientation[as::mat3_rc(2, 0)], orientation[as::mat3_rc(0, 0)]);
       z = std::asin(orientation[as::mat3_rc(1, 0)]);
-    }
-    else
-    {
+    } else {
       x = 0.0f;
-      y = -std::atan2(orientation[as::mat3_rc(2, 1)], orientation[as::mat3_rc(2, 2)]);
+      y = -std::atan2(
+        orientation[as::mat3_rc(2, 1)], orientation[as::mat3_rc(2, 2)]);
       z = -as::k_pi * 0.5f;
     }
+  } else {
+    x = 0.0f;
+    y = std::atan2(
+      orientation[as::mat3_rc(2, 1)], orientation[as::mat3_rc(2, 2)]);
+    z = as::k_pi * 0.5f;
   }
-  else
-  {
-      x = 0.0f;
-      y = std::atan2(orientation[as::mat3_rc(2, 1)], orientation[as::mat3_rc(2, 2)]);
-      z = as::k_pi * 0.5f;
-  }
-  
+
   return {x, y, z};
 }
 
@@ -276,16 +274,15 @@ int main(int argc, char** argv)
 
             m = alignment;
 
-            const auto[x, y, _] = eulerAngles(alignment);
+            const auto [x, y, _] = eulerAngles(alignment);
 
-            std::clog
-              << "x: " << as::degrees(x) << " y: " << as::degrees(y)
-              << " pitch: " << as::degrees(camera_control.pitch)
-              << " yaw: " << as::degrees(camera_control.yaw) << "\n";
+            std::clog << "x: " << as::degrees(x) << " y: " << as::degrees(y)
+                      << " pitch: " << as::degrees(camera_control.pitch)
+                      << " yaw: " << as::degrees(camera_control.yaw) << "\n";
 
             if (warp_mouse) {
               // center mouse after snap
-              SDL_WarpMouseInWindow(window, width/2, height/2);
+              SDL_WarpMouseInWindow(window, width / 2, height / 2);
             }
 
             camera_control.pitch = x;
@@ -346,7 +343,8 @@ int main(int argc, char** argv)
       (modifierKeys & KMOD_LSHIFT) == 1 ? translation_multiplier : 1.0f;
 
     asc::updateCamera(
-      camera, camera_control, camera_props_now, delta_time, asc::Handedness::Left);
+      camera, camera_control, camera_props_now, delta_time,
+      asc::Handedness::Left);
 
     float view[16];
     as::mat_to_arr(as::mat4_from_affine(camera.view()), view);
@@ -420,9 +418,12 @@ int main(int argc, char** argv)
     auto debug_lines = dbg::DebugLines(main_view, program_col);
 
     // draw alignment transform
-    debug_lines.addLine(camera.look_at, camera.look_at + as::mat3_basis_x(m), 0xff0000ff);
-    debug_lines.addLine(camera.look_at, camera.look_at + as::mat3_basis_y(m), 0xff00ff00);
-    debug_lines.addLine(camera.look_at, camera.look_at + as::mat3_basis_z(m), 0xffff0000);
+    debug_lines.addLine(
+      camera.look_at, camera.look_at + as::mat3_basis_x(m), 0xff0000ff);
+    debug_lines.addLine(
+      camera.look_at, camera.look_at + as::mat3_basis_y(m), 0xff00ff00);
+    debug_lines.addLine(
+      camera.look_at, camera.look_at + as::mat3_basis_z(m), 0xffff0000);
 
     // grid
     const auto grid_scale = 10.0f;
@@ -433,16 +434,22 @@ int main(int argc, char** argv)
     namespace ei = easy_iterator;
     for (auto line : ei::range(grid_dimension + 1)) {
       const auto start = (static_cast<float>(line) * grid_scale) - grid_offset;
-      const auto flattened_offset = as::vec3(grid_camera_offset.x, 0.0f, grid_camera_offset.z);
-      debug_lines.addLine(as::vec3(-grid_offset, 0.0f, start) + flattened_offset, as::vec3(0.0f + grid_offset, 0.0f, start) + flattened_offset, 0xff000000);
-      debug_lines.addLine(as::vec3(start, 0.0f, -grid_offset) + flattened_offset, as::vec3(start, 0.0f, grid_offset) + flattened_offset, 0xff000000);
+      const auto flattened_offset =
+        as::vec3(grid_camera_offset.x, 0.0f, grid_camera_offset.z);
+      debug_lines.addLine(
+        as::vec3(-grid_offset, 0.0f, start) + flattened_offset,
+        as::vec3(0.0f + grid_offset, 0.0f, start) + flattened_offset,
+        0xff000000);
+      debug_lines.addLine(
+        as::vec3(start, 0.0f, -grid_offset) + flattened_offset,
+        as::vec3(start, 0.0f, grid_offset) + flattened_offset, 0xff000000);
     }
 
     // draw camera look at
     if (!as::almost_equal(camera.focal_dist, 0.0f, 0.01f)) {
       auto sphere = dbg::DebugSphere(
-        as::mat4_from_mat3_vec3(as::mat3::identity(), camera.look_at),
-        1.0f, main_view, program_col);
+        as::mat4_from_mat3_vec3(as::mat3::identity(), camera.look_at), 1.0f,
+        main_view, program_col);
       sphere.draw();
     }
 
@@ -468,8 +475,7 @@ int main(int argc, char** argv)
 
     // control lines
     for (as::index i = 0; i < points[order].size(); i += 2) {
-      debug_lines.addLine(
-        points[order][i], points[order][i + 1], 0xffaaaaaa);
+      debug_lines.addLine(points[order][i], points[order][i + 1], 0xffaaaaaa);
     }
 
     // control handles
@@ -822,7 +828,8 @@ int main(int argc, char** argv)
       for (size_t c = 0; c < 100; ++c) {
         const as::vec2 p = as::vec2(float(c) * 0.1f, float(r) * 0.1f);
         const float grey =
-          ns::perlinNoise2d((p + noise_position) * noise2d_freq, noise2d_offset) * noise2d_amp
+          ns::perlinNoise2d((p + noise_position) * noise2d_freq, noise2d_offset)
+            * noise2d_amp
           + 0.5f;
 
         if (draw_gradients && c % 10 == 0 && r % 10 == 0) {
