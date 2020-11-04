@@ -188,7 +188,10 @@ int main(int argc, char** argv)
   asc::CameraProperties camera_props{};
   camera_props.rotate_speed = 0.005f;
   camera_props.translate_speed = 10.0f;
+  camera_props.orbit_speed = 1.0f;
   camera_props.look_smoothness = 5.0f;
+  float translation_multiplier = 3.0f;
+  bool warp_mouse = true;
 
   const as::mat4 perspective_projection = as::perspective_d3d_lh(
     as::radians(60.0f), float(width) / float(height), 0.01f, 1000.0f);
@@ -280,6 +283,11 @@ int main(int argc, char** argv)
               << " pitch: " << as::degrees(camera_control.pitch)
               << " yaw: " << as::degrees(camera_control.yaw) << "\n";
 
+            if (warp_mouse) {
+              // center mouse after snap
+              SDL_WarpMouseInWindow(window, width/2, height/2);
+            }
+
             camera_control.pitch = x;
             camera_control.yaw = y;
             camera_control.dolly = -hit_distance;
@@ -312,6 +320,15 @@ int main(int argc, char** argv)
 
     ImGui::NewFrame();
 
+    ImGui::Begin("Camera");
+    ImGui::InputFloat("Rotate Speed", &camera_props.rotate_speed);
+    ImGui::InputFloat("Translate Speed", &camera_props.translate_speed);
+    ImGui::InputFloat("Look Smoothness", &camera_props.look_smoothness);
+    ImGui::InputFloat("Translation Multiplier", &translation_multiplier);
+    ImGui::InputFloat("Orbit Speed", &camera_props.orbit_speed);
+    ImGui::Checkbox("Warp Mouse", &warp_mouse);
+    ImGui::End();
+
     const auto freq = double(bx::getHPFrequency());
     int64_t time_window = fps::calculateWindow(fps, bx::getHPCounter());
     const double framerate = time_window > -1 ? (double)(fps.MaxSamples - 1)
@@ -323,8 +340,13 @@ int main(int argc, char** argv)
 
     const float delta_time = delta / static_cast<float>(freq);
 
+    const auto modifierKeys = SDL_GetModState();
+    auto camera_props_now = camera_props;
+    camera_props_now.translate_speed *=
+      (modifierKeys & KMOD_LSHIFT) == 1 ? translation_multiplier : 1.0f;
+
     asc::updateCamera(
-      camera, camera_control, camera_props, delta_time, asc::Handedness::Left);
+      camera, camera_control, camera_props_now, delta_time, asc::Handedness::Left);
 
     float view[16];
     as::mat_to_arr(as::mat4_from_affine(camera.view()), view);
