@@ -188,7 +188,7 @@ int main(int argc, char** argv)
   asc::CameraProperties camera_props{};
   camera_props.rotate_speed = 0.005f;
   camera_props.translate_speed = 10.0f;
-  camera_props.orbit_speed = 1.0f;
+  camera_props.orbit_speed = 0.0f;
   camera_props.look_smoothness = 5.0f;
   float translation_multiplier = 3.0f;
   bool warp_mouse = true;
@@ -321,12 +321,20 @@ int main(int argc, char** argv)
     ImGui::NewFrame();
 
     ImGui::Begin("Camera");
+    ImGui::PushItemWidth(70);
     ImGui::InputFloat("Rotate Speed", &camera_props.rotate_speed);
     ImGui::InputFloat("Translate Speed", &camera_props.translate_speed);
     ImGui::InputFloat("Look Smoothness", &camera_props.look_smoothness);
     ImGui::InputFloat("Translation Multiplier", &translation_multiplier);
     ImGui::InputFloat("Orbit Speed", &camera_props.orbit_speed);
+    ImGui::PopItemWidth();
     ImGui::Checkbox("Warp Mouse", &warp_mouse);
+    ImGui::Text("Yaw Control: ");
+    ImGui::SameLine(100);
+    ImGui::Text("%f", as::degrees(camera_control.yaw));
+    ImGui::Text("Yaw Camera: ");
+    ImGui::SameLine(100);
+    ImGui::Text("%f", as::degrees(camera.yaw));
     ImGui::End();
 
     const auto freq = double(bx::getHPFrequency());
