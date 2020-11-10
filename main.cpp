@@ -88,7 +88,7 @@ std::tuple<float, float, float> eulerAngles(const as::mat3& orientation)
       y = std::atan2(orientation[as::mat3_rc(2, 1)], orientation[as::mat3_rc(2, 2)]);
       z = as::k_pi * 0.5f;
   }
-  
+
   return {x, y, z};
 }
 
@@ -193,8 +193,9 @@ int main(int argc, char** argv)
   float translation_multiplier = 3.0f;
   bool warp_mouse = true;
 
+  const float fov = as::radians(60.0f);
   const as::mat4 perspective_projection = as::perspective_d3d_lh(
-    as::radians(60.0f), float(width) / float(height), 0.01f, 1000.0f);
+    fov, float(width) / float(height), 0.01f, 1000.0f);
 
   // debug settings
   bool linear = true;
@@ -210,6 +211,10 @@ int main(int argc, char** argv)
   bool smooth_stop3 = true;
   bool smooth_stop4 = true;
   bool smooth_stop5 = true;
+  bool arch2 = true;
+  bool smooth_start_arch3 = true;
+  bool smooth_stop_arch3 = true;
+  bool smooth_step_arch4 = true;
   bool bezier_smooth_step = true;
   bool normalized_bezier2 = true;
   bool normalized_bezier3 = true;
@@ -415,6 +420,10 @@ int main(int argc, char** argv)
     ImGui::Checkbox("Smooth Stop 3", &smooth_stop3);
     ImGui::Checkbox("Smooth Stop 4", &smooth_stop4);
     ImGui::Checkbox("Smooth Stop 5", &smooth_stop5);
+    ImGui::Checkbox("Arch 2", &arch2);
+    ImGui::Checkbox("Smooth Start Arch 3", &smooth_start_arch3);
+    ImGui::Checkbox("Smooth Stop Arch 3", &smooth_stop_arch3);
+    ImGui::Checkbox("Smooth Step Arch 4", &smooth_step_arch4);
     ImGui::Checkbox("Bezier Smooth Step", &bezier_smooth_step);
     ImGui::Checkbox("Normalized Bezier 2", &normalized_bezier2);
     ImGui::Checkbox("Normalized Bezier 3", &normalized_bezier3);
@@ -537,6 +546,22 @@ int main(int argc, char** argv)
 
       if (linear) {
         sample_curve([](const float a) { return a; });
+      }
+
+      if (arch2) {
+        sample_curve(nlt::arch2);
+      }
+
+      if (smooth_start_arch3) {
+        sample_curve(nlt::smoothStartArch3);
+      }
+
+      if (smooth_stop_arch3) {
+        sample_curve(nlt::smoothStopArch3);
+      }
+
+      if (smooth_step_arch4) {
+        sample_curve(nlt::smoothStepArch4);
       }
 
       if (smooth_step) {
