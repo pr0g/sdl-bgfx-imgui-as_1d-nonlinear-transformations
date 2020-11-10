@@ -186,13 +186,14 @@ int main(int argc, char** argv)
   asc::CameraProperties camera_props{};
   camera_props.rotate_speed = 0.005f;
   camera_props.translate_speed = 10.0f;
-  camera_props.orbit_speed = 1.0f;
+  camera_props.orbit_speed = 0.0f;
   camera_props.look_smoothness = 5.0f;
   float translation_multiplier = 3.0f;
   bool warp_mouse = true;
 
+  const float fov = as::radians(60.0f);
   const as::mat4 perspective_projection = as::perspective_d3d_lh(
-    as::radians(60.0f), float(width) / float(height), 0.01f, 1000.0f);
+    fov, float(width) / float(height), 0.01f, 1000.0f);
 
   // debug settings
   bool linear = true;
@@ -208,6 +209,10 @@ int main(int argc, char** argv)
   bool smooth_stop3 = true;
   bool smooth_stop4 = true;
   bool smooth_stop5 = true;
+  bool arch2 = true;
+  bool smooth_start_arch3 = true;
+  bool smooth_stop_arch3 = true;
+  bool smooth_step_arch4 = true;
   bool bezier_smooth_step = true;
   bool normalized_bezier2 = true;
   bool normalized_bezier3 = true;
@@ -318,12 +323,20 @@ int main(int argc, char** argv)
     ImGui::NewFrame();
 
     ImGui::Begin("Camera");
+    ImGui::PushItemWidth(70);
     ImGui::InputFloat("Rotate Speed", &camera_props.rotate_speed);
     ImGui::InputFloat("Translate Speed", &camera_props.translate_speed);
     ImGui::InputFloat("Look Smoothness", &camera_props.look_smoothness);
     ImGui::InputFloat("Translation Multiplier", &translation_multiplier);
     ImGui::InputFloat("Orbit Speed", &camera_props.orbit_speed);
+    ImGui::PopItemWidth();
     ImGui::Checkbox("Warp Mouse", &warp_mouse);
+    ImGui::Text("Yaw Control: ");
+    ImGui::SameLine(100);
+    ImGui::Text("%f", as::degrees(camera_control.yaw));
+    ImGui::Text("Yaw Camera: ");
+    ImGui::SameLine(100);
+    ImGui::Text("%f", as::degrees(camera.yaw));
     ImGui::End();
 
     const auto freq = double(bx::getHPFrequency());
@@ -405,6 +418,10 @@ int main(int argc, char** argv)
     ImGui::Checkbox("Smooth Stop 3", &smooth_stop3);
     ImGui::Checkbox("Smooth Stop 4", &smooth_stop4);
     ImGui::Checkbox("Smooth Stop 5", &smooth_stop5);
+    ImGui::Checkbox("Arch 2", &arch2);
+    ImGui::Checkbox("Smooth Start Arch 3", &smooth_start_arch3);
+    ImGui::Checkbox("Smooth Stop Arch 3", &smooth_stop_arch3);
+    ImGui::Checkbox("Smooth Step Arch 4", &smooth_step_arch4);
     ImGui::Checkbox("Bezier Smooth Step", &bezier_smooth_step);
     ImGui::Checkbox("Normalized Bezier 2", &normalized_bezier2);
     ImGui::Checkbox("Normalized Bezier 3", &normalized_bezier3);
@@ -535,6 +552,22 @@ int main(int argc, char** argv)
 
       if (linear) {
         sample_curve([](const float a) { return a; });
+      }
+
+      if (arch2) {
+        sample_curve(nlt::arch2);
+      }
+
+      if (smooth_start_arch3) {
+        sample_curve(nlt::smoothStartArch3);
+      }
+
+      if (smooth_stop_arch3) {
+        sample_curve(nlt::smoothStopArch3);
+      }
+
+      if (smooth_step_arch4) {
+        sample_curve(nlt::smoothStepArch4);
       }
 
       if (smooth_step) {

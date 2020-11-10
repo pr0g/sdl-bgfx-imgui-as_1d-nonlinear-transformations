@@ -189,4 +189,54 @@ inline as::vec3 bezier5(
     p0c0c0c1c0c1c1c2_c0c1c1c2c1c2c2c3, c0c1c1c2c1c2c2c3_c1c2c2c3c2c3c3p1, t);
 }
 
+inline float scale(float(*fn)(float), const float x)
+{
+  return x * fn(x);
+}
+
+inline float reverseScale(float(*fn)(float), const float x)
+{
+  return (1.0f - x) * fn(x);
+}
+
+inline float arch2_internal(const float x)
+{
+  return scale(flip, x);
+}
+
+inline float arch2(const float x)
+{
+  return arch2_internal(x) * 4.0f;
+}
+
+inline float smoothStartArch3_internal(const float x)
+{
+  return scale(arch2_internal, x);
+}
+
+inline float smoothStartArch3(const float x)
+{
+  return smoothStartArch3_internal(x) * 6.75f;
+}
+
+inline float smoothStopArch3_internal(const float x)
+{
+  return reverseScale(arch2_internal, x);
+}
+
+inline float smoothStopArch3(const float x)
+{
+  return smoothStopArch3_internal(x) * 6.75f;
+}
+
+inline float smoothStepArch4_internal(const float x)
+{
+  return reverseScale(smoothStartArch3_internal, x);
+}
+
+inline float smoothStepArch4(const float x)
+{
+  return smoothStepArch4_internal(x) * 16.0f;
+}
+
 } // namespace nlt
