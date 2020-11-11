@@ -191,7 +191,6 @@ int main(int argc, char** argv)
   camera_props.look_smoothness = 5.0f;
   camera_props.dolly_speed = 0.2f;
   float translation_multiplier = 3.0f;
-  bool warp_mouse = true;
 
   const float fov = as::radians(60.0f);
   const as::mat4 perspective_projection = as::perspective_d3d_lh(
@@ -269,34 +268,15 @@ int main(int argc, char** argv)
       }
 
       // camera hack
-      if (current_event.type == SDL_MOUSEBUTTONDOWN) {
-        const auto* mouse_button_event = (SDL_MouseButtonEvent*)&current_event;
-        if (mouse_button_event->clicks == 2) {
+      if (current_event.type == SDL_KEYDOWN) {
+        const int key = current_event.key.keysym.scancode;
+        if (key == SDL_SCANCODE_LALT) {
           float hit_distance = intersectPlane(
-            ray_origin, ray_direction, as::vec4(as::vec3::axis_y()));
+            camera.transform().translation, as::mat3_basis_z(camera.transform().rotation), as::vec4(as::vec3::axis_y()));
+
           if (hit_distance >= 0.0f) {
-
-            as::vec3 across, up;
-            as::vec3_right_and_up_lh(ray_direction, across, up);
-            as::mat3 alignment = as::mat3(across, up, ray_direction);
-
-            m = alignment;
-
-            const auto [x, y, _] = eulerAngles(alignment);
-
-            std::clog << "x: " << as::degrees(x) << " y: " << as::degrees(y)
-                      << " pitch: " << as::degrees(camera_control.pitch)
-                      << " yaw: " << as::degrees(camera_control.yaw) << "\n";
-
-            if (warp_mouse) {
-              // center mouse after snap
-              SDL_WarpMouseInWindow(window, width / 2, height / 2);
-            }
-
-            camera_control.pitch = x;
-            camera_control.yaw = y;
             camera_control.dolly = -hit_distance;
-            camera_control.look_at = ray_origin + ray_direction * hit_distance;
+            camera_control.look_at = camera.transform().translation + as::mat3_basis_z(camera.transform().rotation) * hit_distance;
           }
         }
       }
@@ -326,6 +306,14 @@ int main(int argc, char** argv)
 
     updateCameraControlMouseSdl(camera_control, camera_props, mouse_state);
 
+    using bec::operator&;
+    if ((mouse_state.buttons & MouseButtons::Rmb) == MouseButtons::Rmb) {
+      if (!as::almost_equal(camera.focal_dist, 0.0f, 0.01f)) {
+        camera_control.look_at = camera.transform().translation;
+        camera_control.dolly = 0.0f;
+      }
+    }
+
     ImGui_Implbgfx_NewFrame();
     ImGui_ImplSDL2_NewFrame(window);
 
@@ -341,7 +329,6 @@ int main(int argc, char** argv)
     ImGui::InputFloat("Orbit Speed", &camera_props.orbit_speed);
     ImGui::InputFloat("Dolly Speed", &camera_props.dolly_speed);
     ImGui::PopItemWidth();
-    ImGui::Checkbox("Warp Mouse", &warp_mouse);
     ImGui::Checkbox("Pan Local", &camera_props.pan_local);
     ImGui::Checkbox("Pan Invert X", &camera_props.pan_invert_x);
     ImGui::Checkbox("Pan Invert Y", &camera_props.pan_invert_y);
