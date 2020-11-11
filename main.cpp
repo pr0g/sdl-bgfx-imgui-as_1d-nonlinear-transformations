@@ -189,6 +189,7 @@ int main(int argc, char** argv)
   camera_props.translate_speed = 10.0f;
   camera_props.orbit_speed = 0.0f;
   camera_props.look_smoothness = 5.0f;
+  camera_props.dolly_speed = 0.2f;
   float translation_multiplier = 3.0f;
   bool warp_mouse = true;
 
@@ -250,9 +251,10 @@ int main(int argc, char** argv)
       as::vec2i(x, y), perspective_projection, camera.view(), screen_dimension);
     const auto ray_origin = camera.transform().translation;
     const auto ray_direction = as::vec_normalize(world_position - ray_origin);
-
     const auto hit_distance =
       intersectPlane(ray_origin, ray_direction, as::vec4(as::vec3::axis_z()));
+
+    camera_control.wheel_delta = 0;
 
     static as::mat3 m = as::mat3::identity();
 
@@ -309,6 +311,12 @@ int main(int argc, char** argv)
       if (current_event.type == SDL_MOUSEBUTTONUP) {
         curve_handles.clearDrag();
       }
+
+      // mouse wheel handling for camera
+      if(current_event.type == SDL_MOUSEWHEEL) {
+        const auto* mouse_wheel_event = (SDL_MouseWheelEvent*)&current_event;
+        camera_control.wheel_delta = mouse_wheel_event->y;
+      }
     }
 
     if (curve_handles.dragging() && hit_distance > 0.0f) {
@@ -331,6 +339,7 @@ int main(int argc, char** argv)
     ImGui::InputFloat("Look Smoothness", &camera_props.look_smoothness);
     ImGui::InputFloat("Translation Multiplier", &translation_multiplier);
     ImGui::InputFloat("Orbit Speed", &camera_props.orbit_speed);
+    ImGui::InputFloat("Dolly Speed", &camera_props.dolly_speed);
     ImGui::PopItemWidth();
     ImGui::Checkbox("Warp Mouse", &warp_mouse);
     ImGui::Checkbox("Pan Local", &camera_props.pan_local);
@@ -342,6 +351,9 @@ int main(int argc, char** argv)
     ImGui::Text("Yaw Camera: ");
     ImGui::SameLine(100);
     ImGui::Text("%f", as::degrees(camera.yaw));
+    ImGui::Text("Wheel: ");
+    ImGui::SameLine(100);
+    ImGui::Text("%f", as::degrees(camera_control.wheel_delta));
     ImGui::End();
 
     const auto freq = double(bx::getHPFrequency());
