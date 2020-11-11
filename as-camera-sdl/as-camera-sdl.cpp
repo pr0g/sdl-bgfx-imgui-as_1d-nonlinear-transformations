@@ -80,11 +80,18 @@ void updateCameraControlMouseSdl(
 {
   const MouseState mouse_state = mouseState();
 
+  const as::vec2i delta = mouse_state.xy - prev_mouse_state.xy;
+
   using bec::operator&;
   if ((mouse_state.buttons & MouseButtons::Rmb) == MouseButtons::Rmb) {
-    const as::vec2i delta = mouse_state.xy - prev_mouse_state.xy;
     control.pitch += float(delta[1]) * props.rotate_speed;
     control.yaw += float(delta[0]) * props.rotate_speed;
+  }
+
+  if ((mouse_state.buttons & MouseButtons::Mmb) == MouseButtons::Mmb) {
+    control.pan_delta = delta;
+  } else {
+    control.pan_delta = as::vec2i();
   }
 
   prev_mouse_state = mouse_state;
