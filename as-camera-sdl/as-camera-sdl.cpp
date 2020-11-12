@@ -45,9 +45,19 @@ void updateCameraControlKeyboardSdl(
       const int key = event.key.keysym.scancode;
       if (event.type == SDL_KEYDOWN) {
         control.motion |= motionFromKey(key);
+        if (key == SDL_SCANCODE_LALT) {
+          if (control.mode == asc::Mode::None) {
+            control.mode = asc::Mode::Orbit;
+          }
+        }
       }
       if (event.type == SDL_KEYUP) {
         control.motion ^= motionFromKey(key);
+        if (key == SDL_SCANCODE_LALT) {
+          if (control.mode == asc::Mode::Orbit) {
+            control.mode = asc::Mode::None;
+          }
+        }
       }
     } break;
     default:
@@ -80,11 +90,20 @@ void updateCameraControlMouseSdl(
 {
   const MouseState mouse_state = mouseState();
 
+  using bec::operator&;
+  if ((mouse_state.buttons & MouseButtons::Rmb) == MouseButtons::Rmb) {
+    if (control.mode == asc::Mode::None) {
+      control.mode = asc::Mode::Look;
+    }
+  } else {
+    if (control.mode == asc::Mode::Look) {
+      control.mode = asc::Mode::None;
+    }
+  }
+
   const as::vec2i delta = mouse_state.xy - prev_mouse_state.xy;
 
-  using bec::operator&;
-  if ((mouse_state.buttons & MouseButtons::Rmb) == MouseButtons::Rmb ||
-      (mouse_state.buttons & MouseButtons::Lmb) == MouseButtons::Lmb) {
+  if ((control.mode == asc::Mode::Orbit && ((mouse_state.buttons & MouseButtons::Lmb) == MouseButtons::Lmb)) || control.mode == asc::Mode::Look) {
     control.pitch += float(delta[1]) * props.rotate_speed;
     control.yaw += float(delta[0]) * props.rotate_speed;
   }

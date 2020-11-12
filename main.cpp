@@ -259,8 +259,17 @@ int main(int argc, char** argv)
 
     SDL_Event current_event;
     while (SDL_PollEvent(&current_event) != 0) {
+      asc::Mode before = camera_control.mode;
       updateCameraControlKeyboardSdl(
         current_event, camera_control, camera_props);
+
+      if (before == asc::Mode::Orbit && camera_control.mode == asc::Mode::None) {
+        if (!as::almost_equal(camera.focal_dist, 0.0f, 0.01f)) {
+          camera_control.look_at = camera.transform().translation;
+          camera_control.dolly = 0.0f;
+        }
+      }
+
       ImGui_ImplSDL2_ProcessEvent(&current_event);
       if (current_event.type == SDL_QUIT) {
         quit = true;
@@ -305,14 +314,6 @@ int main(int argc, char** argv)
     }
 
     updateCameraControlMouseSdl(camera_control, camera_props, mouse_state);
-
-    using bec::operator&;
-    if ((mouse_state.buttons & MouseButtons::Rmb) == MouseButtons::Rmb) {
-      if (!as::almost_equal(camera.focal_dist, 0.0f, 0.01f)) {
-        camera_control.look_at = camera.transform().translation;
-        camera_control.dolly = 0.0f;
-      }
-    }
 
     ImGui_Implbgfx_NewFrame();
     ImGui_ImplSDL2_NewFrame(window);
