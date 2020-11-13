@@ -103,7 +103,10 @@ void updateCameraControlMouseSdl(
 
   const as::vec2i delta = mouse_state.xy - prev_mouse_state.xy;
 
-  if ((control.mode == asc::Mode::Orbit && ((mouse_state.buttons & MouseButtons::Lmb) == MouseButtons::Lmb)) || control.mode == asc::Mode::Look) {
+  if (
+    (control.mode == asc::Mode::Orbit
+     && ((mouse_state.buttons & MouseButtons::Lmb) == MouseButtons::Lmb))
+    || control.mode == asc::Mode::Look) {
     control.pitch += float(delta[1]) * props.rotate_speed;
     control.yaw += float(delta[0]) * props.rotate_speed;
   }

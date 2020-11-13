@@ -193,8 +193,8 @@ int main(int argc, char** argv)
   float translation_multiplier = 3.0f;
 
   const float fov = as::radians(60.0f);
-  const as::mat4 perspective_projection = as::perspective_d3d_lh(
-    fov, float(width) / float(height), 0.01f, 1000.0f);
+  const as::mat4 perspective_projection =
+    as::perspective_d3d_lh(fov, float(width) / float(height), 0.01f, 1000.0f);
 
   // debug settings
   bool linear = true;
@@ -263,7 +263,8 @@ int main(int argc, char** argv)
       updateCameraControlKeyboardSdl(
         current_event, camera_control, camera_props);
 
-      if (before == asc::Mode::Orbit && camera_control.mode == asc::Mode::None) {
+      if (
+        before == asc::Mode::Orbit && camera_control.mode == asc::Mode::None) {
         if (!as::almost_equal(camera.focal_dist, 0.0f, 0.01f)) {
           camera_control.look_at = camera.transform().translation;
           camera_control.dolly = 0.0f;
@@ -281,11 +282,15 @@ int main(int argc, char** argv)
         const int key = current_event.key.keysym.scancode;
         if (key == SDL_SCANCODE_LALT) {
           float hit_distance = intersectPlane(
-            camera.transform().translation, as::mat3_basis_z(camera.transform().rotation), as::vec4(as::vec3::axis_y()));
+            camera.transform().translation,
+            as::mat3_basis_z(camera.transform().rotation),
+            as::vec4(as::vec3::axis_y()));
 
           if (hit_distance >= 0.0f) {
             camera_control.dolly = -hit_distance;
-            camera_control.look_at = camera.transform().translation + as::mat3_basis_z(camera.transform().rotation) * hit_distance;
+            camera_control.look_at =
+              camera.transform().translation
+              + as::mat3_basis_z(camera.transform().rotation) * hit_distance;
           }
         }
       }
@@ -302,7 +307,7 @@ int main(int argc, char** argv)
       }
 
       // mouse wheel handling for camera
-      if(current_event.type == SDL_MOUSEWHEEL) {
+      if (current_event.type == SDL_MOUSEWHEEL) {
         const auto* mouse_wheel_event = (SDL_MouseWheelEvent*)&current_event;
         camera_control.wheel_delta = mouse_wheel_event->y;
       }

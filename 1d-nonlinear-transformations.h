@@ -189,12 +189,12 @@ inline as::vec3 bezier5(
     p0c0c0c1c0c1c1c2_c0c1c1c2c1c2c2c3, c0c1c1c2c1c2c2c3_c1c2c2c3c2c3c3p1, t);
 }
 
-inline float scale(float(*fn)(float), const float x)
+inline float scale(float (*fn)(float), const float x)
 {
   return x * fn(x);
 }
 
-inline float reverseScale(float(*fn)(float), const float x)
+inline float reverseScale(float (*fn)(float), const float x)
 {
   return (1.0f - x) * fn(x);
 }
