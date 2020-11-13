@@ -360,10 +360,10 @@ int main(int argc, char** argv)
 
     const float delta_time = delta / static_cast<float>(freq);
 
-    const auto modifierKeys = SDL_GetModState();
+    const auto modifier_keys = SDL_GetModState();
     auto camera_props_now = camera_props;
     camera_props_now.translate_speed *=
-      (modifierKeys & KMOD_LSHIFT) == 1 ? translation_multiplier : 1.0f;
+      (modifier_keys & KMOD_LSHIFT) == 1 ? translation_multiplier : 1.0f;
 
     asc::updateCamera(
       camera, camera_control, camera_props_now, delta_time,
