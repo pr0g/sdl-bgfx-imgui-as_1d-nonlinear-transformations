@@ -111,10 +111,17 @@ void updateCameraControlMouseSdl(
     control.yaw += float(delta[0]) * props.rotate_speed;
   }
 
-  if ((mouse_state.buttons & MouseButtons::Mmb) == MouseButtons::Mmb) {
+  if (
+    control.mode == asc::Mode::Orbit
+    && ((mouse_state.buttons & MouseButtons::Rmb) == MouseButtons::Rmb)) {
+    control.dolly_delta = as::vec2i(0, delta.y);
+    control.pan_delta = as::vec2i::zero();
+  } else if ((mouse_state.buttons & MouseButtons::Mmb) == MouseButtons::Mmb) {
     control.pan_delta = delta;
+    control.dolly_delta = as::vec2i::zero();
   } else {
-    control.pan_delta = as::vec2i();
+    control.pan_delta = as::vec2i::zero();
+    control.dolly_delta = as::vec2i::zero();
   }
 
   prev_mouse_state = mouse_state;
