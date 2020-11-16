@@ -242,6 +242,33 @@ int main(int argc, char** argv)
 
   fps::Fps fps;
   for (bool quit = false; !quit;) {
+    int global_x;
+    int global_y;
+    SDL_GetGlobalMouseState(&global_x, &global_y);
+
+    SDL_DisplayMode display_mode;
+    SDL_GetDesktopDisplayMode(0, &display_mode);
+
+    if (global_x == display_mode.w - 1) {
+      mouse_state.xy = as::vec2i(1, global_y);
+      SDL_WarpMouseGlobal(mouse_state.xy.x, mouse_state.xy.y);
+    }
+
+    if (global_y == display_mode.h - 1) {
+      mouse_state.xy = as::vec2i(global_y, 1);
+      SDL_WarpMouseGlobal(mouse_state.xy.x, mouse_state.xy.y);
+    }
+
+    if (global_x == 0) {
+      mouse_state.xy = as::vec2i(display_mode.w - 2, global_y);
+      SDL_WarpMouseGlobal(mouse_state.xy.x, mouse_state.xy.y);
+    }
+
+    if (global_y == 0) {
+      mouse_state.xy = as::vec2i(global_x, display_mode.h - 2);
+      SDL_WarpMouseGlobal(mouse_state.xy.x, mouse_state.xy.y);
+    }
+
     int x;
     int y;
     SDL_GetMouseState(&x, &y);
