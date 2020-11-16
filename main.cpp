@@ -191,6 +191,7 @@ int main(int argc, char** argv)
   camera_props.look_smoothness = 5.0f;
   camera_props.dolly_speed = 0.2f;
   float translation_multiplier = 3.0f;
+  float default_orbit_distance = 15.0f;
 
   const float fov = as::radians(60.0f);
   const as::mat4 perspective_projection =
@@ -318,6 +319,11 @@ int main(int argc, char** argv)
             camera_control.look_at =
               camera.transform().translation
               + as::mat3_basis_z(camera.transform().rotation) * hit_distance;
+          } else {
+            camera_control.dolly = -default_orbit_distance;
+            camera_control.look_at =
+              camera.transform().translation
+              + as::mat3_basis_z(camera.transform().rotation) * default_orbit_distance;
           }
         }
       }
@@ -359,6 +365,7 @@ int main(int argc, char** argv)
     ImGui::InputFloat("Translate Speed", &camera_props.translate_speed);
     ImGui::InputFloat("Look Smoothness", &camera_props.look_smoothness);
     ImGui::InputFloat("Translation Multiplier", &translation_multiplier);
+    ImGui::InputFloat("Default Orbit Distance", &default_orbit_distance);
     ImGui::InputFloat("Orbit Speed", &camera_props.orbit_speed);
     ImGui::InputFloat("Dolly Speed", &camera_props.dolly_speed);
     ImGui::PopItemWidth();
