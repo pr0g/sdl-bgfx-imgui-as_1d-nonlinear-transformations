@@ -323,7 +323,8 @@ int main(int argc, char** argv)
             camera_control.dolly = -default_orbit_distance;
             camera_control.look_at =
               camera.transform().translation
-              + as::mat3_basis_z(camera.transform().rotation) * default_orbit_distance;
+              + as::mat3_basis_z(camera.transform().rotation)
+                  * default_orbit_distance;
           }
         }
       }
