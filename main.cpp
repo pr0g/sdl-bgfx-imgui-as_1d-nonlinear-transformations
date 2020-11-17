@@ -192,6 +192,7 @@ int main(int argc, char** argv)
   camera_props.dolly_speed = 0.2f;
   float translation_multiplier = 3.0f;
   float default_orbit_distance = 15.0f;
+  float orbit_max_distance = 100.0f;
 
   const float fov = as::radians(60.0f);
   const as::mat4 perspective_projection =
@@ -309,17 +310,19 @@ int main(int argc, char** argv)
       if (current_event.type == SDL_KEYDOWN) {
         const auto key_event = (SDL_KeyboardEvent*)&current_event;
         const int key = current_event.key.keysym.scancode;
-        if (key == SDL_SCANCODE_LALT && !key_event->repeat) {
+        if (key == SDL_SCANCODE_LALT && !key_event->repeat
+            && camera_control.mode == asc::Mode::Orbit) {
           float hit_distance = intersectPlane(
             camera.transform().translation,
             as::mat3_basis_z(camera.transform().rotation),
             as::vec4(as::vec3::axis_y()));
 
           if (hit_distance >= 0.0f) {
-            camera_control.dolly = -hit_distance;
+            const float dist = std::min(hit_distance, orbit_max_distance);
+            camera_control.dolly = -dist;
             camera_control.look_at =
               camera.transform().translation
-              + as::mat3_basis_z(camera.transform().rotation) * hit_distance;
+              + as::mat3_basis_z(camera.transform().rotation) * dist;
           } else {
             camera_control.dolly = -default_orbit_distance;
             camera_control.look_at =
@@ -368,6 +371,7 @@ int main(int argc, char** argv)
     ImGui::InputFloat("Look Smoothness", &camera_props.look_smoothness);
     ImGui::InputFloat("Translation Multiplier", &translation_multiplier);
     ImGui::InputFloat("Default Orbit Distance", &default_orbit_distance);
+    ImGui::InputFloat("Orbit Max Distance", &orbit_max_distance);
     ImGui::InputFloat("Orbit Speed", &camera_props.orbit_speed);
     ImGui::InputFloat("Dolly Speed", &camera_props.dolly_speed);
     ImGui::PopItemWidth();
