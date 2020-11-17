@@ -307,8 +307,9 @@ int main(int argc, char** argv)
 
       // camera hack
       if (current_event.type == SDL_KEYDOWN) {
+        const auto key_event = (SDL_KeyboardEvent*)&current_event;
         const int key = current_event.key.keysym.scancode;
-        if (key == SDL_SCANCODE_LALT) {
+        if (key == SDL_SCANCODE_LALT && !key_event->repeat) {
           float hit_distance = intersectPlane(
             camera.transform().translation,
             as::mat3_basis_z(camera.transform().rotation),
