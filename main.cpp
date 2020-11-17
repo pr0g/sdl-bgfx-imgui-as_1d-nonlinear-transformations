@@ -189,6 +189,7 @@ int main(int argc, char** argv)
   camera_props.translate_speed = 10.0f;
   camera_props.orbit_speed = 0.0f;
   camera_props.look_smoothness = 5.0f;
+  camera_props.move_smoothness = 5.0f;
   camera_props.dolly_speed = 0.2f;
   float translation_multiplier = 3.0f;
   float default_orbit_distance = 15.0f;
@@ -369,6 +370,7 @@ int main(int argc, char** argv)
     ImGui::InputFloat("Pan Speed", &camera_props.pan_speed);
     ImGui::InputFloat("Translate Speed", &camera_props.translate_speed);
     ImGui::InputFloat("Look Smoothness", &camera_props.look_smoothness);
+    ImGui::InputFloat("Move Smoothness", &camera_props.move_smoothness);
     ImGui::InputFloat("Translation Multiplier", &translation_multiplier);
     ImGui::InputFloat("Default Orbit Distance", &default_orbit_distance);
     ImGui::InputFloat("Orbit Max Distance", &orbit_max_distance);
