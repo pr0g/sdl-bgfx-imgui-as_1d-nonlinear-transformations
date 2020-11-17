@@ -250,12 +250,12 @@ int main(int argc, char** argv)
     SDL_DisplayMode display_mode;
     SDL_GetDesktopDisplayMode(0, &display_mode);
 
-    if (global_x == display_mode.w - 1) {
+    if (global_x >= display_mode.w - 1) {
       mouse_state.xy = as::vec2i(1, global_y);
       SDL_WarpMouseGlobal(mouse_state.xy.x, mouse_state.xy.y);
     }
 
-    if (global_y == display_mode.h - 1) {
+    if (global_y >= display_mode.h - 1) {
       mouse_state.xy = as::vec2i(global_y, 1);
       SDL_WarpMouseGlobal(mouse_state.xy.x, mouse_state.xy.y);
     }
