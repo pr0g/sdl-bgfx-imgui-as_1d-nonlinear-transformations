@@ -243,6 +243,8 @@ int main(int argc, char** argv)
 
   auto prev = bx::getHPCounter();
 
+  CameraInputSDL camera_input_sdl;
+
   fps::Fps fps;
   for (bool quit = false; !quit;) {
     int global_x;
@@ -289,6 +291,9 @@ int main(int argc, char** argv)
 
     SDL_Event current_event;
     while (SDL_PollEvent(&current_event) != 0) {
+
+      camera_input_sdl.handleEvents(&current_event);
+
       asc::Mode before = camera_control.mode;
       updateCameraControlKeyboardSdl(
         current_event, camera_control, camera_props);

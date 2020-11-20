@@ -1,6 +1,75 @@
 #include "as-camera-sdl.h"
 #include "SDL.h"
-#include "as-camera/as-camera-controller.hpp"
+
+void CameraInputSDL::handleEvents(const SDL_Event* event)
+{
+  using bec::operator^=;
+  using bec::operator|=;
+
+  input_ = Input::None;
+
+  switch (event->type) {
+    case SDL_MOUSEMOTION: {
+      const auto* mouse_motion_event = (SDL_MouseMotionEvent*)event;
+      const auto mouse_position = as::vec2i(mouse_motion_event->x, mouse_motion_event->y);
+      mouse_delta_ = mouse_position - last_mouse_position_;
+      last_mouse_position_ = mouse_position;
+    }
+    break;
+    case SDL_MOUSEBUTTONDOWN: {
+      const auto* mouseEvent = (SDL_MouseButtonEvent*)event;
+      if ((mouseEvent->button & SDL_BUTTON(SDL_BUTTON_RIGHT)) != 0) {
+        input_ |= Input::EnterLook;
+      }
+    }
+    break;
+    case SDL_MOUSEBUTTONUP: {
+      const auto* mouseEvent = (SDL_MouseButtonEvent*)event;
+      if ((mouseEvent->button & SDL_BUTTON(SDL_BUTTON_RIGHT)) != 0) {
+        input_ |= Input::LeaveLook;
+      }
+    }
+    break;
+    case SDL_KEYDOWN: {
+        if (event->key.keysym.scancode == SDL_SCANCODE_LALT) {
+          input_ |= Input::EnterOrbit;
+        }
+      }
+      break;
+    case SDL_KEYUP: {
+        if (event->key.keysym.scancode == SDL_SCANCODE_LALT) {
+          input_ |= Input::LeaveOrbit;
+        }
+      }
+      break;
+    default:
+      break;
+  }
+}
+
+void CameraInputSDL::stepCamera()
+{
+  if (input_ == Input::EnterOrbit && mode_ == Mode::None) {
+    mode_ = Mode::Orbit;
+  } else if (input_ == Input::LeaveOrbit && mode_ == Mode::Orbit) {
+    mode_ = Mode::None;
+  } else if (input_ == Input::EnterLook && mode_ == Mode::None) {
+    mode_ = Mode::Look;
+  } else if (input_ == Input::LeaveLook && mode_ == Mode::Look) {
+    mode_ = Mode::None;
+  }
+
+  if (mode_ == Mode::Look) {
+
+  } else if (mode_ == Mode::Orbit) {
+
+  }
+}
+
+asc::Camera CameraInputSDL::nextCamera() const
+{
+  return asc::Camera();
+}
 
 asc::MotionType motionFromKey(int key)
 {
