@@ -173,6 +173,8 @@ int main(int argc, char** argv)
   // initial camera position and orientation
   camera.look_at = as::vec3(24.3f, 1.74f, -33.0f);
 
+  asc::Camera target_camera = camera;
+
   // initial mouse state
   MouseState mouse_state = mouseState();
 
@@ -415,8 +417,8 @@ int main(int argc, char** argv)
     camera_props_now.translate_speed *=
       (modifier_keys & KMOD_LSHIFT) == 1 ? translation_multiplier : 1.0f;
 
-    const auto next_camera = cameras.stepCamera(camera);
-    camera = smoothCamera(camera, next_camera, delta_time);
+    target_camera = cameras.stepCamera(target_camera);
+    camera = smoothCamera(camera, target_camera, delta_time);
 
     // asc::updateCamera(
     //   camera, camera_control, camera_props_now, delta_time,
