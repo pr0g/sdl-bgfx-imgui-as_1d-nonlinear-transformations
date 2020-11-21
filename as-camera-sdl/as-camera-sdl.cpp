@@ -1,74 +1,47 @@
 #include "as-camera-sdl.h"
 #include "SDL.h"
 
-void CameraInputSDL::handleEvents(const SDL_Event* event)
+void LookCameraInput::handleEvents(const SDL_Event* event)
 {
-  using bec::operator^=;
-  using bec::operator|=;
-
-  input_ = Input::None;
-
   switch (event->type) {
-    case SDL_MOUSEMOTION: {
-      const auto* mouse_motion_event = (SDL_MouseMotionEvent*)event;
-      const auto mouse_position = as::vec2i(mouse_motion_event->x, mouse_motion_event->y);
-      mouse_delta_ = mouse_position - last_mouse_position_;
-      last_mouse_position_ = mouse_position;
-    }
-    break;
     case SDL_MOUSEBUTTONDOWN: {
       const auto* mouseEvent = (SDL_MouseButtonEvent*)event;
-      if ((mouseEvent->button & SDL_BUTTON(SDL_BUTTON_RIGHT)) != 0) {
-        input_ |= Input::EnterLook;
+      if (mouseEvent->button == SDL_BUTTON_RIGHT) {
+        activation_ = Activation::Begin;
       }
     }
     break;
     case SDL_MOUSEBUTTONUP: {
       const auto* mouseEvent = (SDL_MouseButtonEvent*)event;
-      if ((mouseEvent->button & SDL_BUTTON(SDL_BUTTON_RIGHT)) != 0) {
-        input_ |= Input::LeaveLook;
+      if (mouseEvent->button == SDL_BUTTON_RIGHT) {
+        last_mouse_position_.reset();
+        activation_ = Activation::End;
       }
     }
     break;
-    case SDL_KEYDOWN: {
-        if (event->key.keysym.scancode == SDL_SCANCODE_LALT) {
-          input_ |= Input::EnterOrbit;
-        }
-      }
-      break;
-    case SDL_KEYUP: {
-        if (event->key.keysym.scancode == SDL_SCANCODE_LALT) {
-          input_ |= Input::LeaveOrbit;
-        }
-      }
-      break;
+    case SDL_MOUSEMOTION: {
+      const auto* mouse_motion_event = (SDL_MouseMotionEvent*)event;
+      current_mouse_position_ = as::vec2i(mouse_motion_event->x, mouse_motion_event->y);
+    }
+    break;
     default:
       break;
   }
 }
 
-void CameraInputSDL::stepCamera()
+asc::Camera LookCameraInput::stepCamera(const asc::Camera& current_camera)
 {
-  if (input_ == Input::EnterOrbit && mode_ == Mode::None) {
-    mode_ = Mode::Orbit;
-  } else if (input_ == Input::LeaveOrbit && mode_ == Mode::Orbit) {
-    mode_ = Mode::None;
-  } else if (input_ == Input::EnterLook && mode_ == Mode::None) {
-    mode_ = Mode::Look;
-  } else if (input_ == Input::LeaveLook && mode_ == Mode::Look) {
-    mode_ = Mode::None;
-  }
+  asc::Camera next_camera = current_camera;
 
-  if (mode_ == Mode::Look) {
+  const auto mouse_delta = current_mouse_position_ - last_mouse_position_.value_or(current_mouse_position_);
+  last_mouse_position_ = current_mouse_position_;
 
-  } else if (mode_ == Mode::Orbit) {
+  next_camera.pitch += float(mouse_delta[1]) * 0.005f;
+  next_camera.yaw += float(mouse_delta[0]) * 0.005f;
+  
+  activation_ = Activation::Idle;
 
-  }
-}
-
-asc::Camera CameraInputSDL::nextCamera() const
-{
-  return asc::Camera();
+  return next_camera;
 }
 
 asc::MotionType motionFromKey(int key)

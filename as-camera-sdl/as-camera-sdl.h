@@ -4,6 +4,10 @@
 #include "as-camera/as-camera-controller.hpp"
 #include "bec/bitfield-enum-class.hpp"
 
+#include <memory>
+#include <vector>
+#include <optional>
+
 union SDL_Event;
 
 namespace asc
@@ -15,51 +19,115 @@ struct CameraProperties;
 
 } // namespace asc
 
-class CameraInputSDL : asc::CameraInput
+// Cameras
+// stack
+// return false to exit (except if top of stack)
+
+// no starting camera - no transition
+// both sub cameras are running
+
+// must answer - how do they compose
+
+class CameraInput
 {
 public:
-  enum class Input
-  {
-    None        = 0,
-    EnterOrbit  = 1 << 0,
-    LeaveOrbit  = 1 << 1,
-    EnterLook   = 1 << 2,
-    LeaveLook   = 1 << 3,
-    // ForwardMotion
-    // BackwardMotion
-    // etc..
-  };
+  virtual ~CameraInput() = default;
 
-  void handleEvents(const SDL_Event* event);
-
-  void stepCamera() override;
-  asc::Camera nextCamera() const override;
-  // float pitchDelta() const override;
-  // float yawDelta() const override;
-  // as::vec3 lookAtDelta() const override;
-private:
-  enum class Mode
-  {
-    None,
-    Orbit,
-    Look
-  };
-
-  Input input_;
-
-  Mode mode_;
-
-  as::vec2i last_mouse_position_; 
-  as::vec2i mouse_delta_; // look_delta - 
-  // as::vec2i translation_delta; ?
+  virtual void handleEvents(const SDL_Event* event) = 0;
+  virtual bool didBegin() const = 0;
+  virtual bool didEnd() const = 0;
+  virtual asc::Camera stepCamera(const asc::Camera& current_camera) = 0;
 };
 
-template<>
-struct bec::EnableBitMaskOperators<CameraInputSDL::Input>
+inline asc::Camera smoothCamera(
+  const asc::Camera& current_camera, const asc::Camera& target_camera, const float dt)
 {
-  static const bool Enable = true;
+  auto clamp_rotation = [](const float angle) {
+    return std::fmod(angle + as::k_tau, as::k_tau);
+  };
+
+  // keep yaw in 0 - 360 range
+  float target_yaw = clamp_rotation(target_camera.yaw);
+  const float current_yaw = clamp_rotation(current_camera.yaw);
+
+  // ensure smooth transition when moving across 0 - 360 boundary
+  const float yaw_delta = target_yaw - current_yaw;
+  if (std::abs(yaw_delta) >= as::k_pi) {
+    target_yaw -= as::k_tau * as::sign(yaw_delta);
+  }
+
+  // clamp pitch to be +-90 degrees
+  const float target_pitch = as::clamp(target_camera.pitch, -as::k_pi * 0.5f, as::k_pi * 0.5f);
+
+  asc::Camera camera;
+  // https://www.gamasutra.com/blogs/ScottLembcke/20180404/316046/Improved_Lerp_Smoothing.php
+  const float look_rate = exp2(/*props.look_smoothness*/5.0f);
+  const float look_t = exp2(-look_rate * dt);
+  camera.pitch = as::mix(target_pitch, current_camera.pitch, look_t);
+  camera.yaw = as::mix(target_yaw, current_yaw, look_t);
+  const float move_rate = exp2(/*props.move_smoothness*/5.0f);
+  const float move_t = exp2(-move_rate * dt);
+  camera.focal_dist = as::mix(target_camera.focal_dist, current_camera.focal_dist, move_t);
+  camera.look_at = as::vec_mix(target_camera.look_at, current_camera.look_at, move_t);
+  return camera;
+}
+
+class Cameras // could also be a CameraInput?
+{
+public:
+  void handleEvents(const SDL_Event* event)
+  {
+    for (auto* camera : cameras_) {
+      camera->handleEvents(event);
+    }
+
+    for (auto* camera : cameras_) {
+      if (camera->didBegin() && active_camera_ == nullptr) {
+        active_camera_ = camera;
+        break;
+      }
+    }
+
+    for (const auto* camera : cameras_) {
+      if (camera->didEnd() && active_camera_ != nullptr) {
+        active_camera_ = nullptr;
+        break;
+      }
+    }
+  }
+
+  asc::Camera stepCamera(const asc::Camera& current_camera)
+  {
+    if (active_camera_) {
+      return active_camera_->stepCamera(current_camera);
+    }
+
+    return current_camera;
+  }
+
+  CameraInput* active_camera_ = nullptr;
+  std::vector<CameraInput*> cameras_;
 };
 
+class LookCameraInput : public CameraInput
+{
+public:
+  enum class Activation
+  {
+    Idle,
+    Begin,
+    End
+  };
+
+  void handleEvents(const SDL_Event* event) override;
+  bool didBegin() const override { return activation_ == Activation::Begin; }
+  bool didEnd() const override { return activation_ == Activation::End; }
+  asc::Camera stepCamera(const asc::Camera& current_camera) override;
+
+  Activation activation_;
+  std::optional<as::vec2i> last_mouse_position_; 
+  as::vec2i current_mouse_position_;
+};
 
 enum class MouseButtons : uint8_t
 {
