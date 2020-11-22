@@ -28,19 +28,40 @@ struct CameraProperties;
 
 // must answer - how do they compose
 
+// loads of little behaviors 
+
+// look
+// pan
+// 
+
+// behavior -> active() (could always return true)
+// camera has a list of behaviors
+
 class CameraInput
 {
 public:
+  enum class Activation
+  {
+    Idle,
+    Begin,
+    End
+  };
+
   virtual ~CameraInput() = default;
 
+  bool didBegin() const { return activation_ == Activation::Begin; }
+  bool didEnd() const { return activation_ == Activation::End; }
+
   virtual void handleEvents(const SDL_Event* event) = 0;
-  virtual bool didBegin() const = 0;
-  virtual bool didEnd() const = 0;
-  virtual asc::Camera stepCamera(const asc::Camera& current_camera) = 0;
+  virtual asc::Camera stepCamera(const asc::Camera& target_camera) = 0;
+
+protected:
+  Activation activation_;
 };
 
 inline asc::Camera smoothCamera(
-  const asc::Camera& current_camera, const asc::Camera& target_camera, const float dt)
+  const asc::Camera& current_camera, const asc::Camera& target_camera,
+  const float dt)
 {
   auto clamp_rotation = [](const float angle) {
     return std::fmod(angle + as::k_tau, as::k_tau);
@@ -57,7 +78,8 @@ inline asc::Camera smoothCamera(
   }
 
   // clamp pitch to be +-90 degrees
-  const float target_pitch = as::clamp(target_camera.pitch, -as::k_pi * 0.5f, as::k_pi * 0.5f);
+  const float target_pitch =
+    as::clamp(target_camera.pitch, -as::k_pi * 0.5f, as::k_pi * 0.5f);
 
   asc::Camera camera;
   // https://www.gamasutra.com/blogs/ScottLembcke/20180404/316046/Improved_Lerp_Smoothing.php
@@ -96,13 +118,13 @@ public:
     }
   }
 
-  asc::Camera stepCamera(const asc::Camera& current_camera)
+  asc::Camera stepCamera(const asc::Camera& target_camera)
   {
     if (active_camera_) {
-      return active_camera_->stepCamera(current_camera);
+      return active_camera_->stepCamera(target_camera);
     }
 
-    return current_camera;
+    return target_camera;
   }
 
   CameraInput* active_camera_ = nullptr;
@@ -112,19 +134,9 @@ public:
 class LookCameraInput : public CameraInput
 {
 public:
-  enum class Activation
-  {
-    Idle,
-    Begin,
-    End
-  };
-
   void handleEvents(const SDL_Event* event) override;
-  bool didBegin() const override { return activation_ == Activation::Begin; }
-  bool didEnd() const override { return activation_ == Activation::End; }
-  asc::Camera stepCamera(const asc::Camera& current_camera) override;
+  asc::Camera stepCamera(const asc::Camera& target_camera) override;
 
-  Activation activation_;
   std::optional<as::vec2i> last_mouse_position_; 
   as::vec2i current_mouse_position_;
 };

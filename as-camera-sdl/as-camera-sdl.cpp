@@ -22,6 +22,13 @@ void LookCameraInput::handleEvents(const SDL_Event* event)
     case SDL_MOUSEMOTION: {
       const auto* mouse_motion_event = (SDL_MouseMotionEvent*)event;
       current_mouse_position_ = as::vec2i(mouse_motion_event->x, mouse_motion_event->y);
+      // handle mouse warp gracefully
+      if (std::abs(current_mouse_position_.x - last_mouse_position_.value_or(current_mouse_position_).x) >= 500) {
+        last_mouse_position_->x = current_mouse_position_.x;
+      }
+      if (std::abs(current_mouse_position_.y - last_mouse_position_.value_or(current_mouse_position_).y) >= 500) {
+        last_mouse_position_->y = current_mouse_position_.y;
+      }
     }
     break;
     default:
@@ -29,11 +36,14 @@ void LookCameraInput::handleEvents(const SDL_Event* event)
   }
 }
 
-asc::Camera LookCameraInput::stepCamera(const asc::Camera& current_camera)
+asc::Camera LookCameraInput::stepCamera(const asc::Camera& target_camera)
 {
-  asc::Camera next_camera = current_camera;
+  asc::Camera next_camera = target_camera;
 
-  const auto mouse_delta = current_mouse_position_ - last_mouse_position_.value_or(current_mouse_position_);
+  auto mouse_delta =
+    current_mouse_position_
+    - last_mouse_position_.value_or(current_mouse_position_);
+
   last_mouse_position_ = current_mouse_position_;
 
   next_camera.pitch += float(mouse_delta[1]) * 0.005f;
