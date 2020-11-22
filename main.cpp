@@ -248,7 +248,7 @@ int main(int argc, char** argv)
   auto lookCamera = LookCameraInput{};
 
   Cameras cameras;
-  cameras.cameras_.push_back(&lookCamera);
+  cameras.idle_camera_inputs_.push_back(&lookCamera);
 
   fps::Fps fps;
   for (bool quit = false; !quit;) {

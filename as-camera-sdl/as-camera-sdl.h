@@ -36,6 +36,8 @@ struct CameraProperties;
 
 // behavior -> active() (could always return true)
 // camera has a list of behaviors
+// camera -> exclusive (cannot begin while other actions are running
+//                      and other actions cannot begin while it is running)
 
 class CameraInput
 {
@@ -99,36 +101,50 @@ class Cameras // could also be a CameraInput?
 public:
   void handleEvents(const SDL_Event* event)
   {
-    for (auto* camera : cameras_) {
-      camera->handleEvents(event);
+    for (auto* camera_input : active_camera_inputs_) {
+      camera_input->handleEvents(event);
     }
 
-    for (auto* camera : cameras_) {
-      if (camera->didBegin() && active_camera_ == nullptr) {
-        active_camera_ = camera;
-        break;
+    for (auto* camera_input : idle_camera_inputs_) {
+      camera_input->handleEvents(event);
+    }
+
+    for (int i = 0; i < idle_camera_inputs_.size();) {
+      auto* camera_input = idle_camera_inputs_[i];
+      if (camera_input->didBegin()) {
+        active_camera_inputs_.push_back(camera_input);
+        idle_camera_inputs_[i] = idle_camera_inputs_[idle_camera_inputs_.size() - 1];
+        idle_camera_inputs_.pop_back();
+      } else {
+        i++;
       }
     }
 
-    for (const auto* camera : cameras_) {
-      if (camera->didEnd() && active_camera_ != nullptr) {
-        active_camera_ = nullptr;
-        break;
+    for (int i = 0; i < active_camera_inputs_.size();) {
+      auto* camera_input = active_camera_inputs_[i];
+      if (camera_input->didEnd()) {
+        idle_camera_inputs_.push_back(camera_input);
+        active_camera_inputs_[i] = active_camera_inputs_[active_camera_inputs_.size() - 1];
+        active_camera_inputs_.pop_back();
+      } else {
+        i++;
       }
     }
   }
 
   asc::Camera stepCamera(const asc::Camera& target_camera)
   {
-    if (active_camera_) {
-      return active_camera_->stepCamera(target_camera);
+    asc::Camera next_camera = target_camera;
+    // accumulate
+    for (auto* camera_input : active_camera_inputs_) {
+      next_camera = camera_input->stepCamera(next_camera);
     }
 
-    return target_camera;
+    return next_camera;
   }
 
-  CameraInput* active_camera_ = nullptr;
-  std::vector<CameraInput*> cameras_;
+  std::vector<CameraInput*> active_camera_inputs_;
+  std::vector<CameraInput*> idle_camera_inputs_;
 };
 
 class LookCameraInput : public CameraInput
