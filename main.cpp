@@ -246,9 +246,11 @@ int main(int argc, char** argv)
   auto prev = bx::getHPCounter();
 
   auto lookCamera = LookCameraInput{};
+  auto panCamera = PanCameraInput{};
 
   Cameras cameras;
   cameras.idle_camera_inputs_.push_back(&lookCamera);
+  cameras.idle_camera_inputs_.push_back(&panCamera);
 
   fps::Fps fps;
   for (bool quit = false; !quit;) {
