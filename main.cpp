@@ -247,10 +247,12 @@ int main(int argc, char** argv)
 
   auto lookCamera = LookCameraInput{};
   auto panCamera = PanCameraInput{};
+  auto translateCamera = TranslateCameraInput{};
 
   Cameras cameras;
   cameras.idle_camera_inputs_.push_back(&lookCamera);
   cameras.idle_camera_inputs_.push_back(&panCamera);
+  cameras.idle_camera_inputs_.push_back(&translateCamera);
 
   fps::Fps fps;
   for (bool quit = false; !quit;) {
@@ -419,7 +421,7 @@ int main(int argc, char** argv)
     camera_props_now.translate_speed *=
       (modifier_keys & KMOD_LSHIFT) == 1 ? translation_multiplier : 1.0f;
 
-    target_camera = cameras.stepCamera(target_camera);
+    target_camera = cameras.stepCamera(target_camera, delta_time);
     camera = smoothCamera(camera, target_camera, delta_time);
 
     // asc::updateCamera(

@@ -49,7 +49,8 @@ void Cameras::handleEvents(const SDL_Event* event)
     }
   }
 
-  asc::Camera Cameras::stepCamera(const asc::Camera& target_camera)
+  asc::Camera Cameras::stepCamera(
+    const asc::Camera& target_camera, const float delta_time)
   {
     auto mouse_delta =
       current_mouse_position_
@@ -57,10 +58,10 @@ void Cameras::handleEvents(const SDL_Event* event)
 
     last_mouse_position_ = current_mouse_position_;
 
-    asc::Camera next_camera = target_camera;
     // accumulate
+    asc::Camera next_camera = target_camera;
     for (auto* camera_input : active_camera_inputs_) {
-      next_camera = camera_input->stepCamera(next_camera, mouse_delta);
+      next_camera = camera_input->stepCamera(next_camera, mouse_delta, delta_time);
     }
 
     return next_camera;
@@ -79,7 +80,6 @@ void LookCameraInput::handleEvents(const SDL_Event* event)
     case SDL_MOUSEBUTTONUP: {
       const auto* mouseEvent = (SDL_MouseButtonEvent*)event;
       if (mouseEvent->button == SDL_BUTTON_RIGHT) {
-        // last_mouse_position_.reset();
         activation_ = Activation::End;
       }
     }
@@ -90,7 +90,7 @@ void LookCameraInput::handleEvents(const SDL_Event* event)
 }
 
 asc::Camera LookCameraInput::stepCamera(
-  const asc::Camera& target_camera, const as::vec2i& mouse_delta)
+  const asc::Camera& target_camera, const as::vec2i& mouse_delta, const float delta_time)
 {
   asc::Camera next_camera = target_camera;
 
@@ -107,14 +107,14 @@ void PanCameraInput::handleEvents(const SDL_Event* event)
   switch (event->type) {
     case SDL_MOUSEBUTTONDOWN: {
       const auto* mouseEvent = (SDL_MouseButtonEvent*)event;
-      if (mouseEvent->button == SDL_BUTTON_LEFT) {
+      if (mouseEvent->button == SDL_BUTTON_MIDDLE) {
         activation_ = Activation::Begin;
       }
     }
     break;
     case SDL_MOUSEBUTTONUP: {
       const auto* mouseEvent = (SDL_MouseButtonEvent*)event;
-      if (mouseEvent->button == SDL_BUTTON_LEFT) {
+      if (mouseEvent->button == SDL_BUTTON_MIDDLE) {
         activation_ = Activation::End;
       }
     }
@@ -125,7 +125,8 @@ void PanCameraInput::handleEvents(const SDL_Event* event)
 }
 
 asc::Camera PanCameraInput::stepCamera(
-  const asc::Camera& target_camera, const as::vec2i& mouse_delta)
+  const asc::Camera& target_camera, const as::vec2i& mouse_delta,
+  const float delta_time)
 {
   asc::Camera next_camera = target_camera;
 
@@ -141,6 +142,93 @@ asc::Camera PanCameraInput::stepCamera(
   next_camera.look_at += delta_pan_y /*props.pan_invert_y*/;
 
   activation_ = Activation::Idle;
+
+  return next_camera;
+}
+
+TranslateCameraInput::TranslationType TranslateCameraInput::translationFromKey(int key)
+{
+  switch (key) {
+    case SDL_SCANCODE_W:
+      return TranslationType::Forward;
+    case SDL_SCANCODE_S:
+      return TranslationType::Backward;
+    case SDL_SCANCODE_A:
+      return TranslationType::Left;
+    case SDL_SCANCODE_D:
+      return TranslationType::Right;
+    case SDL_SCANCODE_Q:
+      return TranslationType::Down;
+    case SDL_SCANCODE_E:
+      return TranslationType::Up;
+    default:
+      return TranslationType::None;
+  }
+}
+
+void TranslateCameraInput::handleEvents(const SDL_Event* event)
+{
+  switch (event->type) {
+    case SDL_KEYDOWN: {
+      const auto* keyboardEvent = (SDL_KeyboardEvent*)event;
+      using bec::operator|=;
+      translation_ |= translationFromKey(keyboardEvent->keysym.scancode);
+      if (translation_ != TranslationType::None) {
+        activation_ = Activation::Begin;
+      }
+    }
+    break;
+    case SDL_KEYUP: {
+      const auto* keyboardEvent = (SDL_KeyboardEvent*)event;
+      using bec::operator^=;
+      translation_ ^= translationFromKey(keyboardEvent->keysym.scancode);
+      if (translation_ == TranslationType::None) {
+        activation_ = Activation::End;
+      }
+    }
+    break;
+    default:
+      break;
+  }
+}
+
+asc::Camera TranslateCameraInput::stepCamera(
+    const asc::Camera& target_camera, const as::vec2i& mouse_delta, const float delta_time)
+{
+  asc::Camera next_camera = target_camera;
+
+  const as::mat3 orientation = next_camera.transform().rotation;
+
+  const auto basis_x = as::mat3_basis_x(orientation);
+  const auto basis_z = as::mat3_basis_z(orientation);
+
+  using bec::operator&;
+
+  const float speed = 10.0f;
+
+  if ((translation_ & TranslationType::Forward) == TranslationType::Forward) {
+    next_camera.look_at += basis_z * speed * /*props.translate_speed*/ delta_time;
+  }
+
+  if ((translation_ & TranslationType::Backward) == TranslationType::Backward) {
+    next_camera.look_at -= basis_z * speed * /*props.translate_speed*/ delta_time;
+  }
+
+  if ((translation_ & TranslationType::Left) == TranslationType::Left) {
+    next_camera.look_at -= basis_x * speed * /*props.translate_speed* */ delta_time;
+  }
+
+  if ((translation_ & TranslationType::Right) == TranslationType::Right) {
+    next_camera.look_at += basis_x * speed * /*props.translate_speed* */ delta_time;
+  }
+
+  if ((translation_ & TranslationType::Up) == TranslationType::Up) {
+    next_camera.look_at += as::vec3::axis_y() * speed * /*props.translate_speed* */ delta_time;
+  }
+
+  if ((translation_ & TranslationType::Down) == TranslationType::Down) {
+    next_camera.look_at -= as::vec3::axis_y() * speed * /*props.translate_speed* */ delta_time;
+  }
 
   return next_camera;
 }

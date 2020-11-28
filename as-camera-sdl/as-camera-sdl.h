@@ -30,10 +30,6 @@ struct CameraProperties;
 
 // loads of little behaviors 
 
-// look
-// pan
-// 
-
 // behavior -> active() (could always return true)
 // camera has a list of behaviors
 // camera -> exclusive (cannot begin while other actions are running
@@ -56,7 +52,8 @@ public:
 
   virtual void handleEvents(const SDL_Event* event) = 0;
   virtual asc::Camera stepCamera(
-    const asc::Camera& target_camera, const as::vec2i& mouse_delta) = 0;
+    const asc::Camera& target_camera, const as::vec2i& mouse_delta,
+    float delta_time) = 0;
 
 protected:
   Activation activation_;
@@ -70,7 +67,8 @@ class Cameras // could also be a CameraInput?
 {
 public:
   void handleEvents(const SDL_Event* event);
-  asc::Camera stepCamera(const asc::Camera& target_camera);
+  asc::Camera stepCamera(const asc::Camera& target_camera,
+  float delta_time);
 
   std::vector<CameraInput*> active_camera_inputs_;
   std::vector<CameraInput*> idle_camera_inputs_;
@@ -84,7 +82,8 @@ class LookCameraInput : public CameraInput
 public:
   void handleEvents(const SDL_Event* event) override;
   asc::Camera stepCamera(
-    const asc::Camera& target_camera, const as::vec2i& mouse_delta) override;
+    const asc::Camera& target_camera, const as::vec2i& mouse_delta,
+    float delta_time) override;
 };
 
 class PanCameraInput : public CameraInput
@@ -92,7 +91,40 @@ class PanCameraInput : public CameraInput
 public:
   void handleEvents(const SDL_Event* event) override;
   asc::Camera stepCamera(
-    const asc::Camera& target_camera, const as::vec2i& mouse_delta) override;
+    const asc::Camera& target_camera, const as::vec2i& mouse_delta,
+    float delta_time) override;
+};
+
+class TranslateCameraInput : public CameraInput
+{
+public:
+  void handleEvents(const SDL_Event* event) override;
+  asc::Camera stepCamera(
+    const asc::Camera& target_camera, const as::vec2i& mouse_delta,
+    float delta_time) override;
+private:
+  enum class TranslationType
+  {
+    // clang-format off
+    None        = 0,
+    Forward     = 1 << 0,
+    Backward    = 1 << 1,
+    Left        = 1 << 2,
+    Right       = 1 << 3,
+    Up          = 1 << 4,
+    Down        = 1 << 5,
+    // clang-format on
+  };
+
+  static TranslationType translationFromKey(int key);
+
+  TranslationType translation_ = TranslationType::None;
+};
+
+template<>
+struct bec::EnableBitMaskOperators<TranslateCameraInput::TranslationType>
+{
+  static const bool Enable = true;
 };
 
 enum class MouseButtons : uint8_t
