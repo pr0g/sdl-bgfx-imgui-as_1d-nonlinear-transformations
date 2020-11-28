@@ -245,17 +245,19 @@ int main(int argc, char** argv)
 
   auto prev = bx::getHPCounter();
 
-  auto lookCamera = LookCameraInput{};
-  auto panCamera = PanCameraInput{};
-  auto translateCamera = TranslateCameraInput{};
-  auto orbitCamera = OrbitLookCameraInput{}; // exclusive
-  // orbit camera has child inputs?
+  auto look_camera = LookCameraInput{SDL_BUTTON_RIGHT};
+  auto pan_camera = PanCameraInput{};
+  auto translate_camera = TranslateCameraInput{};
+  auto orbit_camera = OrbitLookCameraInput{};
+
+  auto look_camera_orbit = LookCameraInput{SDL_BUTTON_LEFT};
+  orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(&look_camera_orbit);
 
   Cameras cameras;
-  cameras.idle_camera_inputs_.push_back(&lookCamera);
-  cameras.idle_camera_inputs_.push_back(&panCamera);
-  cameras.idle_camera_inputs_.push_back(&translateCamera);
-  cameras.idle_camera_inputs_.push_back(&orbitCamera);
+  cameras.idle_camera_inputs_.push_back(&look_camera);
+  cameras.idle_camera_inputs_.push_back(&pan_camera);
+  cameras.idle_camera_inputs_.push_back(&translate_camera);
+  cameras.idle_camera_inputs_.push_back(&orbit_camera);
 
   fps::Fps fps;
   for (bool quit = false; !quit;) {

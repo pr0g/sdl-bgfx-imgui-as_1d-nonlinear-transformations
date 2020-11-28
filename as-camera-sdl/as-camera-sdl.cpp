@@ -8,11 +8,14 @@ void Cameras::handleEvents(const SDL_Event* event)
         const auto* mouse_motion_event = (SDL_MouseMotionEvent*)event;
         current_mouse_position_ = as::vec2i(mouse_motion_event->x, mouse_motion_event->y);
         // handle mouse warp gracefully
-        if (std::abs(current_mouse_position_.x - last_mouse_position_.value_or(current_mouse_position_).x) >= 500) {
-          last_mouse_position_->x = current_mouse_position_.x;
-        }
-        if (std::abs(current_mouse_position_.y - last_mouse_position_.value_or(current_mouse_position_).y) >= 500) {
-          last_mouse_position_->y = current_mouse_position_.y;
+        if (current_mouse_position_.has_value() && last_mouse_position_.has_value()) {
+          if (
+            std::abs(current_mouse_position_->x - last_mouse_position_->x) >= 500) {
+            last_mouse_position_->x = current_mouse_position_->x;
+          }
+          if (std::abs(current_mouse_position_->y - last_mouse_position_->y) >= 500) {
+            last_mouse_position_->y = current_mouse_position_->y;
+          }
         }
       }
       break;
@@ -33,7 +36,7 @@ void Cameras::handleEvents(const SDL_Event* event)
     for (int i = 0; i < idle_camera_inputs_.size();) {
       auto* camera_input = idle_camera_inputs_[i];
       const bool can_begin =
-        camera_input->didBegin() &&
+        camera_input->beginning() &&
         std::all_of(active_camera_inputs_.cbegin(), active_camera_inputs_.cend(),
         [](const auto& input){ return !input->exclusive(); })
         && (!camera_input->exclusive() ||
@@ -48,10 +51,13 @@ void Cameras::handleEvents(const SDL_Event* event)
     }
 
     auto mouse_delta =
-      current_mouse_position_
-      - last_mouse_position_.value_or(current_mouse_position_);
+      current_mouse_position_.has_value() && last_mouse_position_.has_value()
+        ? current_mouse_position_.value() - last_mouse_position_.value()
+        : as::vec2i::zero();
 
-    last_mouse_position_ = current_mouse_position_;
+    if (current_mouse_position_.has_value()) {
+      last_mouse_position_ = current_mouse_position_;
+    }
 
     // accumulate
     asc::Camera next_camera = target_camera;
@@ -61,14 +67,15 @@ void Cameras::handleEvents(const SDL_Event* event)
 
     for (int i = 0; i < active_camera_inputs_.size();) {
       auto* camera_input = active_camera_inputs_[i];
-      if (camera_input->didEnd()) {
+      if (camera_input->ending()) {
+        camera_input->clearActivation();
         idle_camera_inputs_.push_back(camera_input);
         active_camera_inputs_[i] = active_camera_inputs_[active_camera_inputs_.size() - 1];
         active_camera_inputs_.pop_back();
       } else {
+        camera_input->continueActivation();
         i++;
       }
-      camera_input->clearActivation();
     }
 
     return next_camera;
@@ -79,14 +86,14 @@ void LookCameraInput::handleEvents(const SDL_Event* event)
   switch (event->type) {
     case SDL_MOUSEBUTTONDOWN: {
       const auto* mouseEvent = (SDL_MouseButtonEvent*)event;
-      if (mouseEvent->button == SDL_BUTTON_RIGHT) {
+      if (mouseEvent->button == button_type_) {
         beginActivation();
       }
     }
     break;
     case SDL_MOUSEBUTTONUP: {
       const auto* mouseEvent = (SDL_MouseButtonEvent*)event;
-      if (mouseEvent->button == SDL_BUTTON_RIGHT) {
+      if (mouseEvent->button == button_type_) {
         endActivation();
       }
     }
@@ -97,7 +104,8 @@ void LookCameraInput::handleEvents(const SDL_Event* event)
 }
 
 asc::Camera LookCameraInput::stepCamera(
-  const asc::Camera& target_camera, const as::vec2i& mouse_delta, const float delta_time)
+  const asc::Camera& target_camera, const as::vec2i& mouse_delta,
+  const float delta_time)
 {
   asc::Camera next_camera = target_camera;
 
@@ -256,6 +264,10 @@ void OrbitLookCameraInput::handleEvents(const SDL_Event* event)
     default:
       break;
   }
+
+  if (active()) {
+    orbit_cameras_.handleEvents(event);
+  }
 }
 
 static float intersectPlane(
@@ -273,7 +285,7 @@ asc::Camera OrbitLookCameraInput::stepCamera(
 
   const float default_orbit_distance = 15.0f;
   const float orbit_max_distance = 100.0f;
-  if (didBegin()) {
+  if (beginning()) {
     float hit_distance = intersectPlane(
       target_camera.transform().translation,
       as::mat3_basis_z(target_camera.transform().rotation),
@@ -294,7 +306,16 @@ asc::Camera OrbitLookCameraInput::stepCamera(
     }
   }
 
-  if (didEnd()) {
+  if (active()) {
+    // todo: need to return nested cameras to idle state when ending
+    next_camera = orbit_cameras_.stepCamera(next_camera, delta_time);
+  }
+
+  if (ending()) {
+    // bit of a hack... fix me
+    orbit_cameras_.last_mouse_position_ = {};
+    orbit_cameras_.current_mouse_position_ = {};
+
     next_camera.look_at = next_camera.transform().translation;
     next_camera.focal_dist = 0.0f;
   }

@@ -42,16 +42,20 @@ public:
   {
     Idle,
     Begin,
+    Active,
     End
   };
 
   virtual ~CameraInput() = default;
 
-  bool didBegin() const { return activation_ == Activation::Begin; }
-  bool didEnd() const { return activation_ == Activation::End; }
+  bool beginning() const { return activation_ == Activation::Begin; }
+  bool ending() const { return activation_ == Activation::End; }
+  bool idle() const { return activation_ == Activation::Idle; }
+  bool active() const { return activation_ == Activation::Active; }
 
   void beginActivation() { activation_ = Activation::Begin; }
   void endActivation() { activation_ = Activation::End; }
+  void continueActivation() { activation_ = Activation::Active; }
   void clearActivation() { activation_ = Activation::Idle; }
 
   virtual void handleEvents(const SDL_Event* event) = 0;
@@ -79,16 +83,19 @@ public:
   std::vector<CameraInput*> idle_camera_inputs_;
 
   std::optional<as::vec2i> last_mouse_position_; 
-  as::vec2i current_mouse_position_;
+  std::optional<as::vec2i> current_mouse_position_;
 };
 
 class /*Free*/LookCameraInput : public CameraInput
 {
 public:
+  explicit LookCameraInput(uint8_t button_type) : button_type_(button_type) {}
   void handleEvents(const SDL_Event* event) override;
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
     float delta_time) override;
+
+  uint8_t button_type_;
 };
 
 class PanCameraInput : public CameraInput
@@ -140,6 +147,8 @@ public:
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
     float delta_time) override;
   bool exclusive() const override { return true; }
+
+  Cameras orbit_cameras_;
 };
 
 enum class MouseButtons : uint8_t
