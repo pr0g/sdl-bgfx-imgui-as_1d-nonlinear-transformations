@@ -49,6 +49,7 @@ public:
 
   bool didBegin() const { return activation_ == Activation::Begin; }
   bool didEnd() const { return activation_ == Activation::End; }
+  void clearActivation() { activation_ = Activation::Idle; }
 
   virtual void handleEvents(const SDL_Event* event) = 0;
   virtual asc::Camera stepCamera(
@@ -77,7 +78,7 @@ public:
   as::vec2i current_mouse_position_;
 };
 
-class LookCameraInput : public CameraInput
+class /*Free*/LookCameraInput : public CameraInput
 {
 public:
   void handleEvents(const SDL_Event* event) override;
@@ -125,6 +126,15 @@ template<>
 struct bec::EnableBitMaskOperators<TranslateCameraInput::TranslationType>
 {
   static const bool Enable = true;
+};
+
+class OrbitLookCameraInput : public CameraInput
+{
+public:
+  void handleEvents(const SDL_Event* event) override;
+  asc::Camera stepCamera(
+    const asc::Camera& target_camera, const as::vec2i& mouse_delta,
+    float delta_time) override;
 };
 
 enum class MouseButtons : uint8_t

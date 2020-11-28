@@ -25,7 +25,11 @@ void Cameras::handleEvents(const SDL_Event* event)
     for (auto* camera_input : idle_camera_inputs_) {
       camera_input->handleEvents(event);
     }
+  }
 
+  asc::Camera Cameras::stepCamera(
+    const asc::Camera& target_camera, const float delta_time)
+  {
     for (int i = 0; i < idle_camera_inputs_.size();) {
       auto* camera_input = idle_camera_inputs_[i];
       if (camera_input->didBegin()) {
@@ -37,21 +41,6 @@ void Cameras::handleEvents(const SDL_Event* event)
       }
     }
 
-    for (int i = 0; i < active_camera_inputs_.size();) {
-      auto* camera_input = active_camera_inputs_[i];
-      if (camera_input->didEnd()) {
-        idle_camera_inputs_.push_back(camera_input);
-        active_camera_inputs_[i] = active_camera_inputs_[active_camera_inputs_.size() - 1];
-        active_camera_inputs_.pop_back();
-      } else {
-        i++;
-      }
-    }
-  }
-
-  asc::Camera Cameras::stepCamera(
-    const asc::Camera& target_camera, const float delta_time)
-  {
     auto mouse_delta =
       current_mouse_position_
       - last_mouse_position_.value_or(current_mouse_position_);
@@ -62,6 +51,18 @@ void Cameras::handleEvents(const SDL_Event* event)
     asc::Camera next_camera = target_camera;
     for (auto* camera_input : active_camera_inputs_) {
       next_camera = camera_input->stepCamera(next_camera, mouse_delta, delta_time);
+    }
+
+    for (int i = 0; i < active_camera_inputs_.size();) {
+      auto* camera_input = active_camera_inputs_[i];
+      if (camera_input->didEnd()) {
+        idle_camera_inputs_.push_back(camera_input);
+        active_camera_inputs_[i] = active_camera_inputs_[active_camera_inputs_.size() - 1];
+        active_camera_inputs_.pop_back();
+      } else {
+        i++;
+      }
+      camera_input->clearActivation();
     }
 
     return next_camera;
@@ -96,8 +97,6 @@ asc::Camera LookCameraInput::stepCamera(
 
   next_camera.pitch += float(mouse_delta[1]) * 0.005f;
   next_camera.yaw += float(mouse_delta[0]) * 0.005f;
-  
-  activation_ = Activation::Idle;
 
   return next_camera;
 }
@@ -140,8 +139,6 @@ asc::Camera PanCameraInput::stepCamera(
 
   next_camera.look_at += delta_pan_x * /*props.pan_invert_x*/ -1.0f;
   next_camera.look_at += delta_pan_y /*props.pan_invert_y*/;
-
-  activation_ = Activation::Idle;
 
   return next_camera;
 }
@@ -228,6 +225,72 @@ asc::Camera TranslateCameraInput::stepCamera(
 
   if ((translation_ & TranslationType::Down) == TranslationType::Down) {
     next_camera.look_at -= as::vec3::axis_y() * speed * /*props.translate_speed* */ delta_time;
+  }
+
+  return next_camera;
+}
+
+void OrbitLookCameraInput::handleEvents(const SDL_Event* event)
+{
+  switch (event->type) {
+    case SDL_KEYDOWN: {
+      const auto* keyboardEvent = (SDL_KeyboardEvent*)event;
+      if (keyboardEvent->keysym.scancode == SDL_SCANCODE_LALT) {
+        activation_ = Activation::Begin;
+      }
+    }
+    break;
+    case SDL_KEYUP: {
+      const auto* keyboardEvent = (SDL_KeyboardEvent*)event;
+      if (keyboardEvent->keysym.scancode == SDL_SCANCODE_LALT) {
+        activation_ = Activation::End;
+      }
+    }
+    break;
+    default:
+      break;
+  }
+}
+
+static float intersectPlane(
+  const as::vec3& origin, const as::vec3& direction, const as::vec4& plane)
+{
+  return -(as::vec_dot(origin, as::vec3_from_vec4(plane)) + plane.w)
+       / as::vec_dot(direction, as::vec3_from_vec4(plane));
+}
+
+asc::Camera OrbitLookCameraInput::stepCamera(
+  const asc::Camera& target_camera, const as::vec2i& mouse_delta,
+  float delta_time)
+{
+  asc::Camera next_camera = target_camera;
+
+  const float default_orbit_distance = 15.0f;
+  const float orbit_max_distance = 100.0f;
+  if (didBegin()) {
+    float hit_distance = intersectPlane(
+      target_camera.transform().translation,
+      as::mat3_basis_z(target_camera.transform().rotation),
+      as::vec4(as::vec3::axis_y()));
+
+    if (hit_distance >= 0.0f) {
+      const float dist = std::min(hit_distance, orbit_max_distance);
+      next_camera.focal_dist = -dist;
+      next_camera.look_at =
+        target_camera.transform().translation
+        + as::mat3_basis_z(target_camera.transform().rotation) * dist;
+    } else {
+      next_camera.focal_dist = -default_orbit_distance;
+      next_camera.look_at =
+        target_camera.transform().translation
+        + as::mat3_basis_z(target_camera.transform().rotation)
+            * default_orbit_distance;
+    }
+  }
+
+  if (didEnd()) {
+    next_camera.look_at = next_camera.transform().translation;
+    next_camera.focal_dist = 0.0f;
   }
 
   return next_camera;

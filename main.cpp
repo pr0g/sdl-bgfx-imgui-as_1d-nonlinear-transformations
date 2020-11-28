@@ -52,7 +52,7 @@ std::optional<bgfx::ProgramHandle> createShaderProgram(
   return bgfx::createProgram(vsh, fsh, true);
 }
 
-float intersectPlane(
+static float intersectPlane(
   const as::vec3& origin, const as::vec3& direction, const as::vec4& plane)
 {
   return -(as::vec_dot(origin, as::vec3_from_vec4(plane)) + plane.w)
@@ -248,11 +248,14 @@ int main(int argc, char** argv)
   auto lookCamera = LookCameraInput{};
   auto panCamera = PanCameraInput{};
   auto translateCamera = TranslateCameraInput{};
+  auto orbitCamera = OrbitLookCameraInput{}; // exclusive
+  // orbit camera has child inputs?
 
   Cameras cameras;
   cameras.idle_camera_inputs_.push_back(&lookCamera);
   cameras.idle_camera_inputs_.push_back(&panCamera);
   cameras.idle_camera_inputs_.push_back(&translateCamera);
+  cameras.idle_camera_inputs_.push_back(&orbitCamera);
 
   fps::Fps fps;
   for (bool quit = false; !quit;) {
