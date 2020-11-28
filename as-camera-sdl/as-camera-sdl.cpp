@@ -32,7 +32,13 @@ void Cameras::handleEvents(const SDL_Event* event)
   {
     for (int i = 0; i < idle_camera_inputs_.size();) {
       auto* camera_input = idle_camera_inputs_[i];
-      if (camera_input->didBegin()) {
+      const bool can_begin =
+        camera_input->didBegin() &&
+        std::all_of(active_camera_inputs_.cbegin(), active_camera_inputs_.cend(),
+        [](const auto& input){ return !input->exclusive(); })
+        && (!camera_input->exclusive() ||
+         (camera_input->exclusive() && active_camera_inputs_.empty()));
+      if (can_begin) {
         active_camera_inputs_.push_back(camera_input);
         idle_camera_inputs_[i] = idle_camera_inputs_[idle_camera_inputs_.size() - 1];
         idle_camera_inputs_.pop_back();
@@ -74,14 +80,14 @@ void LookCameraInput::handleEvents(const SDL_Event* event)
     case SDL_MOUSEBUTTONDOWN: {
       const auto* mouseEvent = (SDL_MouseButtonEvent*)event;
       if (mouseEvent->button == SDL_BUTTON_RIGHT) {
-        activation_ = Activation::Begin;
+        beginActivation();
       }
     }
     break;
     case SDL_MOUSEBUTTONUP: {
       const auto* mouseEvent = (SDL_MouseButtonEvent*)event;
       if (mouseEvent->button == SDL_BUTTON_RIGHT) {
-        activation_ = Activation::End;
+        endActivation();
       }
     }
     break;
@@ -107,14 +113,14 @@ void PanCameraInput::handleEvents(const SDL_Event* event)
     case SDL_MOUSEBUTTONDOWN: {
       const auto* mouseEvent = (SDL_MouseButtonEvent*)event;
       if (mouseEvent->button == SDL_BUTTON_MIDDLE) {
-        activation_ = Activation::Begin;
+        beginActivation();
       }
     }
     break;
     case SDL_MOUSEBUTTONUP: {
       const auto* mouseEvent = (SDL_MouseButtonEvent*)event;
       if (mouseEvent->button == SDL_BUTTON_MIDDLE) {
-        activation_ = Activation::End;
+        endActivation();
       }
     }
     break;
@@ -171,7 +177,7 @@ void TranslateCameraInput::handleEvents(const SDL_Event* event)
       using bec::operator|=;
       translation_ |= translationFromKey(keyboardEvent->keysym.scancode);
       if (translation_ != TranslationType::None) {
-        activation_ = Activation::Begin;
+        beginActivation();
       }
     }
     break;
@@ -180,7 +186,7 @@ void TranslateCameraInput::handleEvents(const SDL_Event* event)
       using bec::operator^=;
       translation_ ^= translationFromKey(keyboardEvent->keysym.scancode);
       if (translation_ == TranslationType::None) {
-        activation_ = Activation::End;
+        endActivation();
       }
     }
     break;
@@ -236,14 +242,14 @@ void OrbitLookCameraInput::handleEvents(const SDL_Event* event)
     case SDL_KEYDOWN: {
       const auto* keyboardEvent = (SDL_KeyboardEvent*)event;
       if (keyboardEvent->keysym.scancode == SDL_SCANCODE_LALT) {
-        activation_ = Activation::Begin;
+        beginActivation();
       }
     }
     break;
     case SDL_KEYUP: {
       const auto* keyboardEvent = (SDL_KeyboardEvent*)event;
       if (keyboardEvent->keysym.scancode == SDL_SCANCODE_LALT) {
-        activation_ = Activation::End;
+        endActivation();
       }
     }
     break;

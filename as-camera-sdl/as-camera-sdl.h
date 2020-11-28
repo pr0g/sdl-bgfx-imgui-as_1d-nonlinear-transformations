@@ -49,14 +49,18 @@ public:
 
   bool didBegin() const { return activation_ == Activation::Begin; }
   bool didEnd() const { return activation_ == Activation::End; }
+
+  void beginActivation() { activation_ = Activation::Begin; }
+  void endActivation() { activation_ = Activation::End; }
   void clearActivation() { activation_ = Activation::Idle; }
 
   virtual void handleEvents(const SDL_Event* event) = 0;
   virtual asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
     float delta_time) = 0;
+  virtual bool exclusive() const { return false; }
 
-protected:
+private:
   Activation activation_;
 };
 
@@ -135,6 +139,7 @@ public:
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
     float delta_time) override;
+  bool exclusive() const override { return true; }
 };
 
 enum class MouseButtons : uint8_t
