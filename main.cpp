@@ -247,11 +247,13 @@ int main(int argc, char** argv)
 
   auto look_camera = LookCameraInput{SDL_BUTTON_RIGHT};
   auto pan_camera = PanCameraInput{};
-  auto translate_camera = TranslateCameraInput{};
+  auto translate_camera = TranslateCameraInput{lookTranslation};
   auto orbit_camera = OrbitLookCameraInput{};
 
   auto look_camera_orbit = LookCameraInput{SDL_BUTTON_LEFT};
+  auto translate_camera_orbit = TranslateCameraInput{orbitTranslation};
   orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(&look_camera_orbit);
+  orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(&translate_camera_orbit);
 
   Cameras cameras;
   cameras.idle_camera_inputs_.push_back(&look_camera);

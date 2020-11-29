@@ -208,37 +208,37 @@ asc::Camera TranslateCameraInput::stepCamera(
 {
   asc::Camera next_camera = target_camera;
 
-  const as::mat3 orientation = next_camera.transform().rotation;
-
-  const auto basis_x = as::mat3_basis_x(orientation);
-  const auto basis_z = as::mat3_basis_z(orientation);
+  const auto translation_basis = translationAxesFn_(next_camera);
+  const auto axis_x = as::mat3_basis_x(translation_basis);
+  const auto axis_y = as::mat3_basis_y(translation_basis);
+  const auto axis_z = as::mat3_basis_z(translation_basis);
 
   using bec::operator&;
 
   const float speed = 10.0f;
 
   if ((translation_ & TranslationType::Forward) == TranslationType::Forward) {
-    next_camera.look_at += basis_z * speed * /*props.translate_speed*/ delta_time;
+    next_camera.look_at += axis_z * speed * /*props.translate_speed*/ delta_time;
   }
 
   if ((translation_ & TranslationType::Backward) == TranslationType::Backward) {
-    next_camera.look_at -= basis_z * speed * /*props.translate_speed*/ delta_time;
+    next_camera.look_at -= axis_z * speed * /*props.translate_speed*/ delta_time;
   }
 
   if ((translation_ & TranslationType::Left) == TranslationType::Left) {
-    next_camera.look_at -= basis_x * speed * /*props.translate_speed* */ delta_time;
+    next_camera.look_at -= axis_x * speed * /*props.translate_speed* */ delta_time;
   }
 
   if ((translation_ & TranslationType::Right) == TranslationType::Right) {
-    next_camera.look_at += basis_x * speed * /*props.translate_speed* */ delta_time;
+    next_camera.look_at += axis_x * speed * /*props.translate_speed* */ delta_time;
   }
 
   if ((translation_ & TranslationType::Up) == TranslationType::Up) {
-    next_camera.look_at += as::vec3::axis_y() * speed * /*props.translate_speed* */ delta_time;
+    next_camera.look_at += axis_y * speed * /*props.translate_speed* */ delta_time;
   }
 
   if ((translation_ & TranslationType::Down) == TranslationType::Down) {
-    next_camera.look_at -= as::vec3::axis_y() * speed * /*props.translate_speed* */ delta_time;
+    next_camera.look_at -= axis_y * speed * /*props.translate_speed* */ delta_time;
   }
 
   return next_camera;

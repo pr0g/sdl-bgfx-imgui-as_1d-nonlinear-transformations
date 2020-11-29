@@ -107,9 +107,38 @@ public:
     float delta_time) override;
 };
 
+using TranslationAxesFn = std::function<as::mat3(const asc::Camera& camera)>;
+
+inline as::mat3 lookTranslation(const asc::Camera& camera)
+{
+  const as::mat3 orientation = camera.transform().rotation;
+
+  const auto basis_x = as::mat3_basis_x(orientation);
+  const auto basis_y = as::vec3::axis_y();
+  const auto basis_z = as::mat3_basis_z(orientation);
+
+  return {basis_x, basis_y, basis_z};
+}
+
+inline as::mat3 orbitTranslation(const asc::Camera& camera)
+{
+  const as::mat3 orientation = camera.transform().rotation;
+
+  const auto basis_x = as::mat3_basis_x(orientation);
+  const auto basis_y = as::vec3::axis_y();
+  const auto basis_z = [&orientation]{
+    const auto forward = as::mat3_basis_z(orientation);
+    return as::vec_normalize(as::vec3(forward.x, 0.0f, forward.z));
+  }();
+
+  return {basis_x, basis_y, basis_z};
+}
+
 class TranslateCameraInput : public CameraInput
 {
 public:
+  explicit TranslateCameraInput(TranslationAxesFn translationAxesFn)
+    : translationAxesFn_(std::move(translationAxesFn)) {}
   void handleEvents(const SDL_Event* event) override;
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
@@ -131,6 +160,7 @@ private:
   static TranslationType translationFromKey(int key);
 
   TranslationType translation_ = TranslationType::None;
+  TranslationAxesFn translationAxesFn_;
 };
 
 template<>
