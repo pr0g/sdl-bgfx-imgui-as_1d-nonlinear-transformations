@@ -63,6 +63,7 @@ public:
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
     float delta_time) = 0;
   virtual bool exclusive() const { return false; }
+  virtual void reset() {}
 
 private:
   Activation activation_;
@@ -76,8 +77,8 @@ class Cameras // could also be a CameraInput?
 {
 public:
   void handleEvents(const SDL_Event* event);
-  asc::Camera stepCamera(const asc::Camera& target_camera,
-  float delta_time);
+  asc::Camera stepCamera(const asc::Camera& target_camera, float delta_time);
+  void reset();
 
   std::vector<CameraInput*> active_camera_inputs_;
   std::vector<CameraInput*> idle_camera_inputs_;
@@ -143,6 +144,8 @@ public:
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
     float delta_time) override;
+  void reset() override { translation_ = TranslationType::None; }
+
 private:
   enum class TranslationType
   {

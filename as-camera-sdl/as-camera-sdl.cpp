@@ -2,84 +2,94 @@
 #include "SDL.h"
 
 void Cameras::handleEvents(const SDL_Event* event)
-  {
-    switch (event->type) {
-      case SDL_MOUSEMOTION: {
-        const auto* mouse_motion_event = (SDL_MouseMotionEvent*)event;
-        current_mouse_position_ = as::vec2i(mouse_motion_event->x, mouse_motion_event->y);
-        // handle mouse warp gracefully
-        if (current_mouse_position_.has_value() && last_mouse_position_.has_value()) {
-          if (
-            std::abs(current_mouse_position_->x - last_mouse_position_->x) >= 500) {
-            last_mouse_position_->x = current_mouse_position_->x;
-          }
-          if (std::abs(current_mouse_position_->y - last_mouse_position_->y) >= 500) {
-            last_mouse_position_->y = current_mouse_position_->y;
-          }
+{
+  switch (event->type) {
+    case SDL_MOUSEMOTION: {
+      const auto* mouse_motion_event = (SDL_MouseMotionEvent*)event;
+      current_mouse_position_ = as::vec2i(mouse_motion_event->x, mouse_motion_event->y);
+      // handle mouse warp gracefully
+      if (current_mouse_position_.has_value() && last_mouse_position_.has_value()) {
+        if (
+          std::abs(current_mouse_position_->x - last_mouse_position_->x) >= 500) {
+          last_mouse_position_->x = current_mouse_position_->x;
+        }
+        if (std::abs(current_mouse_position_->y - last_mouse_position_->y) >= 500) {
+          last_mouse_position_->y = current_mouse_position_->y;
         }
       }
-      break;
     }
+    break;
+  }
 
-    for (auto* camera_input : active_camera_inputs_) {
-      camera_input->handleEvents(event);
-    }
+  for (auto* camera_input : active_camera_inputs_) {
+    camera_input->handleEvents(event);
+  }
 
-    for (auto* camera_input : idle_camera_inputs_) {
-      camera_input->handleEvents(event);
+  for (auto* camera_input : idle_camera_inputs_) {
+    camera_input->handleEvents(event);
+  }
+}
+
+asc::Camera Cameras::stepCamera(
+  const asc::Camera& target_camera, const float delta_time)
+{
+  for (int i = 0; i < idle_camera_inputs_.size();) {
+    auto* camera_input = idle_camera_inputs_[i];
+    const bool can_begin =
+      camera_input->beginning() &&
+      std::all_of(active_camera_inputs_.cbegin(), active_camera_inputs_.cend(),
+      [](const auto& input){ return !input->exclusive(); })
+      && (!camera_input->exclusive() ||
+        (camera_input->exclusive() && active_camera_inputs_.empty()));
+    if (can_begin) {
+      active_camera_inputs_.push_back(camera_input);
+      idle_camera_inputs_[i] = idle_camera_inputs_[idle_camera_inputs_.size() - 1];
+      idle_camera_inputs_.pop_back();
+    } else {
+      i++;
     }
   }
 
-  asc::Camera Cameras::stepCamera(
-    const asc::Camera& target_camera, const float delta_time)
-  {
-    for (int i = 0; i < idle_camera_inputs_.size();) {
-      auto* camera_input = idle_camera_inputs_[i];
-      const bool can_begin =
-        camera_input->beginning() &&
-        std::all_of(active_camera_inputs_.cbegin(), active_camera_inputs_.cend(),
-        [](const auto& input){ return !input->exclusive(); })
-        && (!camera_input->exclusive() ||
-         (camera_input->exclusive() && active_camera_inputs_.empty()));
-      if (can_begin) {
-        active_camera_inputs_.push_back(camera_input);
-        idle_camera_inputs_[i] = idle_camera_inputs_[idle_camera_inputs_.size() - 1];
-        idle_camera_inputs_.pop_back();
-      } else {
-        i++;
-      }
-    }
+  auto mouse_delta =
+    current_mouse_position_.has_value() && last_mouse_position_.has_value()
+      ? current_mouse_position_.value() - last_mouse_position_.value()
+      : as::vec2i::zero();
 
-    auto mouse_delta =
-      current_mouse_position_.has_value() && last_mouse_position_.has_value()
-        ? current_mouse_position_.value() - last_mouse_position_.value()
-        : as::vec2i::zero();
-
-    if (current_mouse_position_.has_value()) {
-      last_mouse_position_ = current_mouse_position_;
-    }
-
-    // accumulate
-    asc::Camera next_camera = target_camera;
-    for (auto* camera_input : active_camera_inputs_) {
-      next_camera = camera_input->stepCamera(next_camera, mouse_delta, delta_time);
-    }
-
-    for (int i = 0; i < active_camera_inputs_.size();) {
-      auto* camera_input = active_camera_inputs_[i];
-      if (camera_input->ending()) {
-        camera_input->clearActivation();
-        idle_camera_inputs_.push_back(camera_input);
-        active_camera_inputs_[i] = active_camera_inputs_[active_camera_inputs_.size() - 1];
-        active_camera_inputs_.pop_back();
-      } else {
-        camera_input->continueActivation();
-        i++;
-      }
-    }
-
-    return next_camera;
+  if (current_mouse_position_.has_value()) {
+    last_mouse_position_ = current_mouse_position_;
   }
+
+  // accumulate
+  asc::Camera next_camera = target_camera;
+  for (auto* camera_input : active_camera_inputs_) {
+    next_camera = camera_input->stepCamera(next_camera, mouse_delta, delta_time);
+  }
+
+  for (int i = 0; i < active_camera_inputs_.size();) {
+    auto* camera_input = active_camera_inputs_[i];
+    if (camera_input->ending()) {
+      camera_input->clearActivation();
+      idle_camera_inputs_.push_back(camera_input);
+      active_camera_inputs_[i] = active_camera_inputs_[active_camera_inputs_.size() - 1];
+      active_camera_inputs_.pop_back();
+    } else {
+      camera_input->continueActivation();
+      i++;
+    }
+  }
+
+  return next_camera;
+}
+
+void Cameras::reset()
+{
+  for (int i = 0; i < active_camera_inputs_.size();) {
+    active_camera_inputs_[i]->reset();
+    idle_camera_inputs_.push_back(active_camera_inputs_[i]);
+    active_camera_inputs_[i] = active_camera_inputs_[active_camera_inputs_.size() - 1];
+    active_camera_inputs_.pop_back();
+  }
+}
 
 void LookCameraInput::handleEvents(const SDL_Event* event)
 {
@@ -241,6 +251,10 @@ asc::Camera TranslateCameraInput::stepCamera(
     next_camera.look_at -= axis_y * speed * /*props.translate_speed* */ delta_time;
   }
 
+  if (ending()) {
+    translation_ = TranslationType::None;
+  }
+
   return next_camera;
 }
 
@@ -315,6 +329,7 @@ asc::Camera OrbitLookCameraInput::stepCamera(
     // bit of a hack... fix me
     orbit_cameras_.last_mouse_position_ = {};
     orbit_cameras_.current_mouse_position_ = {};
+    orbit_cameras_.reset();
 
     next_camera.look_at = next_camera.transform().translation;
     next_camera.focal_dist = 0.0f;
