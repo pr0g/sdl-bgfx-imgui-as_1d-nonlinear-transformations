@@ -61,7 +61,7 @@ public:
   virtual void handleEvents(const SDL_Event* event) = 0;
   virtual asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
-    float delta_time) = 0;
+    int32_t wheel_delta, float delta_time) = 0;
   virtual bool exclusive() const { return false; }
   virtual void reset() {}
 
@@ -83,7 +83,8 @@ public:
   std::vector<CameraInput*> active_camera_inputs_;
   std::vector<CameraInput*> idle_camera_inputs_;
 
-  std::optional<as::vec2i> last_mouse_position_; 
+  int32_t wheel_delta_ = 0;
+  std::optional<as::vec2i> last_mouse_position_;
   std::optional<as::vec2i> current_mouse_position_;
 };
 
@@ -94,7 +95,7 @@ public:
   void handleEvents(const SDL_Event* event) override;
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
-    float delta_time) override;
+    int32_t wheel_delta, float delta_time) override;
 
   uint8_t button_type_;
 };
@@ -105,7 +106,7 @@ public:
   void handleEvents(const SDL_Event* event) override;
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
-    float delta_time) override;
+    int32_t wheel_delta, float delta_time) override;
 };
 
 using TranslationAxesFn = std::function<as::mat3(const asc::Camera& camera)>;
@@ -143,7 +144,7 @@ public:
   void handleEvents(const SDL_Event* event) override;
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
-    float delta_time) override;
+    int32_t wheel_delta, float delta_time) override;
   void reset() override { translation_ = TranslationType::None; }
 
 private:
@@ -166,6 +167,15 @@ private:
   TranslationAxesFn translationAxesFn_;
 };
 
+class DollyCameraInput : public CameraInput
+{
+public:
+  void handleEvents(const SDL_Event* event) override;
+  asc::Camera stepCamera(
+    const asc::Camera& target_camera, const as::vec2i& mouse_delta,
+    int32_t wheel_delta, float delta_time) override;
+};
+
 template<>
 struct bec::EnableBitMaskOperators<TranslateCameraInput::TranslationType>
 {
@@ -178,7 +188,7 @@ public:
   void handleEvents(const SDL_Event* event) override;
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
-    float delta_time) override;
+    int32_t wheel_delta, float delta_time) override;
   bool exclusive() const override { return true; }
 
   Cameras orbit_cameras_;

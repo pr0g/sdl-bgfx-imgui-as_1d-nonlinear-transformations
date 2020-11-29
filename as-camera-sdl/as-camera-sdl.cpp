@@ -19,6 +19,13 @@ void Cameras::handleEvents(const SDL_Event* event)
       }
     }
     break;
+    case SDL_MOUSEWHEEL: {
+      const auto* mouse_wheel_event = (SDL_MouseWheelEvent*)event;
+      wheel_delta_ = mouse_wheel_event->y;
+    }
+    break;
+    default:
+      break;
   }
 
   for (auto* camera_input : active_camera_inputs_) {
@@ -62,7 +69,9 @@ asc::Camera Cameras::stepCamera(
   // accumulate
   asc::Camera next_camera = target_camera;
   for (auto* camera_input : active_camera_inputs_) {
-    next_camera = camera_input->stepCamera(next_camera, mouse_delta, delta_time);
+    next_camera =
+      camera_input->stepCamera(
+        next_camera, mouse_delta, wheel_delta_, delta_time);
   }
 
   for (int i = 0; i < active_camera_inputs_.size();) {
@@ -77,6 +86,8 @@ asc::Camera Cameras::stepCamera(
       i++;
     }
   }
+
+  wheel_delta_ = 0;
 
   return next_camera;
 }
@@ -115,7 +126,7 @@ void LookCameraInput::handleEvents(const SDL_Event* event)
 
 asc::Camera LookCameraInput::stepCamera(
   const asc::Camera& target_camera, const as::vec2i& mouse_delta,
-  const float delta_time)
+  const int32_t wheel_delta, const float delta_time)
 {
   asc::Camera next_camera = target_camera;
 
@@ -149,7 +160,7 @@ void PanCameraInput::handleEvents(const SDL_Event* event)
 
 asc::Camera PanCameraInput::stepCamera(
   const asc::Camera& target_camera, const as::vec2i& mouse_delta,
-  const float delta_time)
+  const int32_t wheel_delta, const float delta_time)
 {
   asc::Camera next_camera = target_camera;
 
@@ -214,7 +225,8 @@ void TranslateCameraInput::handleEvents(const SDL_Event* event)
 }
 
 asc::Camera TranslateCameraInput::stepCamera(
-    const asc::Camera& target_camera, const as::vec2i& mouse_delta, const float delta_time)
+    const asc::Camera& target_camera, const as::vec2i& mouse_delta,
+    const int32_t wheel_delta, const float delta_time)
 {
   asc::Camera next_camera = target_camera;
 
@@ -293,7 +305,7 @@ static float intersectPlane(
 
 asc::Camera OrbitLookCameraInput::stepCamera(
   const asc::Camera& target_camera, const as::vec2i& mouse_delta,
-  float delta_time)
+  const int32_t wheel_delta, float delta_time)
 {
   asc::Camera next_camera = target_camera;
 
@@ -337,6 +349,24 @@ asc::Camera OrbitLookCameraInput::stepCamera(
 
   return next_camera;
 }
+
+void DollyCameraInput::handleEvents(const SDL_Event* event)
+{
+  beginActivation();
+}
+
+asc::Camera DollyCameraInput::stepCamera(
+  const asc::Camera& target_camera, const as::vec2i& mouse_delta,
+  const int32_t wheel_delta, float delta_time)
+{
+  asc::Camera next_camera = target_camera;
+
+  next_camera.focal_dist = as::min(next_camera.focal_dist + float(wheel_delta) * 0.2f /*props.dolly_speed*/, 0.0f);
+  // control.dolly = as::min(control.dolly + float(control.dolly_delta.y) * props.pan_speed, 0.0f);
+
+  return next_camera;
+}
+
 
 asc::Camera smoothCamera(
   const asc::Camera& current_camera, const asc::Camera& target_camera,
