@@ -177,7 +177,7 @@ public:
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
     int32_t wheel_delta, float delta_time) override;
-  void reset() override { translation_ = TranslationType::None; }
+  void reset() override { translation_ = TranslationType::None; boost_ = false; }
 
 private:
   enum class TranslationType
@@ -197,6 +197,7 @@ private:
 
   TranslationType translation_ = TranslationType::None;
   TranslationAxesFn translationAxesFn_;
+  bool boost_ = false;
 };
 
 class OrbitDollyMouseWheelCameraInput : public CameraInput

@@ -207,6 +207,9 @@ void TranslateCameraInput::handleEvents(const SDL_Event* event)
       if (translation_ != TranslationType::None) {
         beginActivation();
       }
+      if (keyboardEvent->keysym.scancode == SDL_SCANCODE_LSHIFT) {
+        boost_ = true;
+      }
     }
     break;
     case SDL_KEYUP: {
@@ -215,6 +218,9 @@ void TranslateCameraInput::handleEvents(const SDL_Event* event)
       translation_ ^= translationFromKey(keyboardEvent->keysym.scancode);
       if (translation_ == TranslationType::None) {
         endActivation();
+      }
+      if (keyboardEvent->keysym.scancode == SDL_SCANCODE_LSHIFT) {
+        boost_ = false;
       }
     }
     break;
@@ -236,7 +242,10 @@ asc::Camera TranslateCameraInput::stepCamera(
 
   using bec::operator&;
 
-  const float speed = 10.0f;
+  const float speed = [boost = boost_]() {
+    float speed = 10.0f;
+    return speed * (boost ?/*speed multiplier*/ 3.0f : 1.0f);
+  }();
 
   if ((translation_ & TranslationType::Forward) == TranslationType::Forward) {
     next_camera.look_at += axis_z * speed * /*props.translate_speed*/ delta_time;
