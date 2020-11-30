@@ -133,6 +133,15 @@ asc::Camera LookCameraInput::stepCamera(
   next_camera.pitch += float(mouse_delta[1]) * 0.005f;
   next_camera.yaw += float(mouse_delta[0]) * 0.005f;
 
+  auto clamp_rotation = [](const float angle) {
+   return std::fmod(angle + as::k_tau, as::k_tau);
+  };
+
+  next_camera.yaw = clamp_rotation(next_camera.yaw);
+  // clamp pitch to be +-90 degrees
+  next_camera.pitch =
+    as::clamp(next_camera.pitch, -as::k_pi * 0.5f, as::k_pi * 0.5f);
+
   return next_camera;
 }
 
@@ -457,15 +466,11 @@ asc::Camera smoothCamera(
     target_yaw -= as::k_tau * as::sign(yaw_delta);
   }
 
-  // clamp pitch to be +-90 degrees
-  const float target_pitch =
-    as::clamp(target_camera.pitch, -as::k_pi * 0.5f, as::k_pi * 0.5f);
-
   asc::Camera camera;
   // https://www.gamasutra.com/blogs/ScottLembcke/20180404/316046/Improved_Lerp_Smoothing.php
   const float look_rate = exp2(/*props.look_smoothness*/5.0f);
   const float look_t = exp2(-look_rate * dt);
-  camera.pitch = as::mix(target_pitch, current_camera.pitch, look_t);
+  camera.pitch = as::mix(target_camera.pitch, current_camera.pitch, look_t);
   camera.yaw = as::mix(target_yaw, current_yaw, look_t);
   const float move_rate = exp2(/*props.move_smoothness*/5.0f);
   const float move_t = exp2(-move_rate * dt);
