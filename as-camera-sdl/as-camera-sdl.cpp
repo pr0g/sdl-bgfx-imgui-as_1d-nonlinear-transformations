@@ -350,23 +350,86 @@ asc::Camera OrbitLookCameraInput::stepCamera(
   return next_camera;
 }
 
-void DollyCameraInput::handleEvents(const SDL_Event* event)
+void OrbitDollyMouseWheelCameraInput::handleEvents(const SDL_Event* event)
 {
-  beginActivation();
+  switch (event->type) {
+    case SDL_MOUSEWHEEL: {
+      beginActivation();
+    }
+    break;
+  default:
+    break;
+  }
 }
 
-asc::Camera DollyCameraInput::stepCamera(
+asc::Camera OrbitDollyMouseWheelCameraInput::stepCamera(
   const asc::Camera& target_camera, const as::vec2i& mouse_delta,
   const int32_t wheel_delta, float delta_time)
 {
   asc::Camera next_camera = target_camera;
-
   next_camera.focal_dist = as::min(next_camera.focal_dist + float(wheel_delta) * 0.2f /*props.dolly_speed*/, 0.0f);
-  // control.dolly = as::min(control.dolly + float(control.dolly_delta.y) * props.pan_speed, 0.0f);
-
+  endActivation();
   return next_camera;
 }
 
+void OrbitDollyMouseMoveCameraInput::handleEvents(const SDL_Event* event)
+{
+  switch (event->type) {
+    case SDL_MOUSEBUTTONDOWN: {
+      const auto* mouseEvent = (SDL_MouseButtonEvent*)event;
+      if (mouseEvent->button == SDL_BUTTON_RIGHT) {
+        beginActivation();
+      }
+    }
+    break;
+    case SDL_MOUSEBUTTONUP: {
+      const auto* mouseEvent = (SDL_MouseButtonEvent*)event;
+      if (mouseEvent->button == SDL_BUTTON_RIGHT) {
+        endActivation();
+      }
+    }
+    break;
+    default:
+      break;
+  }
+}
+
+asc::Camera OrbitDollyMouseMoveCameraInput::stepCamera(
+  const asc::Camera& target_camera, const as::vec2i& mouse_delta,
+  const int32_t wheel_delta, float delta_time)
+{
+  asc::Camera next_camera = target_camera;
+  next_camera.focal_dist = as::min(next_camera.focal_dist + float(mouse_delta.y) * 0.1f /*props.pan_speed*/, 0.0f);
+  return next_camera;
+}
+
+void WheelTranslationCameraInput::handleEvents(const SDL_Event* event)
+{
+  switch (event->type) {
+    case SDL_MOUSEWHEEL: {
+      beginActivation();
+    }
+    break;
+  default:
+    break;
+  }
+}
+
+asc::Camera WheelTranslationCameraInput::stepCamera(
+  const asc::Camera& target_camera, const as::vec2i& mouse_delta,
+  int32_t wheel_delta, float delta_time)
+{
+  asc::Camera next_camera = target_camera;
+
+  const auto translation_basis = lookTranslation(next_camera);
+  const auto axis_z = as::mat3_basis_z(translation_basis);
+
+  next_camera.look_at += axis_z * float(wheel_delta) * 0.2f;
+
+  endActivation();
+
+  return next_camera;
+}
 
 asc::Camera smoothCamera(
   const asc::Camera& current_camera, const asc::Camera& target_camera,

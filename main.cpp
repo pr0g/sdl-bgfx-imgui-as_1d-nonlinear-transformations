@@ -249,19 +249,23 @@ int main(int argc, char** argv)
   auto pan_camera = PanCameraInput{};
   auto translate_camera = TranslateCameraInput{lookTranslation};
   auto orbit_camera = OrbitLookCameraInput{};
+  auto wheel_camera = WheelTranslationCameraInput{};
 
   auto look_camera_orbit = LookCameraInput{SDL_BUTTON_LEFT};
   auto translate_camera_orbit = TranslateCameraInput{orbitTranslation};
-  auto dolly_camera_orbit = DollyCameraInput{};
+  auto dolly_wheel_camera_orbit = OrbitDollyMouseWheelCameraInput{}; 
+  auto dolly_move_camera_orbit = OrbitDollyMouseMoveCameraInput{};
   orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(&look_camera_orbit);
   orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(&translate_camera_orbit);
-  orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(&dolly_camera_orbit);
+  orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(&dolly_wheel_camera_orbit);
+  orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(&dolly_move_camera_orbit);
 
   Cameras cameras;
   cameras.idle_camera_inputs_.push_back(&look_camera);
   cameras.idle_camera_inputs_.push_back(&pan_camera);
   cameras.idle_camera_inputs_.push_back(&translate_camera);
   cameras.idle_camera_inputs_.push_back(&orbit_camera);
+  cameras.idle_camera_inputs_.push_back(&wheel_camera);
 
   fps::Fps fps;
   for (bool quit = false; !quit;) {

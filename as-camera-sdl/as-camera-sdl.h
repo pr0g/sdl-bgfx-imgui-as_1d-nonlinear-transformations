@@ -167,7 +167,25 @@ private:
   TranslationAxesFn translationAxesFn_;
 };
 
-class DollyCameraInput : public CameraInput
+class OrbitDollyMouseWheelCameraInput : public CameraInput
+{
+public:
+  void handleEvents(const SDL_Event* event) override;
+  asc::Camera stepCamera(
+    const asc::Camera& target_camera, const as::vec2i& mouse_delta,
+    int32_t wheel_delta, float delta_time) override;
+};
+
+class OrbitDollyMouseMoveCameraInput : public CameraInput
+{
+public:
+  void handleEvents(const SDL_Event* event) override;
+  asc::Camera stepCamera(
+    const asc::Camera& target_camera, const as::vec2i& mouse_delta,
+    int32_t wheel_delta, float delta_time) override;
+};
+
+class WheelTranslationCameraInput : public CameraInput
 {
 public:
   void handleEvents(const SDL_Event* event) override;
