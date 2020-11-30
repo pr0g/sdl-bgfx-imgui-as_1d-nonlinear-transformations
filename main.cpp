@@ -246,7 +246,7 @@ int main(int argc, char** argv)
   auto prev = bx::getHPCounter();
 
   auto look_camera = LookCameraInput{SDL_BUTTON_RIGHT};
-  auto pan_camera = PanCameraInput{};
+  auto pan_camera = PanCameraInput{lookPan};
   auto translate_camera = TranslateCameraInput{lookTranslation};
   auto orbit_camera = OrbitLookCameraInput{};
   auto wheel_camera = WheelTranslationCameraInput{};
@@ -255,10 +255,12 @@ int main(int argc, char** argv)
   auto translate_camera_orbit = TranslateCameraInput{orbitTranslation};
   auto dolly_wheel_camera_orbit = OrbitDollyMouseWheelCameraInput{}; 
   auto dolly_move_camera_orbit = OrbitDollyMouseMoveCameraInput{};
+  auto pan_camera_orbit = PanCameraInput{orbitPan};
   orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(&look_camera_orbit);
   orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(&translate_camera_orbit);
   orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(&dolly_wheel_camera_orbit);
   orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(&dolly_move_camera_orbit);
+  orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(&pan_camera_orbit);
 
   Cameras cameras;
   cameras.idle_camera_inputs_.push_back(&look_camera);

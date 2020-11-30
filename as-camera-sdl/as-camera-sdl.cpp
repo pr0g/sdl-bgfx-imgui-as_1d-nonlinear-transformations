@@ -166,11 +166,10 @@ asc::Camera PanCameraInput::stepCamera(
 
   const as::mat3 orientation = next_camera.transform().rotation;
 
-  const auto basis_x = as::mat3_basis_x(orientation);
-  const auto basis_y = as::mat3_basis_y(orientation);
+  const auto pan_axes = panAxesFn_(next_camera);
 
-  const auto delta_pan_x = float(mouse_delta.x) * basis_x * 0.01f/** props.pan_speed*/;
-  const auto delta_pan_y = float(mouse_delta.y) * basis_y * 0.01f/** props.pan_speed*/;
+  const auto delta_pan_x = float(mouse_delta.x) * pan_axes.horizontal_axis_ * 0.01f/** props.pan_speed*/;
+  const auto delta_pan_y = float(mouse_delta.y) * pan_axes.vertical_axis_ * 0.01f/** props.pan_speed*/;
 
   next_camera.look_at += delta_pan_x * /*props.pan_invert_x*/ -1.0f;
   next_camera.look_at += delta_pan_y /*props.pan_invert_y*/;

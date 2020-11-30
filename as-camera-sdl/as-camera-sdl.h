@@ -100,13 +100,45 @@ public:
   uint8_t button_type_;
 };
 
+struct PanAxes
+{
+  as::vec3 horizontal_axis_;
+  as::vec3 vertical_axis_;
+};
+
+using PanAxesFn = std::function<PanAxes(const asc::Camera& camera)>;
+
+inline PanAxes lookPan(const asc::Camera& camera)
+{
+  const as::mat3 orientation = camera.transform().rotation;
+  return {as::mat3_basis_x(orientation), as::mat3_basis_y(orientation)};
+}
+
+inline PanAxes orbitPan(const asc::Camera& camera)
+{
+  const as::mat3 orientation = camera.transform().rotation;
+
+  const auto basis_x = as::mat3_basis_x(orientation);
+  const auto basis_z = [&orientation]{
+    const auto forward = as::mat3_basis_z(orientation);
+    return as::vec_normalize(as::vec3(forward.x, 0.0f, forward.z));
+  }();
+
+  return {basis_x, basis_z};
+}
+
 class PanCameraInput : public CameraInput
 {
 public:
+  explicit PanCameraInput(PanAxesFn panAxesFn)
+    : panAxesFn_(std::move(panAxesFn)) {}
   void handleEvents(const SDL_Event* event) override;
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
     int32_t wheel_delta, float delta_time) override;
+
+private:
+  PanAxesFn panAxesFn_;
 };
 
 using TranslationAxesFn = std::function<as::mat3(const asc::Camera& camera)>;
