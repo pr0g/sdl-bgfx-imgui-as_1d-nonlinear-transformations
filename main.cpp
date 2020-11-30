@@ -253,13 +253,16 @@ int main(int argc, char** argv)
 
   auto look_camera_orbit = LookCameraInput{SDL_BUTTON_LEFT};
   auto translate_camera_orbit = TranslateCameraInput{orbitTranslation};
-  auto dolly_wheel_camera_orbit = OrbitDollyMouseWheelCameraInput{}; 
+  auto dolly_wheel_camera_orbit = OrbitDollyMouseWheelCameraInput{};
   auto dolly_move_camera_orbit = OrbitDollyMouseMoveCameraInput{};
   auto pan_camera_orbit = PanCameraInput{orbitPan};
   orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(&look_camera_orbit);
-  orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(&translate_camera_orbit);
-  orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(&dolly_wheel_camera_orbit);
-  orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(&dolly_move_camera_orbit);
+  orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(
+    &translate_camera_orbit);
+  orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(
+    &dolly_wheel_camera_orbit);
+  orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(
+    &dolly_move_camera_orbit);
   orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(&pan_camera_orbit);
 
   Cameras cameras;
@@ -323,8 +326,8 @@ int main(int argc, char** argv)
       //   current_event, camera_control, camera_props);
 
       // if (
-      //   before == asc::Mode::Orbit && camera_control.mode == asc::Mode::None) {
-      //   if (!as::almost_equal(camera.focal_dist, 0.0f, 0.01f)) {
+      //   before == asc::Mode::Orbit && camera_control.mode == asc::Mode::None)
+      //   { if (!as::almost_equal(camera.focal_dist, 0.0f, 0.01f)) {
       //     camera_control.look_at = camera.transform().translation;
       //     camera_control.dolly = 0.0f;
       //   }

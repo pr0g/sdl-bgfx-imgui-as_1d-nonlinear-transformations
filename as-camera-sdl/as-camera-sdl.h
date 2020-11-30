@@ -1,12 +1,13 @@
 #pragma once
 
-#include "as/as-vec.hpp"
 #include "as-camera/as-camera-controller.hpp"
+#include "as/as-vec.hpp"
 #include "bec/bitfield-enum-class.hpp"
 
+#include <functional>
 #include <memory>
-#include <vector>
 #include <optional>
+#include <vector>
 
 union SDL_Event;
 
@@ -28,7 +29,7 @@ struct CameraProperties;
 
 // must answer - how do they compose
 
-// loads of little behaviors 
+// loads of little behaviors
 
 // behavior -> active() (could always return true)
 // camera has a list of behaviors
@@ -88,7 +89,7 @@ public:
   std::optional<as::vec2i> current_mouse_position_;
 };
 
-class /*Free*/LookCameraInput : public CameraInput
+class /*Free*/ LookCameraInput : public CameraInput
 {
 public:
   explicit LookCameraInput(uint8_t button_type) : button_type_(button_type) {}
@@ -119,7 +120,7 @@ inline PanAxes orbitPan(const asc::Camera& camera)
   const as::mat3 orientation = camera.transform().rotation;
 
   const auto basis_x = as::mat3_basis_x(orientation);
-  const auto basis_z = [&orientation]{
+  const auto basis_z = [&orientation] {
     const auto forward = as::mat3_basis_z(orientation);
     return as::vec_normalize(as::vec3(forward.x, 0.0f, forward.z));
   }();
@@ -131,7 +132,9 @@ class PanCameraInput : public CameraInput
 {
 public:
   explicit PanCameraInput(PanAxesFn panAxesFn)
-    : panAxesFn_(std::move(panAxesFn)) {}
+    : panAxesFn_(std::move(panAxesFn))
+  {
+  }
   void handleEvents(const SDL_Event* event) override;
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
@@ -160,7 +163,7 @@ inline as::mat3 orbitTranslation(const asc::Camera& camera)
 
   const auto basis_x = as::mat3_basis_x(orientation);
   const auto basis_y = as::vec3::axis_y();
-  const auto basis_z = [&orientation]{
+  const auto basis_z = [&orientation] {
     const auto forward = as::mat3_basis_z(orientation);
     return as::vec_normalize(as::vec3(forward.x, 0.0f, forward.z));
   }();
@@ -172,12 +175,18 @@ class TranslateCameraInput : public CameraInput
 {
 public:
   explicit TranslateCameraInput(TranslationAxesFn translationAxesFn)
-    : translationAxesFn_(std::move(translationAxesFn)) {}
+    : translationAxesFn_(std::move(translationAxesFn))
+  {
+  }
   void handleEvents(const SDL_Event* event) override;
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
     int32_t wheel_delta, float delta_time) override;
-  void reset() override { translation_ = TranslationType::None; boost_ = false; }
+  void reset() override
+  {
+    translation_ = TranslationType::None;
+    boost_ = false;
+  }
 
 private:
   enum class TranslationType

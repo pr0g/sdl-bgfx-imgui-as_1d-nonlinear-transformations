@@ -6,24 +6,28 @@ void Cameras::handleEvents(const SDL_Event* event)
   switch (event->type) {
     case SDL_MOUSEMOTION: {
       const auto* mouse_motion_event = (SDL_MouseMotionEvent*)event;
-      current_mouse_position_ = as::vec2i(mouse_motion_event->x, mouse_motion_event->y);
+      current_mouse_position_ =
+        as::vec2i(mouse_motion_event->x, mouse_motion_event->y);
       // handle mouse warp gracefully
-      if (current_mouse_position_.has_value() && last_mouse_position_.has_value()) {
+      if (
+        current_mouse_position_.has_value()
+        && last_mouse_position_.has_value()) {
         if (
-          std::abs(current_mouse_position_->x - last_mouse_position_->x) >= 500) {
+          std::abs(current_mouse_position_->x - last_mouse_position_->x)
+          >= 500) {
           last_mouse_position_->x = current_mouse_position_->x;
         }
-        if (std::abs(current_mouse_position_->y - last_mouse_position_->y) >= 500) {
+        if (
+          std::abs(current_mouse_position_->y - last_mouse_position_->y)
+          >= 500) {
           last_mouse_position_->y = current_mouse_position_->y;
         }
       }
-    }
-    break;
+    } break;
     case SDL_MOUSEWHEEL: {
       const auto* mouse_wheel_event = (SDL_MouseWheelEvent*)event;
       wheel_delta_ = mouse_wheel_event->y;
-    }
-    break;
+    } break;
     default:
       break;
   }
@@ -42,15 +46,18 @@ asc::Camera Cameras::stepCamera(
 {
   for (int i = 0; i < idle_camera_inputs_.size();) {
     auto* camera_input = idle_camera_inputs_[i];
-    const bool can_begin =
-      camera_input->beginning() &&
-      std::all_of(active_camera_inputs_.cbegin(), active_camera_inputs_.cend(),
-      [](const auto& input){ return !input->exclusive(); })
-      && (!camera_input->exclusive() ||
-        (camera_input->exclusive() && active_camera_inputs_.empty()));
+    const bool
+      can_begin = camera_input->beginning()
+               && std::all_of(
+                    active_camera_inputs_.cbegin(),
+                    active_camera_inputs_.cend(),
+                    [](const auto& input) { return !input->exclusive(); })
+               && (!camera_input->exclusive()
+                   || (camera_input->exclusive() && active_camera_inputs_.empty()));
     if (can_begin) {
       active_camera_inputs_.push_back(camera_input);
-      idle_camera_inputs_[i] = idle_camera_inputs_[idle_camera_inputs_.size() - 1];
+      idle_camera_inputs_[i] =
+        idle_camera_inputs_[idle_camera_inputs_.size() - 1];
       idle_camera_inputs_.pop_back();
     } else {
       i++;
@@ -69,9 +76,8 @@ asc::Camera Cameras::stepCamera(
   // accumulate
   asc::Camera next_camera = target_camera;
   for (auto* camera_input : active_camera_inputs_) {
-    next_camera =
-      camera_input->stepCamera(
-        next_camera, mouse_delta, wheel_delta_, delta_time);
+    next_camera = camera_input->stepCamera(
+      next_camera, mouse_delta, wheel_delta_, delta_time);
   }
 
   for (int i = 0; i < active_camera_inputs_.size();) {
@@ -79,7 +85,8 @@ asc::Camera Cameras::stepCamera(
     if (camera_input->ending()) {
       camera_input->clearActivation();
       idle_camera_inputs_.push_back(camera_input);
-      active_camera_inputs_[i] = active_camera_inputs_[active_camera_inputs_.size() - 1];
+      active_camera_inputs_[i] =
+        active_camera_inputs_[active_camera_inputs_.size() - 1];
       active_camera_inputs_.pop_back();
     } else {
       camera_input->continueActivation();
@@ -97,7 +104,8 @@ void Cameras::reset()
   for (int i = 0; i < active_camera_inputs_.size();) {
     active_camera_inputs_[i]->reset();
     idle_camera_inputs_.push_back(active_camera_inputs_[i]);
-    active_camera_inputs_[i] = active_camera_inputs_[active_camera_inputs_.size() - 1];
+    active_camera_inputs_[i] =
+      active_camera_inputs_[active_camera_inputs_.size() - 1];
     active_camera_inputs_.pop_back();
   }
 }
@@ -110,15 +118,13 @@ void LookCameraInput::handleEvents(const SDL_Event* event)
       if (mouseEvent->button == button_type_) {
         beginActivation();
       }
-    }
-    break;
+    } break;
     case SDL_MOUSEBUTTONUP: {
       const auto* mouseEvent = (SDL_MouseButtonEvent*)event;
       if (mouseEvent->button == button_type_) {
         endActivation();
       }
-    }
-    break;
+    } break;
     default:
       break;
   }
@@ -134,7 +140,7 @@ asc::Camera LookCameraInput::stepCamera(
   next_camera.yaw += float(mouse_delta[0]) * 0.005f;
 
   auto clamp_rotation = [](const float angle) {
-   return std::fmod(angle + as::k_tau, as::k_tau);
+    return std::fmod(angle + as::k_tau, as::k_tau);
   };
 
   next_camera.yaw = clamp_rotation(next_camera.yaw);
@@ -153,15 +159,13 @@ void PanCameraInput::handleEvents(const SDL_Event* event)
       if (mouseEvent->button == SDL_BUTTON_MIDDLE) {
         beginActivation();
       }
-    }
-    break;
+    } break;
     case SDL_MOUSEBUTTONUP: {
       const auto* mouseEvent = (SDL_MouseButtonEvent*)event;
       if (mouseEvent->button == SDL_BUTTON_MIDDLE) {
         endActivation();
       }
-    }
-    break;
+    } break;
     default:
       break;
   }
@@ -177,8 +181,10 @@ asc::Camera PanCameraInput::stepCamera(
 
   const auto pan_axes = panAxesFn_(next_camera);
 
-  const auto delta_pan_x = float(mouse_delta.x) * pan_axes.horizontal_axis_ * 0.01f/** props.pan_speed*/;
-  const auto delta_pan_y = float(mouse_delta.y) * pan_axes.vertical_axis_ * 0.01f/** props.pan_speed*/;
+  const auto delta_pan_x = float(mouse_delta.x) * pan_axes.horizontal_axis_
+                         * 0.01f /** props.pan_speed*/;
+  const auto delta_pan_y = float(mouse_delta.y) * pan_axes.vertical_axis_
+                         * 0.01f /** props.pan_speed*/;
 
   next_camera.look_at += delta_pan_x * /*props.pan_invert_x*/ -1.0f;
   next_camera.look_at += delta_pan_y /*props.pan_invert_y*/;
@@ -186,7 +192,8 @@ asc::Camera PanCameraInput::stepCamera(
   return next_camera;
 }
 
-TranslateCameraInput::TranslationType TranslateCameraInput::translationFromKey(int key)
+TranslateCameraInput::TranslationType TranslateCameraInput::translationFromKey(
+  int key)
 {
   switch (key) {
     case SDL_SCANCODE_W:
@@ -219,8 +226,7 @@ void TranslateCameraInput::handleEvents(const SDL_Event* event)
       if (keyboardEvent->keysym.scancode == SDL_SCANCODE_LSHIFT) {
         boost_ = true;
       }
-    }
-    break;
+    } break;
     case SDL_KEYUP: {
       const auto* keyboardEvent = (SDL_KeyboardEvent*)event;
       using bec::operator^=;
@@ -231,16 +237,15 @@ void TranslateCameraInput::handleEvents(const SDL_Event* event)
       if (keyboardEvent->keysym.scancode == SDL_SCANCODE_LSHIFT) {
         boost_ = false;
       }
-    }
-    break;
+    } break;
     default:
       break;
   }
 }
 
 asc::Camera TranslateCameraInput::stepCamera(
-    const asc::Camera& target_camera, const as::vec2i& mouse_delta,
-    const int32_t wheel_delta, const float delta_time)
+  const asc::Camera& target_camera, const as::vec2i& mouse_delta,
+  const int32_t wheel_delta, const float delta_time)
 {
   asc::Camera next_camera = target_camera;
 
@@ -253,31 +258,37 @@ asc::Camera TranslateCameraInput::stepCamera(
 
   const float speed = [boost = boost_]() {
     float speed = 10.0f;
-    return speed * (boost ?/*speed multiplier*/ 3.0f : 1.0f);
+    return speed * (boost ? /*speed multiplier*/ 3.0f : 1.0f);
   }();
 
   if ((translation_ & TranslationType::Forward) == TranslationType::Forward) {
-    next_camera.look_at += axis_z * speed * /*props.translate_speed*/ delta_time;
+    next_camera.look_at +=
+      axis_z * speed * /*props.translate_speed*/ delta_time;
   }
 
   if ((translation_ & TranslationType::Backward) == TranslationType::Backward) {
-    next_camera.look_at -= axis_z * speed * /*props.translate_speed*/ delta_time;
+    next_camera.look_at -=
+      axis_z * speed * /*props.translate_speed*/ delta_time;
   }
 
   if ((translation_ & TranslationType::Left) == TranslationType::Left) {
-    next_camera.look_at -= axis_x * speed * /*props.translate_speed* */ delta_time;
+    next_camera.look_at -=
+      axis_x * speed * /*props.translate_speed* */ delta_time;
   }
 
   if ((translation_ & TranslationType::Right) == TranslationType::Right) {
-    next_camera.look_at += axis_x * speed * /*props.translate_speed* */ delta_time;
+    next_camera.look_at +=
+      axis_x * speed * /*props.translate_speed* */ delta_time;
   }
 
   if ((translation_ & TranslationType::Up) == TranslationType::Up) {
-    next_camera.look_at += axis_y * speed * /*props.translate_speed* */ delta_time;
+    next_camera.look_at +=
+      axis_y * speed * /*props.translate_speed* */ delta_time;
   }
 
   if ((translation_ & TranslationType::Down) == TranslationType::Down) {
-    next_camera.look_at -= axis_y * speed * /*props.translate_speed* */ delta_time;
+    next_camera.look_at -=
+      axis_y * speed * /*props.translate_speed* */ delta_time;
   }
 
   if (ending()) {
@@ -295,15 +306,13 @@ void OrbitLookCameraInput::handleEvents(const SDL_Event* event)
       if (keyboardEvent->keysym.scancode == SDL_SCANCODE_LALT) {
         beginActivation();
       }
-    }
-    break;
+    } break;
     case SDL_KEYUP: {
       const auto* keyboardEvent = (SDL_KeyboardEvent*)event;
       if (keyboardEvent->keysym.scancode == SDL_SCANCODE_LALT) {
         endActivation();
       }
-    }
-    break;
+    } break;
     default:
       break;
   }
@@ -342,10 +351,9 @@ asc::Camera OrbitLookCameraInput::stepCamera(
         + as::mat3_basis_z(target_camera.transform().rotation) * dist;
     } else {
       next_camera.focal_dist = -default_orbit_distance;
-      next_camera.look_at =
-        target_camera.transform().translation
-        + as::mat3_basis_z(target_camera.transform().rotation)
-            * default_orbit_distance;
+      next_camera.look_at = target_camera.transform().translation
+                          + as::mat3_basis_z(target_camera.transform().rotation)
+                              * default_orbit_distance;
     }
   }
 
@@ -372,10 +380,9 @@ void OrbitDollyMouseWheelCameraInput::handleEvents(const SDL_Event* event)
   switch (event->type) {
     case SDL_MOUSEWHEEL: {
       beginActivation();
-    }
-    break;
-  default:
-    break;
+    } break;
+    default:
+      break;
   }
 }
 
@@ -384,7 +391,9 @@ asc::Camera OrbitDollyMouseWheelCameraInput::stepCamera(
   const int32_t wheel_delta, float delta_time)
 {
   asc::Camera next_camera = target_camera;
-  next_camera.focal_dist = as::min(next_camera.focal_dist + float(wheel_delta) * 0.2f /*props.dolly_speed*/, 0.0f);
+  next_camera.focal_dist = as::min(
+    next_camera.focal_dist + float(wheel_delta) * 0.2f /*props.dolly_speed*/,
+    0.0f);
   endActivation();
   return next_camera;
 }
@@ -397,15 +406,13 @@ void OrbitDollyMouseMoveCameraInput::handleEvents(const SDL_Event* event)
       if (mouseEvent->button == SDL_BUTTON_RIGHT) {
         beginActivation();
       }
-    }
-    break;
+    } break;
     case SDL_MOUSEBUTTONUP: {
       const auto* mouseEvent = (SDL_MouseButtonEvent*)event;
       if (mouseEvent->button == SDL_BUTTON_RIGHT) {
         endActivation();
       }
-    }
-    break;
+    } break;
     default:
       break;
   }
@@ -416,7 +423,9 @@ asc::Camera OrbitDollyMouseMoveCameraInput::stepCamera(
   const int32_t wheel_delta, float delta_time)
 {
   asc::Camera next_camera = target_camera;
-  next_camera.focal_dist = as::min(next_camera.focal_dist + float(mouse_delta.y) * 0.1f /*props.pan_speed*/, 0.0f);
+  next_camera.focal_dist = as::min(
+    next_camera.focal_dist + float(mouse_delta.y) * 0.1f /*props.pan_speed*/,
+    0.0f);
   return next_camera;
 }
 
@@ -425,10 +434,9 @@ void WheelTranslationCameraInput::handleEvents(const SDL_Event* event)
   switch (event->type) {
     case SDL_MOUSEWHEEL: {
       beginActivation();
-    }
-    break;
-  default:
-    break;
+    } break;
+    default:
+      break;
   }
 }
 
@@ -468,14 +476,16 @@ asc::Camera smoothCamera(
 
   asc::Camera camera;
   // https://www.gamasutra.com/blogs/ScottLembcke/20180404/316046/Improved_Lerp_Smoothing.php
-  const float look_rate = exp2(/*props.look_smoothness*/5.0f);
+  const float look_rate = exp2(/*props.look_smoothness*/ 5.0f);
   const float look_t = exp2(-look_rate * dt);
   camera.pitch = as::mix(target_camera.pitch, current_camera.pitch, look_t);
   camera.yaw = as::mix(target_yaw, current_yaw, look_t);
-  const float move_rate = exp2(/*props.move_smoothness*/5.0f);
+  const float move_rate = exp2(/*props.move_smoothness*/ 5.0f);
   const float move_t = exp2(-move_rate * dt);
-  camera.focal_dist = as::mix(target_camera.focal_dist, current_camera.focal_dist, move_t);
-  camera.look_at = as::vec_mix(target_camera.look_at, current_camera.look_at, move_t);
+  camera.focal_dist =
+    as::mix(target_camera.focal_dist, current_camera.focal_dist, move_t);
+  camera.look_at =
+    as::vec_mix(target_camera.look_at, current_camera.look_at, move_t);
   return camera;
 }
 
