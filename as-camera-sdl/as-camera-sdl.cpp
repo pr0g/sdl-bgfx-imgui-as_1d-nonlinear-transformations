@@ -217,24 +217,27 @@ void TranslateCameraInput::handleEvents(const SDL_Event* event)
 {
   switch (event->type) {
     case SDL_KEYDOWN: {
-      const auto* keyboardEvent = (SDL_KeyboardEvent*)event;
+      if (event->key.repeat) {
+        break;
+      }
       using bec::operator|=;
-      translation_ |= translationFromKey(keyboardEvent->keysym.scancode);
+      const auto* keyboard_event = (SDL_KeyboardEvent*)event;
+      translation_ |= translationFromKey(keyboard_event->keysym.scancode);
       if (translation_ != TranslationType::None) {
         beginActivation();
       }
-      if (keyboardEvent->keysym.scancode == SDL_SCANCODE_LSHIFT) {
+      if (keyboard_event->keysym.scancode == SDL_SCANCODE_LSHIFT) {
         boost_ = true;
       }
     } break;
     case SDL_KEYUP: {
-      const auto* keyboardEvent = (SDL_KeyboardEvent*)event;
+      const auto* keyboard_event = (SDL_KeyboardEvent*)event;
       using bec::operator^=;
-      translation_ ^= translationFromKey(keyboardEvent->keysym.scancode);
+      translation_ ^= translationFromKey(keyboard_event->keysym.scancode);
       if (translation_ == TranslationType::None) {
         endActivation();
       }
-      if (keyboardEvent->keysym.scancode == SDL_SCANCODE_LSHIFT) {
+      if (keyboard_event->keysym.scancode == SDL_SCANCODE_LSHIFT) {
         boost_ = false;
       }
     } break;
@@ -302,14 +305,17 @@ void OrbitLookCameraInput::handleEvents(const SDL_Event* event)
 {
   switch (event->type) {
     case SDL_KEYDOWN: {
-      const auto* keyboardEvent = (SDL_KeyboardEvent*)event;
-      if (keyboardEvent->keysym.scancode == SDL_SCANCODE_LALT) {
+      if (event->key.repeat) {
+        break;
+      }
+      const auto* keyboard_event = (SDL_KeyboardEvent*)event;
+      if (keyboard_event->keysym.scancode == SDL_SCANCODE_LALT) {
         beginActivation();
       }
     } break;
     case SDL_KEYUP: {
-      const auto* keyboardEvent = (SDL_KeyboardEvent*)event;
-      if (keyboardEvent->keysym.scancode == SDL_SCANCODE_LALT) {
+      const auto* keyboard_event = (SDL_KeyboardEvent*)event;
+      if (keyboard_event->keysym.scancode == SDL_SCANCODE_LALT) {
         endActivation();
       }
     } break;
