@@ -20,22 +20,6 @@ struct CameraProperties;
 
 } // namespace asc
 
-// Cameras
-// stack
-// return false to exit (except if top of stack)
-
-// no starting camera - no transition
-// both sub cameras are running
-
-// must answer - how do they compose
-
-// loads of little behaviors
-
-// behavior -> active() (could always return true)
-// camera has a list of behaviors
-// camera -> exclusive (cannot begin while other actions are running
-//                      and other actions cannot begin while it is running)
-
 class CameraInput
 {
 public:
@@ -253,32 +237,3 @@ public:
 
   Cameras orbit_cameras_;
 };
-
-enum class MouseButtons : uint8_t
-{
-  None = 0,
-  Lmb = 1 << 0,
-  Rmb = 1 << 1,
-  Mmb = 1 << 2
-};
-
-template<>
-struct bec::EnableBitMaskOperators<MouseButtons>
-{
-  static const bool Enable = true;
-};
-
-struct MouseState
-{
-  as::vec2i xy;
-  MouseButtons buttons;
-};
-
-MouseState mouseState();
-asc::MotionType motionFromKey(int key);
-void updateCameraControlKeyboardSdl(
-  const SDL_Event& event, asc::CameraControl& control,
-  const asc::CameraProperties& props);
-void updateCameraControlMouseSdl(
-  asc::CameraControl& control, const asc::CameraProperties& props,
-  MouseState& prev_mouse_state);

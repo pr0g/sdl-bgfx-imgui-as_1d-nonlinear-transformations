@@ -175,15 +175,6 @@ int main(int argc, char** argv)
 
   asc::Camera target_camera = camera;
 
-  // initial mouse state
-  MouseState mouse_state = mouseState();
-
-  // camera control structure
-  // asc::CameraControl camera_control{};
-  // camera_control.pitch = camera.pitch;
-  // camera_control.yaw = camera.yaw;
-  // camera_control.look_at = camera.look_at;
-
   // camera properties
   asc::CameraProperties camera_props{};
   camera_props.rotate_speed = 0.005f;
@@ -282,23 +273,19 @@ int main(int argc, char** argv)
     SDL_GetDesktopDisplayMode(0, &display_mode);
 
     if (global_x >= display_mode.w - 1) {
-      mouse_state.xy = as::vec2i(1, global_y);
-      SDL_WarpMouseGlobal(mouse_state.xy.x, mouse_state.xy.y);
+      SDL_WarpMouseGlobal(1, global_y);
     }
 
     if (global_y >= display_mode.h - 1) {
-      mouse_state.xy = as::vec2i(global_y, 1);
-      SDL_WarpMouseGlobal(mouse_state.xy.x, mouse_state.xy.y);
+      SDL_WarpMouseGlobal(global_y, 1);
     }
 
     if (global_x == 0) {
-      mouse_state.xy = as::vec2i(display_mode.w - 2, global_y);
-      SDL_WarpMouseGlobal(mouse_state.xy.x, mouse_state.xy.y);
+      SDL_WarpMouseGlobal(display_mode.w - 2, global_y);
     }
 
     if (global_y == 0) {
-      mouse_state.xy = as::vec2i(global_x, display_mode.h - 2);
-      SDL_WarpMouseGlobal(mouse_state.xy.x, mouse_state.xy.y);
+      SDL_WarpMouseGlobal(global_x, display_mode.h - 2);
     }
 
     int x;
@@ -312,59 +299,17 @@ int main(int argc, char** argv)
     const auto hit_distance =
       intersectPlane(ray_origin, ray_direction, as::vec4(as::vec3::axis_z()));
 
-    // camera_control.wheel_delta = 0;
-
     static as::mat3 m = as::mat3::identity();
 
     SDL_Event current_event;
     while (SDL_PollEvent(&current_event) != 0) {
-
       cameras.handleEvents(&current_event);
-
-      // asc::Mode before = camera_control.mode;
-      // updateCameraControlKeyboardSdl(
-      //   current_event, camera_control, camera_props);
-
-      // if (
-      //   before == asc::Mode::Orbit && camera_control.mode == asc::Mode::None)
-      //   { if (!as::almost_equal(camera.focal_dist, 0.0f, 0.01f)) {
-      //     camera_control.look_at = camera.transform().translation;
-      //     camera_control.dolly = 0.0f;
-      //   }
-      // }
 
       ImGui_ImplSDL2_ProcessEvent(&current_event);
       if (current_event.type == SDL_QUIT) {
         quit = true;
         break;
       }
-
-      // camera hack
-      // if (current_event.type == SDL_KEYDOWN) {
-      //   const auto key_event = (SDL_KeyboardEvent*)&current_event;
-      //   const int key = current_event.key.keysym.scancode;
-      //   if (key == SDL_SCANCODE_LALT && !key_event->repeat
-      //       && camera_control.mode == asc::Mode::Orbit) {
-      //     float hit_distance = intersectPlane(
-      //       camera.transform().translation,
-      //       as::mat3_basis_z(camera.transform().rotation),
-      //       as::vec4(as::vec3::axis_y()));
-
-      //     if (hit_distance >= 0.0f) {
-      //       const float dist = std::min(hit_distance, orbit_max_distance);
-      //       camera_control.dolly = -dist;
-      //       camera_control.look_at =
-      //         camera.transform().translation
-      //         + as::mat3_basis_z(camera.transform().rotation) * dist;
-      //     } else {
-      //       camera_control.dolly = -default_orbit_distance;
-      //       camera_control.look_at =
-      //         camera.transform().translation
-      //         + as::mat3_basis_z(camera.transform().rotation)
-      //             * default_orbit_distance;
-      //     }
-      //   }
-      // }
 
       if (current_event.type == SDL_MOUSEBUTTONDOWN) {
         if (hit_distance >= 0.0f) {
@@ -376,20 +321,12 @@ int main(int argc, char** argv)
       if (current_event.type == SDL_MOUSEBUTTONUP) {
         curve_handles.clearDrag();
       }
-
-      // mouse wheel handling for camera
-      // if (current_event.type == SDL_MOUSEWHEEL) {
-      //   const auto* mouse_wheel_event = (SDL_MouseWheelEvent*)&current_event;
-      //   camera_control.wheel_delta = mouse_wheel_event->y;
-      // }
     }
 
     if (curve_handles.dragging() && hit_distance > 0.0f) {
       const auto next_hit = ray_origin + ray_direction * hit_distance;
       curve_handles.updateDrag(next_hit);
     }
-
-    // updateCameraControlMouseSdl(camera_control, camera_props, mouse_state);
 
     ImGui_Implbgfx_NewFrame();
     ImGui_ImplSDL2_NewFrame(window);
@@ -434,17 +371,8 @@ int main(int argc, char** argv)
 
     const float delta_time = delta / static_cast<float>(freq);
 
-    const auto modifier_keys = SDL_GetModState();
-    auto camera_props_now = camera_props;
-    camera_props_now.translate_speed *=
-      (modifier_keys & KMOD_LSHIFT) == 1 ? translation_multiplier : 1.0f;
-
     target_camera = cameras.stepCamera(target_camera, delta_time);
     camera = smoothCamera(camera, target_camera, delta_time);
-
-    // asc::updateCamera(
-    //   camera, camera_control, camera_props_now, delta_time,
-    //   asc::Handedness::Left);
 
     float view[16];
     as::mat_to_arr(as::mat4_from_affine(camera.view()), view);
