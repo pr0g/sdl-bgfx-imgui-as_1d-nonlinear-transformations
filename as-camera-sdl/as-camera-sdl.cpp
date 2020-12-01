@@ -114,14 +114,14 @@ void LookCameraInput::handleEvents(const SDL_Event* event)
 {
   switch (event->type) {
     case SDL_MOUSEBUTTONDOWN: {
-      const auto* mouseEvent = (SDL_MouseButtonEvent*)event;
-      if (mouseEvent->button == button_type_) {
+      const auto* mouse_event = (SDL_MouseButtonEvent*)event;
+      if (mouse_event->button == button_type_) {
         beginActivation();
       }
     } break;
     case SDL_MOUSEBUTTONUP: {
-      const auto* mouseEvent = (SDL_MouseButtonEvent*)event;
-      if (mouseEvent->button == button_type_) {
+      const auto* mouse_event = (SDL_MouseButtonEvent*)event;
+      if (mouse_event->button == button_type_) {
         endActivation();
       }
     } break;
@@ -155,14 +155,14 @@ void PanCameraInput::handleEvents(const SDL_Event* event)
 {
   switch (event->type) {
     case SDL_MOUSEBUTTONDOWN: {
-      const auto* mouseEvent = (SDL_MouseButtonEvent*)event;
-      if (mouseEvent->button == SDL_BUTTON_MIDDLE) {
+      const auto* mouse_event = (SDL_MouseButtonEvent*)event;
+      if (mouse_event->button == SDL_BUTTON_MIDDLE) {
         beginActivation();
       }
     } break;
     case SDL_MOUSEBUTTONUP: {
-      const auto* mouseEvent = (SDL_MouseButtonEvent*)event;
-      if (mouseEvent->button == SDL_BUTTON_MIDDLE) {
+      const auto* mouse_event = (SDL_MouseButtonEvent*)event;
+      if (mouse_event->button == SDL_BUTTON_MIDDLE) {
         endActivation();
       }
     } break;
@@ -217,7 +217,7 @@ void TranslateCameraInput::handleEvents(const SDL_Event* event)
 {
   switch (event->type) {
     case SDL_KEYDOWN: {
-      if (event->key.repeat) {
+      if (event->key.repeat != 0u) {
         break;
       }
       using bec::operator|=;
@@ -305,7 +305,7 @@ void OrbitLookCameraInput::handleEvents(const SDL_Event* event)
 {
   switch (event->type) {
     case SDL_KEYDOWN: {
-      if (event->key.repeat) {
+      if (event->key.repeat != 0u) {
         break;
       }
       const auto* keyboard_event = (SDL_KeyboardEvent*)event;
@@ -408,14 +408,14 @@ void OrbitDollyMouseMoveCameraInput::handleEvents(const SDL_Event* event)
 {
   switch (event->type) {
     case SDL_MOUSEBUTTONDOWN: {
-      const auto* mouseEvent = (SDL_MouseButtonEvent*)event;
-      if (mouseEvent->button == SDL_BUTTON_RIGHT) {
+      const auto* mouse_event = (SDL_MouseButtonEvent*)event;
+      if (mouse_event->button == SDL_BUTTON_RIGHT) {
         beginActivation();
       }
     } break;
     case SDL_MOUSEBUTTONUP: {
-      const auto* mouseEvent = (SDL_MouseButtonEvent*)event;
-      if (mouseEvent->button == SDL_BUTTON_RIGHT) {
+      const auto* mouse_event = (SDL_MouseButtonEvent*)event;
+      if (mouse_event->button == SDL_BUTTON_RIGHT) {
         endActivation();
       }
     } break;
