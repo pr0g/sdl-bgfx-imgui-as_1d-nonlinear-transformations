@@ -2,7 +2,6 @@
 #include "SDL.h"
 #include "SDL_syswm.h"
 #include "as-camera-sdl/as-camera-sdl.h"
-#include "as-camera/as-camera-controller.hpp"
 #include "as/as-math-ops.hpp"
 #include "as/as-view.hpp"
 #include "bgfx-imgui/imgui_impl_bgfx.h"
@@ -176,17 +175,18 @@ int main(int argc, char** argv)
   asc::Camera target_camera = camera;
 
   // camera properties
-  asc::CameraProperties camera_props{};
-  camera_props.rotate_speed = 0.005f;
-  camera_props.pan_speed = 0.01f;
-  camera_props.translate_speed = 10.0f;
-  camera_props.orbit_speed = 0.0f;
-  camera_props.look_smoothness = 5.0f;
-  camera_props.move_smoothness = 5.0f;
-  camera_props.dolly_speed = 0.2f;
+  float rotate_speed = 0.005f;
+  float pan_speed = 0.01f;
+  float translate_speed = 10.0f;
+  float orbit_speed = 0.0f;
+  float look_smoothness = 5.0f;
+  float move_smoothness = 5.0f;
+  float dolly_speed = 0.2f;
   float translation_multiplier = 3.0f;
   float default_orbit_distance = 15.0f;
   float orbit_max_distance = 100.0f;
+  bool pan_invert_x = true;
+  bool pan_invert_y = true;
 
   const float fov = as::radians(60.0f);
   const as::mat4 perspective_projection =
@@ -335,20 +335,19 @@ int main(int argc, char** argv)
 
     ImGui::Begin("Camera");
     ImGui::PushItemWidth(70);
-    ImGui::InputFloat("Rotate Speed", &camera_props.rotate_speed);
-    ImGui::InputFloat("Pan Speed", &camera_props.pan_speed);
-    ImGui::InputFloat("Translate Speed", &camera_props.translate_speed);
-    ImGui::InputFloat("Look Smoothness", &camera_props.look_smoothness);
-    ImGui::InputFloat("Move Smoothness", &camera_props.move_smoothness);
+    ImGui::InputFloat("Rotate Speed", &rotate_speed);
+    ImGui::InputFloat("Pan Speed", &pan_speed);
+    ImGui::InputFloat("Translate Speed", &translate_speed);
+    ImGui::InputFloat("Look Smoothness", &look_smoothness);
+    ImGui::InputFloat("Move Smoothness", &move_smoothness);
     ImGui::InputFloat("Translation Multiplier", &translation_multiplier);
     ImGui::InputFloat("Default Orbit Distance", &default_orbit_distance);
     ImGui::InputFloat("Orbit Max Distance", &orbit_max_distance);
-    ImGui::InputFloat("Orbit Speed", &camera_props.orbit_speed);
-    ImGui::InputFloat("Dolly Speed", &camera_props.dolly_speed);
+    ImGui::InputFloat("Orbit Speed", &orbit_speed);
+    ImGui::InputFloat("Dolly Speed", &dolly_speed);
     ImGui::PopItemWidth();
-    ImGui::Checkbox("Pan Local", &camera_props.pan_local);
-    ImGui::Checkbox("Pan Invert X", &camera_props.pan_invert_x);
-    ImGui::Checkbox("Pan Invert Y", &camera_props.pan_invert_y);
+    ImGui::Checkbox("Pan Invert X", &pan_invert_x);
+    ImGui::Checkbox("Pan Invert Y", &pan_invert_y);
     // ImGui::Text("Yaw Control: ");
     // ImGui::SameLine(100);
     // ImGui::Text("%f", as::degrees(camera_control.yaw));
@@ -478,7 +477,7 @@ int main(int argc, char** argv)
     }
 
     // draw camera look at
-    if (!as::almost_equal(camera.focal_dist, 0.0f, 0.01f)) {
+    if (!as::almost_equal(camera.look_dist, 0.0f, 0.01f)) {
       auto sphere = dbg::DebugSphere(
         as::mat4_from_mat3_vec3(as::mat3::identity(), camera.look_at), 1.0f,
         main_view, program_col);

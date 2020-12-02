@@ -1,6 +1,6 @@
 #pragma once
 
-#include "as-camera/as-camera-controller.hpp"
+#include "as-camera/as-camera.hpp"
 #include "as/as-vec.hpp"
 #include "bec/bitfield-enum-class.hpp"
 

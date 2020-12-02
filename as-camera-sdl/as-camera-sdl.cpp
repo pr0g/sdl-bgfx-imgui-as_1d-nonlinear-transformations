@@ -351,12 +351,12 @@ asc::Camera OrbitLookCameraInput::stepCamera(
 
     if (hit_distance >= 0.0f) {
       const float dist = std::min(hit_distance, orbit_max_distance);
-      next_camera.focal_dist = -dist;
+      next_camera.look_dist = -dist;
       next_camera.look_at =
         target_camera.transform().translation
         + as::mat3_basis_z(target_camera.transform().rotation) * dist;
     } else {
-      next_camera.focal_dist = -default_orbit_distance;
+      next_camera.look_dist = -default_orbit_distance;
       next_camera.look_at = target_camera.transform().translation
                           + as::mat3_basis_z(target_camera.transform().rotation)
                               * default_orbit_distance;
@@ -375,7 +375,7 @@ asc::Camera OrbitLookCameraInput::stepCamera(
     orbit_cameras_.reset();
 
     next_camera.look_at = next_camera.transform().translation;
-    next_camera.focal_dist = 0.0f;
+    next_camera.look_dist = 0.0f;
   }
 
   return next_camera;
@@ -397,8 +397,8 @@ asc::Camera OrbitDollyMouseWheelCameraInput::stepCamera(
   const int32_t wheel_delta, float delta_time)
 {
   asc::Camera next_camera = target_camera;
-  next_camera.focal_dist = as::min(
-    next_camera.focal_dist + float(wheel_delta) * 0.2f /*props.dolly_speed*/,
+  next_camera.look_dist = as::min(
+    next_camera.look_dist + float(wheel_delta) * 0.2f /*props.dolly_speed*/,
     0.0f);
   endActivation();
   return next_camera;
@@ -429,8 +429,8 @@ asc::Camera OrbitDollyMouseMoveCameraInput::stepCamera(
   const int32_t wheel_delta, float delta_time)
 {
   asc::Camera next_camera = target_camera;
-  next_camera.focal_dist = as::min(
-    next_camera.focal_dist + float(mouse_delta.y) * 0.1f /*props.pan_speed*/,
+  next_camera.look_dist = as::min(
+    next_camera.look_dist + float(mouse_delta.y) * 0.1f /*props.pan_speed*/,
     0.0f);
   return next_camera;
 }
@@ -488,8 +488,8 @@ asc::Camera smoothCamera(
   camera.yaw = as::mix(target_yaw, current_yaw, look_t);
   const float move_rate = exp2(/*props.move_smoothness*/ 5.0f);
   const float move_t = exp2(-move_rate * dt);
-  camera.focal_dist =
-    as::mix(target_camera.focal_dist, current_camera.focal_dist, move_t);
+  camera.look_dist =
+    as::mix(target_camera.look_dist, current_camera.look_dist, move_t);
   camera.look_at =
     as::vec_mix(target_camera.look_at, current_camera.look_at, move_t);
   return camera;

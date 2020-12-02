@@ -7,17 +7,20 @@ find_package(bgfx REQUIRED CONFIG)
 find_package(imgui REQUIRED CONFIG)
 
 include(FetchContent)
+
 FetchContent_Declare(
     as-camera
     GIT_REPOSITORY https://github.com/pr0g/as-camera.git
     GIT_TAG        origin/camera-experiments)
-FetchContent_MakeAvailable(as-camera)
-
+FetchContent_Declare(
+    bec
+    GIT_REPOSITORY https://github.com/pr0g/Bit-Field-Enum-Class.git
+    GIT_TAG        origin/main)
 FetchContent_Declare(
     EasyIterator
-    GIT_REPOSITORY https://github.com/TheLartians/EasyIterator.git
-)
-FetchContent_MakeAvailable(EasyIterator)
+    GIT_REPOSITORY https://github.com/TheLartians/EasyIterator.git)
+
+FetchContent_MakeAvailable(as-camera EasyIterator bec)
 
 add_executable(${PROJECT_NAME})
 target_sources(
@@ -37,7 +40,8 @@ target_link_libraries(
     bgfx::bgfx
     imgui::imgui
     as-camera
-    EasyIterator)
+    EasyIterator
+    bec)
 
 # required by as library
 target_compile_definitions(
