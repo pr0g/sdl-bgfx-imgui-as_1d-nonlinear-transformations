@@ -514,14 +514,13 @@ int main(int argc, char** argv)
 
     // control handles
     for (as::index index = 0; index < order + 2; ++index) {
-      const auto translation =
-        as::mat4_from_mat3_vec3(
-          as::mat3::identity(), curve_handles.getHandle(index));
+      const auto translation = as::mat4_from_mat3_vec3(
+        as::mat3::identity(), curve_handles.getHandle(index));
       const auto scale =
         as::mat4_from_mat3(as::mat3_scale(dbg::CurveHandles::HandleRadius));
 
       debug_circles.addCircle(
-          as::mat_mul(scale, translation), as::vec4(as::vec3::zero(), 1.0f));
+        as::mat_mul(scale, translation), as::vec4(as::vec3::zero(), 1.0f));
     }
 
     const auto line_granularity = 50;
@@ -709,14 +708,13 @@ int main(int argc, char** argv)
 
     // draw smooth line handles
     for (auto index : {smooth_line_begin_index, smooth_line_end_index}) {
-      const auto translation =
-        as::mat4_from_mat3_vec3(
-          as::mat3::identity(), curve_handles.getHandle(index));
+      const auto translation = as::mat4_from_mat3_vec3(
+        as::mat3::identity(), curve_handles.getHandle(index));
       const auto scale =
         as::mat4_from_mat3(as::mat3_scale(dbg::CurveHandles::HandleRadius));
 
       debug_circles.addCircle(
-          as::mat_mul(scale, translation), as::vec4(as::vec3::zero(), 1.0f));
+        as::mat_mul(scale, translation), as::vec4(as::vec3::zero(), 1.0f));
     }
 
     // draw smooth line
@@ -743,14 +741,14 @@ int main(int argc, char** argv)
 
     const auto horizontal_position =
       as::vec_mix(start, end, interpolations[item](t));
-    
+
     const auto translation =
-        as::mat4_from_mat3_vec3(as::mat3::identity(), horizontal_position);
-      const auto scale =
-        as::mat4_from_mat3(as::mat3_scale(dbg::CurveHandles::HandleRadius));
+      as::mat4_from_mat3_vec3(as::mat3::identity(), horizontal_position);
+    const auto scale =
+      as::mat4_from_mat3(as::mat3_scale(dbg::CurveHandles::HandleRadius));
 
     debug_circles.addCircle(
-        as::mat_mul(scale, translation), as::vec4(as::vec3::zero(), 1.0f));
+      as::mat_mul(scale, translation), as::vec4(as::vec3::zero(), 1.0f));
 
     const auto curve_position = [p0, p1, c0, c1, c2, c3] {
       if (order == 0) {
@@ -773,10 +771,8 @@ int main(int argc, char** argv)
 
     debug_circles.addCircle(
       as::mat_mul(
-        as::mat4_from_mat3(
-          as::mat3_scale(dbg::CurveHandles::HandleRadius)),
-        as::mat4_from_mat3_vec3(
-          as::mat3::identity(), curve_position)),
+        as::mat4_from_mat3(as::mat3_scale(dbg::CurveHandles::HandleRadius)),
+        as::mat4_from_mat3_vec3(as::mat3::identity(), curve_position)),
       as::vec4(as::vec3::zero(), 1.0f));
     // animation end
 
