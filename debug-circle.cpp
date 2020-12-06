@@ -19,7 +19,7 @@ void DebugCircles::init()
     CircleIndices[i] = i;
     rot += increment;
   }
-  
+
   CircleIndices[CircleIndicesCount - 1] = 0;
 }
 
@@ -79,6 +79,37 @@ void DebugCircles::submit()
 
     bgfx::setState(BGFX_STATE_DEFAULT | BGFX_STATE_PT_LINESTRIP);
     bgfx::submit(view_, program_handle_);
+  }
+}
+
+DebugSpheres::DebugSpheres(DebugCircles& debug_circles)
+  : debug_circles_(debug_circles)
+{
+}
+
+void DebugSpheres::addSphere(const as::mat4& transform, const as::vec4& color)
+{
+  constexpr size_t loops = 8;
+  const float vertical_angle_inc_rad = as::radians(180.0f / float(loops));
+  const float starting_vertical_angle_rad = as::radians(90.0f);
+
+  float current_vertical_angle_rad =
+    starting_vertical_angle_rad + vertical_angle_inc_rad;
+  for (size_t loop = 0; loop < loops - 1; ++loop) {
+    const float vertical_position = std::sin(current_vertical_angle_rad);
+    const float horizontal_scale = std::cos(current_vertical_angle_rad);
+
+    const auto translation =
+      as::mat4_from_mat3_vec3(
+        as::mat3_rotation_x(as::radians(90.0f)),
+        as::vec3::axis_y(vertical_position));
+    const auto scale = as::mat4_from_mat3(as::mat3_scale(horizontal_scale));
+
+    debug_circles_.addCircle(
+        as::mat_mul(as::mat_mul(scale, translation), transform),
+        as::vec4(as::vec3::zero(), 1.0f));
+
+    current_vertical_angle_rad += vertical_angle_inc_rad;
   }
 }
 

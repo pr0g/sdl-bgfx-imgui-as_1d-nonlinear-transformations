@@ -325,6 +325,7 @@ int main(int argc, char** argv)
     }
 
     dbg::DebugCircles debug_circles(main_view, program_inst);
+    dbg::DebugSpheres debug_spheres(debug_circles);
 
     if (curve_handles.dragging() && hit_distance > 0.0f) {
       const auto next_hit = ray_origin + ray_direction * hit_distance;
@@ -481,10 +482,9 @@ int main(int argc, char** argv)
 
     // draw camera look at
     if (!as::almost_equal(camera.look_dist, 0.0f, 0.01f)) {
-      auto sphere = dbg::DebugSphere(
-        as::mat4_from_mat3_vec3(as::mat3::identity(), camera.look_at), 1.0f,
-        main_view, program_col);
-      sphere.draw();
+      debug_spheres.addSphere(
+        as::mat4_from_mat3_vec3(as::mat3::identity(), camera.look_at),
+        as::vec4(as::vec3::zero(), 1.0f));
     }
 
     const auto p0 = curve_handles.getHandle(p0_index);
