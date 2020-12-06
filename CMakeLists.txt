@@ -30,6 +30,7 @@ target_sources(
     bgfx-imgui/imgui_impl_bgfx.cpp
     as-camera-sdl/as-camera-sdl.cpp
     debug-lines.cpp
+    debug-circle.cpp
     smooth-line.cpp
     fps.cpp)
 

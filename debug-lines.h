@@ -10,6 +10,7 @@ namespace dbg
 
 struct DebugVertex
 {
+  DebugVertex() = default;
   DebugVertex(const as::vec3& position, const uint32_t color)
     : position_(position), color_(color)
   {
@@ -47,7 +48,7 @@ class DebugQuads
   struct QuadInstance
   {
     QuadInstance() = default;
-    QuadInstance(const as::mat4& transform, const as::vec4 color)
+    QuadInstance(const as::mat4& transform, const as::vec4& color)
       : transform_(transform), color_(color)
     {
     }

@@ -132,6 +132,7 @@ int main(int argc, char** argv)
   bgfx::init(bgfx_init);
 
   dbg::DebugVertex::init();
+  dbg::DebugCircles::init();
 
   const auto screen_dimension = as::vec2i(width, height);
   const bgfx::ViewId main_view = 0;
@@ -323,6 +324,8 @@ int main(int argc, char** argv)
       }
     }
 
+    dbg::DebugCircles debug_circles(main_view, program_inst);
+
     if (curve_handles.dragging() && hit_distance > 0.0f) {
       const auto next_hit = ray_origin + ray_direction * hit_distance;
       curve_handles.updateDrag(next_hit);
@@ -511,11 +514,14 @@ int main(int argc, char** argv)
 
     // control handles
     for (as::index index = 0; index < order + 2; ++index) {
-      const auto circle = dbg::DebugCircle(
+      const auto translation =
         as::mat4_from_mat3_vec3(
-          as::mat3::identity(), curve_handles.getHandle(index)),
-        dbg::CurveHandles::HandleRadius, main_view, program_col);
-      circle.draw();
+          as::mat3::identity(), curve_handles.getHandle(index));
+      const auto scale =
+        as::mat4_from_mat3(as::mat3_scale(dbg::CurveHandles::HandleRadius));
+
+      debug_circles.addCircle(
+          as::mat_mul(scale, translation), as::vec4(as::vec3::zero(), 1.0f));
     }
 
     const auto line_granularity = 50;
@@ -703,11 +709,14 @@ int main(int argc, char** argv)
 
     // draw smooth line handles
     for (auto index : {smooth_line_begin_index, smooth_line_end_index}) {
-      const auto circle = dbg::DebugCircle(
+      const auto translation =
         as::mat4_from_mat3_vec3(
-          as::mat3::identity(), curve_handles.getHandle(index)),
-        dbg::CurveHandles::HandleRadius, main_view, program_col);
-      circle.draw();
+          as::mat3::identity(), curve_handles.getHandle(index));
+      const auto scale =
+        as::mat4_from_mat3(as::mat3_scale(dbg::CurveHandles::HandleRadius));
+
+      debug_circles.addCircle(
+          as::mat_mul(scale, translation), as::vec4(as::vec3::zero(), 1.0f));
     }
 
     // draw smooth line
@@ -734,10 +743,14 @@ int main(int argc, char** argv)
 
     const auto horizontal_position =
       as::vec_mix(start, end, interpolations[item](t));
-    auto horizontal_moving_circle = dbg::DebugCircle(
-      as::mat4_from_mat3_vec3(as::mat3::identity(), horizontal_position),
-      dbg::CurveHandles::HandleRadius, main_view, program_col);
-    horizontal_moving_circle.draw();
+    
+    const auto translation =
+        as::mat4_from_mat3_vec3(as::mat3::identity(), horizontal_position);
+      const auto scale =
+        as::mat4_from_mat3(as::mat3_scale(dbg::CurveHandles::HandleRadius));
+
+    debug_circles.addCircle(
+        as::mat_mul(scale, translation), as::vec4(as::vec3::zero(), 1.0f));
 
     const auto curve_position = [p0, p1, c0, c1, c2, c3] {
       if (order == 0) {
@@ -758,10 +771,13 @@ int main(int argc, char** argv)
       return as::vec3::zero();
     }();
 
-    auto curve_moving_circle = dbg::DebugCircle(
-      as::mat4_from_mat3_vec3(as::mat3::identity(), curve_position),
-      dbg::CurveHandles::HandleRadius, main_view, program_col);
-    curve_moving_circle.draw();
+    debug_circles.addCircle(
+      as::mat_mul(
+        as::mat4_from_mat3(
+          as::mat3_scale(dbg::CurveHandles::HandleRadius)),
+        as::mat4_from_mat3_vec3(
+          as::mat3::identity(), curve_position)),
+      as::vec4(as::vec3::zero(), 1.0f));
     // animation end
 
     // screen space drawing
@@ -899,6 +915,7 @@ int main(int argc, char** argv)
 
     debug_lines.submit();
     debug_quads.submit();
+    debug_circles.submit();
 
     // include this in case nothing was submitted to draw
     bgfx::touch(main_view);
