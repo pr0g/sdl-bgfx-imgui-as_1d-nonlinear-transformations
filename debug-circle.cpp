@@ -14,8 +14,8 @@ void DebugCircles::init()
   float rot = 0.0f;
   const float increment = as::k_tau / static_cast<float>(CircleVerticesCount);
   for (size_t i = 0; i < CircleVerticesCount; ++i) {
-    CircleVertices[i] =
-      {as::vec3(std::cos(rot), std::sin(rot), 0.0f), 0xff000000};
+    CircleVertices[i] = {
+      as::vec3(std::cos(rot), std::sin(rot), 0.0f), 0xff000000};
     CircleIndices[i] = i;
     rot += increment;
   }
@@ -29,8 +29,8 @@ DebugCircles::DebugCircles(
 {
   circle_vbh_ = bgfx::createVertexBuffer(
     bgfx::makeRef(CircleVertices, sizeof(CircleVertices)), DebugVertex::Layout);
-  circle_ibh_ =
-    bgfx::createIndexBuffer(bgfx::makeRef(CircleIndices, sizeof(CircleIndices)));
+  circle_ibh_ = bgfx::createIndexBuffer(
+    bgfx::makeRef(CircleIndices, sizeof(CircleIndices)));
 }
 
 DebugCircles::~DebugCircles()
@@ -89,25 +89,24 @@ DebugSpheres::DebugSpheres(DebugCircles& debug_circles)
 
 void DebugSpheres::addSphere(const as::mat4& transform, const as::vec4& color)
 {
-  constexpr size_t loops = 8;
-  const float vertical_angle_inc_rad = as::radians(180.0f / float(loops));
+  constexpr size_t Loops = 8;
+  const float vertical_angle_inc_rad = as::radians(180.0f / float(Loops));
   const float starting_vertical_angle_rad = as::radians(90.0f);
 
   float current_vertical_angle_rad =
     starting_vertical_angle_rad + vertical_angle_inc_rad;
-  for (size_t loop = 0; loop < loops - 1; ++loop) {
+  for (size_t loop = 0; loop < Loops - 1; ++loop) {
     const float vertical_position = std::sin(current_vertical_angle_rad);
     const float horizontal_scale = std::cos(current_vertical_angle_rad);
 
-    const auto translation =
-      as::mat4_from_mat3_vec3(
-        as::mat3_rotation_x(as::radians(90.0f)),
-        as::vec3::axis_y(vertical_position));
+    const auto translation = as::mat4_from_mat3_vec3(
+      as::mat3_rotation_x(as::radians(90.0f)),
+      as::vec3::axis_y(vertical_position));
     const auto scale = as::mat4_from_mat3(as::mat3_scale(horizontal_scale));
 
     debug_circles_.addCircle(
-        as::mat_mul(as::mat_mul(scale, translation), transform),
-        as::vec4(as::vec3::zero(), 1.0f));
+      as::mat_mul(as::mat_mul(scale, translation), transform),
+      as::vec4(as::vec3::zero(), 1.0f));
 
     current_vertical_angle_rad += vertical_angle_inc_rad;
   }

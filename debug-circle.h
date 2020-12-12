@@ -32,7 +32,7 @@ class DebugCircles
 
 public:
   static void init();
-  
+
   DebugCircles(bgfx::ViewId view, bgfx::ProgramHandle program_handle);
   ~DebugCircles();
 
@@ -55,8 +55,6 @@ public:
   DebugSpheres(DebugCircles& debug_circles);
 
   void addSphere(const as::mat4& transform, const as::vec4& color);
-  
-  
 };
 
 } // namespace dbg
