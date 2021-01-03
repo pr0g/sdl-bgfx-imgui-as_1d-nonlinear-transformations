@@ -481,7 +481,7 @@ int main(int argc, char** argv)
     }
 
     // draw camera look at
-    if (!as::almost_equal(camera.look_dist, 0.0f, 0.01f)) {
+    if (!as::real_near(camera.look_dist, 0.0f, 0.01f)) {
       debug_spheres.addSphere(
         as::mat4_from_mat3_vec3(as::mat3::identity(), camera.look_at),
         as::vec4(as::vec3::zero(), 1.0f));
