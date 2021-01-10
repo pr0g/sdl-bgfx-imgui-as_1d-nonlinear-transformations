@@ -1,35 +1,25 @@
 #include "as-camera-sdl.h"
-#include "SDL.h"
 
-void CameraSystem::handleEvents(const SDL_Event* event)
+void CameraSystem::handleEvents(const InputEvent& event)
 {
-  switch (event->type) {
-    case SDL_MOUSEMOTION: {
-      const auto* mouse_motion_event = (SDL_MouseMotionEvent*)event;
-      current_mouse_position_ =
-        as::vec2i(mouse_motion_event->x, mouse_motion_event->y);
-      // handle mouse warp gracefully
+  if (const auto& mouse_motion = std::get_if<MouseMotionEvent>(&event)) {
+    current_mouse_position_ = mouse_motion->motion_;
+    // handle mouse warp gracefully
+    if (
+      current_mouse_position_.has_value() && last_mouse_position_.has_value()) {
       if (
-        current_mouse_position_.has_value()
-        && last_mouse_position_.has_value()) {
-        if (
-          std::abs(current_mouse_position_->x - last_mouse_position_->x)
-          >= 500) {
-          last_mouse_position_->x = current_mouse_position_->x;
-        }
-        if (
-          std::abs(current_mouse_position_->y - last_mouse_position_->y)
-          >= 500) {
-          last_mouse_position_->y = current_mouse_position_->y;
-        }
+        std::abs(current_mouse_position_->x - last_mouse_position_->x)
+        >= 500) {
+        last_mouse_position_->x = current_mouse_position_->x;
       }
-    } break;
-    case SDL_MOUSEWHEEL: {
-      const auto* mouse_wheel_event = (SDL_MouseWheelEvent*)event;
-      wheel_delta_ = mouse_wheel_event->y;
-    } break;
-    default:
-      break;
+      if (
+        std::abs(current_mouse_position_->y - last_mouse_position_->y)
+        >= 500) {
+        last_mouse_position_->y = current_mouse_position_->y;
+      }
+    }
+  } else if (const auto& mouse_wheel = std::get_if<MouseWheelEvent>(&event)) {
+      wheel_delta_ = mouse_wheel->delta_;
   }
 
   cameras_.handleEvents(event);
@@ -55,7 +45,7 @@ asc::Camera CameraSystem::stepCamera(
   return next_camera;
 }
 
-void Cameras::handleEvents(const SDL_Event* event)
+void Cameras::handleEvents(const InputEvent& event)
 {
   for (auto* camera_input : active_camera_inputs_) {
     camera_input->handleEvents(event);
@@ -125,23 +115,16 @@ void Cameras::reset()
   }
 }
 
-void RotateCameraInput::handleEvents(const SDL_Event* event)
+void RotateCameraInput::handleEvents(const InputEvent& event)
 {
-  switch (event->type) {
-    case SDL_MOUSEBUTTONDOWN: {
-      const auto* mouse_event = (SDL_MouseButtonEvent*)event;
-      if (mouse_event->button == button_type_) {
+  if (const auto& mouse_button = std::get_if<MouseButtonEvent>(&event)) {
+    if (mouse_button->button_ == button_type_) {
+      if (mouse_button->action_ == ButtonAction::Down) {
         beginActivation();
-      }
-    } break;
-    case SDL_MOUSEBUTTONUP: {
-      const auto* mouse_event = (SDL_MouseButtonEvent*)event;
-      if (mouse_event->button == button_type_) {
+      } else if (mouse_button->action_ == ButtonAction::Up) {
         endActivation();
       }
-    } break;
-    default:
-      break;
+    }
   }
 }
 
@@ -166,23 +149,16 @@ asc::Camera RotateCameraInput::stepCamera(
   return next_camera;
 }
 
-void PanCameraInput::handleEvents(const SDL_Event* event)
+void PanCameraInput::handleEvents(const InputEvent& event)
 {
-  switch (event->type) {
-    case SDL_MOUSEBUTTONDOWN: {
-      const auto* mouse_event = (SDL_MouseButtonEvent*)event;
-      if (mouse_event->button == SDL_BUTTON_MIDDLE) {
+  if (const auto& mouse_button = std::get_if<MouseButtonEvent>(&event)) {
+    if (mouse_button->button_ == MouseButton::Middle) {
+      if (mouse_button->action_ == ButtonAction::Down) {
         beginActivation();
-      }
-    } break;
-    case SDL_MOUSEBUTTONUP: {
-      const auto* mouse_event = (SDL_MouseButtonEvent*)event;
-      if (mouse_event->button == SDL_BUTTON_MIDDLE) {
+      } else if (mouse_button->action_ == ButtonAction::Up) {
         endActivation();
       }
-    } break;
-    default:
-      break;
+    } 
   }
 }
 
@@ -208,56 +184,51 @@ asc::Camera PanCameraInput::stepCamera(
 }
 
 TranslateCameraInput::TranslationType TranslateCameraInput::translationFromKey(
-  int key)
+  KeyboardButton button)
 {
-  switch (key) {
-    case SDL_SCANCODE_W:
+  switch (button) {
+    case KeyboardButton::W:
       return TranslationType::Forward;
-    case SDL_SCANCODE_S:
+    case KeyboardButton::S:
       return TranslationType::Backward;
-    case SDL_SCANCODE_A:
+    case KeyboardButton::A:
       return TranslationType::Left;
-    case SDL_SCANCODE_D:
+    case KeyboardButton::D:
       return TranslationType::Right;
-    case SDL_SCANCODE_Q:
+    case KeyboardButton::Q:
       return TranslationType::Down;
-    case SDL_SCANCODE_E:
+    case KeyboardButton::E:
       return TranslationType::Up;
     default:
       return TranslationType::None;
   }
 }
 
-void TranslateCameraInput::handleEvents(const SDL_Event* event)
+void TranslateCameraInput::handleEvents(const InputEvent& event)
 {
-  switch (event->type) {
-    case SDL_KEYDOWN: {
-      if (event->key.repeat != 0u) {
-        break;
+  if (const auto& keyboard_button = std::get_if<KeyboardButtonEvent>(&event)) {
+    if (keyboard_button->action_ == ButtonAction::Down) {
+      if (keyboard_button->repeat_) {
+        return;
       }
       using bec::operator|=;
-      const auto* keyboard_event = (SDL_KeyboardEvent*)event;
-      translation_ |= translationFromKey(keyboard_event->keysym.scancode);
+      translation_ |= translationFromKey(keyboard_button->button_);
       if (translation_ != TranslationType::None) {
         beginActivation();
       }
-      if (keyboard_event->keysym.scancode == SDL_SCANCODE_LSHIFT) {
+      if (keyboard_button->button_ == KeyboardButton::LShift) {
         boost_ = true;
       }
-    } break;
-    case SDL_KEYUP: {
-      const auto* keyboard_event = (SDL_KeyboardEvent*)event;
+    } else if (keyboard_button->action_ == ButtonAction::Up) {
       using bec::operator^=;
-      translation_ ^= translationFromKey(keyboard_event->keysym.scancode);
+      translation_ ^= translationFromKey(keyboard_button->button_);
       if (translation_ == TranslationType::None) {
         endActivation();
       }
-      if (keyboard_event->keysym.scancode == SDL_SCANCODE_LSHIFT) {
+      if (keyboard_button->button_ == KeyboardButton::LShift) {
         boost_ = false;
       }
-    } break;
-    default:
-      break;
+    }
   }
 }
 
@@ -322,28 +293,21 @@ void TranslateCameraInput::resetImpl()
   boost_ = false;
 }
 
-void OrbitCameraInput::handleEvents(const SDL_Event* event)
+void OrbitCameraInput::handleEvents(const InputEvent& event)
 {
-  switch (event->type) {
-    case SDL_KEYDOWN: {
-      if (event->key.repeat != 0u) {
-        break;
+  if (const auto* keyboard_button = std::get_if<KeyboardButtonEvent>(&event)) {
+    if (keyboard_button->button_ == KeyboardButton::LAlt) {
+      if (keyboard_button->repeat_) {
+        goto end;
       }
-      const auto* keyboard_event = (SDL_KeyboardEvent*)event;
-      if (keyboard_event->keysym.scancode == SDL_SCANCODE_LALT) {
+      if (keyboard_button->action_ == ButtonAction::Down) {
         beginActivation();
-      }
-    } break;
-    case SDL_KEYUP: {
-      const auto* keyboard_event = (SDL_KeyboardEvent*)event;
-      if (keyboard_event->keysym.scancode == SDL_SCANCODE_LALT) {
+      } else if (keyboard_button->action_ == ButtonAction::Up) {
         endActivation();
       }
-    } break;
-    default:
-      break;
+    }
   }
-
+end:
   if (active()) {
     orbit_cameras_.handleEvents(event);
   }
@@ -400,14 +364,10 @@ asc::Camera OrbitCameraInput::stepCamera(
   return next_camera;
 }
 
-void OrbitDollyMouseWheelCameraInput::handleEvents(const SDL_Event* event)
+void OrbitDollyMouseWheelCameraInput::handleEvents(const InputEvent& event)
 {
-  switch (event->type) {
-    case SDL_MOUSEWHEEL: {
-      beginActivation();
-    } break;
-    default:
-      break;
+  if (const auto* mouse_wheel = std::get_if<MouseWheelEvent>(&event)) {
+    beginActivation();
   }
 }
 
@@ -423,23 +383,16 @@ asc::Camera OrbitDollyMouseWheelCameraInput::stepCamera(
   return next_camera;
 }
 
-void OrbitDollyMouseMoveCameraInput::handleEvents(const SDL_Event* event)
+void OrbitDollyMouseMoveCameraInput::handleEvents(const InputEvent& event)
 {
-  switch (event->type) {
-    case SDL_MOUSEBUTTONDOWN: {
-      const auto* mouse_event = (SDL_MouseButtonEvent*)event;
-      if (mouse_event->button == SDL_BUTTON_RIGHT) {
+  if (const auto& mouse_button = std::get_if<MouseButtonEvent>(&event)) {
+    if (mouse_button->button_ == MouseButton::Right) {
+      if (mouse_button->action_ == ButtonAction::Down) {
         beginActivation();
-      }
-    } break;
-    case SDL_MOUSEBUTTONUP: {
-      const auto* mouse_event = (SDL_MouseButtonEvent*)event;
-      if (mouse_event->button == SDL_BUTTON_RIGHT) {
+      } else if (mouse_button->action_ == ButtonAction::Up) {
         endActivation();
       }
-    } break;
-    default:
-      break;
+    }
   }
 }
 
@@ -454,14 +407,10 @@ asc::Camera OrbitDollyMouseMoveCameraInput::stepCamera(
   return next_camera;
 }
 
-void WheelTranslationCameraInput::handleEvents(const SDL_Event* event)
+void WheelTranslationCameraInput::handleEvents(const InputEvent& event)
 {
-  switch (event->type) {
-    case SDL_MOUSEWHEEL: {
+  if (const auto* mouse_wheel = std::get_if<MouseWheelEvent>(&event)) {
       beginActivation();
-    } break;
-    default:
-      break;
   }
 }
 

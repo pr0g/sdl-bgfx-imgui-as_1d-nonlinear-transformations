@@ -7,9 +7,59 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <variant>
 #include <vector>
 
-union SDL_Event;
+struct MouseMotionEvent
+{
+  as::vec2i motion_;
+};
+
+struct MouseWheelEvent
+{
+  int32_t delta_;
+};
+
+enum class MouseButton
+{
+  None,
+  Left,
+  Right,
+  Middle
+};
+
+enum class KeyboardButton
+{
+  A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
+  LAlt, LShift, Ctrl, None
+};
+
+enum class ButtonAction
+{
+  Down,
+  Up
+};
+
+struct MouseButtonEvent
+{
+  MouseButton button_;
+  ButtonAction action_;
+};
+
+struct KeyboardButtonEvent
+{
+  KeyboardButton button_;
+  ButtonAction action_;
+  bool repeat_;
+};
+
+using InputEvent =
+  std::variant<
+    std::monostate,
+    MouseMotionEvent,
+    MouseWheelEvent,
+    MouseButtonEvent,
+    KeyboardButtonEvent>;
 
 class CameraInput
 {
@@ -40,7 +90,7 @@ public:
     resetImpl();
   }
 
-  virtual void handleEvents(const SDL_Event* event) = 0;
+  virtual void handleEvents(const InputEvent& event) = 0;
   virtual asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
     int32_t wheel_delta, float delta_time) = 0;
@@ -60,7 +110,7 @@ asc::Camera smoothCamera(
 class Cameras
 {
 public:
-  void handleEvents(const SDL_Event* event);
+  void handleEvents(const InputEvent& event);
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
     int32_t wheel_delta, float delta_time);
@@ -73,7 +123,7 @@ public:
 class CameraSystem
 {
 public:
-  void handleEvents(const SDL_Event* event);
+  void handleEvents(const InputEvent& event);
   asc::Camera stepCamera(const asc::Camera& target_camera, float delta_time);
 
   Cameras cameras_;
@@ -87,16 +137,16 @@ private:
 class RotateCameraInput : public CameraInput
 {
 public:
-  explicit RotateCameraInput(const uint8_t button_type)
+  explicit RotateCameraInput(const MouseButton button_type)
     : button_type_(button_type)
   {
   }
-  void handleEvents(const SDL_Event* event) override;
+  void handleEvents(const InputEvent& event) override;
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
     int32_t wheel_delta, float delta_time) override;
 
-  uint8_t button_type_;
+  MouseButton button_type_;
 };
 
 struct PanAxes
@@ -133,7 +183,7 @@ public:
     : panAxesFn_(std::move(panAxesFn))
   {
   }
-  void handleEvents(const SDL_Event* event) override;
+  void handleEvents(const InputEvent& event) override;
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
     int32_t wheel_delta, float delta_time) override;
@@ -176,7 +226,7 @@ public:
     : translationAxesFn_(std::move(translationAxesFn))
   {
   }
-  void handleEvents(const SDL_Event* event) override;
+  void handleEvents(const InputEvent& event) override;
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
     int32_t wheel_delta, float delta_time) override;
@@ -196,7 +246,7 @@ private:
     // clang-format on
   };
 
-  static TranslationType translationFromKey(int key);
+  static TranslationType translationFromKey(KeyboardButton button);
 
   TranslationType translation_ = TranslationType::None;
   TranslationAxesFn translationAxesFn_;
@@ -206,7 +256,7 @@ private:
 class OrbitDollyMouseWheelCameraInput : public CameraInput
 {
 public:
-  void handleEvents(const SDL_Event* event) override;
+  void handleEvents(const InputEvent& event) override;
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
     int32_t wheel_delta, float delta_time) override;
@@ -215,7 +265,7 @@ public:
 class OrbitDollyMouseMoveCameraInput : public CameraInput
 {
 public:
-  void handleEvents(const SDL_Event* event) override;
+  void handleEvents(const InputEvent& event) override;
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
     int32_t wheel_delta, float delta_time) override;
@@ -224,7 +274,7 @@ public:
 class WheelTranslationCameraInput : public CameraInput
 {
 public:
-  void handleEvents(const SDL_Event* event) override;
+  void handleEvents(const InputEvent& event) override;
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
     int32_t wheel_delta, float delta_time) override;
@@ -239,7 +289,7 @@ struct bec::EnableBitMaskOperators<TranslateCameraInput::TranslationType>
 class OrbitCameraInput : public CameraInput
 {
 public:
-  void handleEvents(const SDL_Event* event) override;
+  void handleEvents(const InputEvent& event) override;
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
     int32_t wheel_delta, float delta_time) override;

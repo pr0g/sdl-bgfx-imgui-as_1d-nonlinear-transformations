@@ -23,6 +23,79 @@
 #include <optional>
 #include <tuple>
 
+MouseButton mouseFromSdl(const SDL_MouseButtonEvent* event) {
+  switch (event->button) {
+  case SDL_BUTTON_LEFT:
+    return MouseButton::Left;
+  case SDL_BUTTON_RIGHT:
+    return MouseButton::Right;
+  case SDL_BUTTON_MIDDLE:
+    return MouseButton::Middle;
+  default:
+    return MouseButton::None;
+  }
+}
+
+KeyboardButton keyboardFromSdl(const int key) {
+  switch (key) {
+    case SDL_SCANCODE_W:
+      return KeyboardButton::W;
+    case SDL_SCANCODE_S:
+      return KeyboardButton::S;
+    case SDL_SCANCODE_A:
+      return KeyboardButton::A;
+    case SDL_SCANCODE_D:
+      return KeyboardButton::D;
+    case SDL_SCANCODE_Q:
+      return KeyboardButton::Q;
+    case SDL_SCANCODE_E:
+      return KeyboardButton::E;
+    case SDL_SCANCODE_LALT:
+      return KeyboardButton::LAlt;
+    case SDL_SCANCODE_LSHIFT:
+      return KeyboardButton::LShift;
+    case SDL_SCANCODE_LCTRL:
+      return KeyboardButton::Ctrl;  
+    default:
+      return KeyboardButton::None;
+  }
+}
+
+InputEvent sdlToInput(const SDL_Event* event) {
+  switch (event->type) {
+    case SDL_MOUSEMOTION: {
+      const auto* mouse_motion_event = (SDL_MouseMotionEvent*)event;
+      return MouseMotionEvent{{mouse_motion_event->x, mouse_motion_event->y}};
+    }
+    case SDL_MOUSEWHEEL: {
+      const auto* mouse_wheel_event = (SDL_MouseWheelEvent*)event;
+      return MouseWheelEvent{mouse_wheel_event->y};
+    }
+    case SDL_MOUSEBUTTONDOWN: {
+      const auto* mouse_event = (SDL_MouseButtonEvent*)event;
+      return MouseButtonEvent{mouseFromSdl(mouse_event), ButtonAction::Down};
+    }
+    case SDL_MOUSEBUTTONUP: {
+      const auto* mouse_event = (SDL_MouseButtonEvent*)event;
+      return MouseButtonEvent{mouseFromSdl(mouse_event), ButtonAction::Up};
+    }
+    case SDL_KEYDOWN: {
+      const auto* keyboard_event = (SDL_KeyboardEvent*)event;
+      return KeyboardButtonEvent{
+        keyboardFromSdl(keyboard_event->keysym.scancode), ButtonAction::Down, event->key.repeat != 0u
+      };
+    }
+    case SDL_KEYUP: {
+      const auto* keyboard_event = (SDL_KeyboardEvent*)event;
+      return KeyboardButtonEvent{
+        keyboardFromSdl(keyboard_event->keysym.scancode), ButtonAction::Up, event->key.repeat != 0u
+      };
+    }
+    default:
+      return std::monostate{};
+  }
+}
+
 static bgfx::ShaderHandle createShader(
   const std::string& shader, const char* name)
 {
@@ -237,13 +310,13 @@ int main(int argc, char** argv)
 
   auto prev = bx::getHPCounter();
 
-  auto first_person_rotate_camera = RotateCameraInput{SDL_BUTTON_RIGHT};
+  auto first_person_rotate_camera = RotateCameraInput{MouseButton::Right};
   auto first_person_pan_camera = PanCameraInput{lookPan};
   auto first_person_translate_camera = TranslateCameraInput{lookTranslation};
   auto first_person_wheel_camera = WheelTranslationCameraInput{};
 
   auto orbit_camera = OrbitCameraInput{};
-  auto orbit_rotate_camera = RotateCameraInput{SDL_BUTTON_LEFT};
+  auto orbit_rotate_camera = RotateCameraInput{MouseButton::Left};
   auto orbit_translate_camera = TranslateCameraInput{orbitTranslation};
   auto orbit_dolly_wheel_camera = OrbitDollyMouseWheelCameraInput{};
   auto orbit_dolly_move_camera = OrbitDollyMouseMoveCameraInput{};
@@ -308,14 +381,12 @@ int main(int argc, char** argv)
 
     SDL_Event current_event;
     while (SDL_PollEvent(&current_event) != 0) {
-      camera_system.handleEvents(&current_event);
-
+      camera_system.handleEvents(sdlToInput(&current_event));
       ImGui_ImplSDL2_ProcessEvent(&current_event);
       if (current_event.type == SDL_QUIT) {
         quit = true;
         break;
       }
-
       if (current_event.type == SDL_MOUSEBUTTONDOWN) {
         if (hit_distance >= 0.0f) {
           const auto hit = ray_origin + ray_direction * hit_distance;
