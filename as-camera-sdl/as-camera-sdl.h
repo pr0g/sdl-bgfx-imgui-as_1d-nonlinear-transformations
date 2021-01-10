@@ -34,30 +34,50 @@ public:
   void continueActivation() { activation_ = Activation::Active; }
   void clearActivation() { activation_ = Activation::Idle; }
 
+  void reset() {
+    clearActivation();
+    resetImpl();
+  }
+
   virtual void handleEvents(const SDL_Event* event) = 0;
   virtual asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
     int32_t wheel_delta, float delta_time) = 0;
   virtual bool exclusive() const { return false; }
-  virtual void reset() {}
+
+protected:
+  virtual void resetImpl() {}
 
 private:
   Activation activation_;
 };
 
 asc::Camera smoothCamera(
-  const asc::Camera& current_camera, const asc::Camera& target_camera, float dt);
+  const asc::Camera& current_camera, const asc::Camera& target_camera,
+  float delta_time);
 
-class Cameras // could also be a CameraInput?
+class Cameras
 {
 public:
   void handleEvents(const SDL_Event* event);
-  asc::Camera stepCamera(const asc::Camera& target_camera, float delta_time);
+  asc::Camera stepCamera(
+    const asc::Camera& target_camera, const as::vec2i& mouse_delta,
+    int32_t wheel_delta, float delta_time);
   void reset();
 
   std::vector<CameraInput*> active_camera_inputs_;
   std::vector<CameraInput*> idle_camera_inputs_;
+};
 
+class CameraSystem
+{
+public:
+  void handleEvents(const SDL_Event* event);
+  asc::Camera stepCamera(const asc::Camera& target_camera, float delta_time);
+
+  Cameras cameras_;
+
+private:
   int32_t wheel_delta_ = 0;
   std::optional<as::vec2i> last_mouse_position_;
   std::optional<as::vec2i> current_mouse_position_;
@@ -157,11 +177,7 @@ public:
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
     int32_t wheel_delta, float delta_time) override;
-  void reset() override
-  {
-    translation_ = TranslationType::None;
-    boost_ = false;
-  }
+  void resetImpl() override;
 
 private:
   enum class TranslationType

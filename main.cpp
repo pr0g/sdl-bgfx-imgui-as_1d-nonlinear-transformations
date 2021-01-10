@@ -264,6 +264,9 @@ int main(int argc, char** argv)
   cameras.idle_camera_inputs_.push_back(&first_person_wheel_camera);
   cameras.idle_camera_inputs_.push_back(&orbit_camera);
 
+  CameraSystem camera_system;
+  camera_system.cameras_ = cameras;
+
   fps::Fps fps;
   for (bool quit = false; !quit;) {
     int global_x;
@@ -304,7 +307,7 @@ int main(int argc, char** argv)
 
     SDL_Event current_event;
     while (SDL_PollEvent(&current_event) != 0) {
-      cameras.handleEvents(&current_event);
+      camera_system.handleEvents(&current_event);
 
       ImGui_ImplSDL2_ProcessEvent(&current_event);
       if (current_event.type == SDL_QUIT) {
@@ -374,7 +377,7 @@ int main(int argc, char** argv)
 
     const float delta_time = delta / static_cast<float>(freq);
 
-    target_camera = cameras.stepCamera(target_camera, delta_time);
+    target_camera = camera_system.stepCamera(target_camera, delta_time);
     camera = smoothCamera(camera, target_camera, delta_time);
 
     float view[16];

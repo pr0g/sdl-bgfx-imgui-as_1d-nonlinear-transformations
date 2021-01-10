@@ -1,7 +1,7 @@
 #include "as-camera-sdl.h"
 #include "SDL.h"
 
-void Cameras::handleEvents(const SDL_Event* event)
+void CameraSystem::handleEvents(const SDL_Event* event)
 {
   switch (event->type) {
     case SDL_MOUSEMOTION: {
@@ -32,6 +32,30 @@ void Cameras::handleEvents(const SDL_Event* event)
       break;
   }
 
+  cameras_.handleEvents(event);
+}
+
+asc::Camera CameraSystem::stepCamera(const asc::Camera& target_camera, float delta_time)
+{
+  const auto mouse_delta =
+    current_mouse_position_.has_value() && last_mouse_position_.has_value()
+      ? current_mouse_position_.value() - last_mouse_position_.value()
+      : as::vec2i::zero();
+  
+  if (current_mouse_position_.has_value()) {
+    last_mouse_position_ = current_mouse_position_;
+  }
+
+  const auto next_camera = cameras_.stepCamera(
+    target_camera, mouse_delta, wheel_delta_, delta_time);
+
+  wheel_delta_ = 0;
+
+  return next_camera;
+}
+
+void Cameras::handleEvents(const SDL_Event* event)
+{
   for (auto* camera_input : active_camera_inputs_) {
     camera_input->handleEvents(event);
   }
@@ -42,7 +66,8 @@ void Cameras::handleEvents(const SDL_Event* event)
 }
 
 asc::Camera Cameras::stepCamera(
-  const asc::Camera& target_camera, const float delta_time)
+  const asc::Camera& target_camera, const as::vec2i& mouse_delta,
+    int32_t wheel_delta, const float delta_time)
 {
   for (int i = 0; i < idle_camera_inputs_.size();) {
     auto* camera_input = idle_camera_inputs_[i];
@@ -64,20 +89,11 @@ asc::Camera Cameras::stepCamera(
     }
   }
 
-  auto mouse_delta =
-    current_mouse_position_.has_value() && last_mouse_position_.has_value()
-      ? current_mouse_position_.value() - last_mouse_position_.value()
-      : as::vec2i::zero();
-
-  if (current_mouse_position_.has_value()) {
-    last_mouse_position_ = current_mouse_position_;
-  }
-
   // accumulate
   asc::Camera next_camera = target_camera;
   for (auto* camera_input : active_camera_inputs_) {
     next_camera = camera_input->stepCamera(
-      next_camera, mouse_delta, wheel_delta_, delta_time);
+      next_camera, mouse_delta, wheel_delta, delta_time);
   }
 
   for (int i = 0; i < active_camera_inputs_.size();) {
@@ -93,8 +109,6 @@ asc::Camera Cameras::stepCamera(
       i++;
     }
   }
-
-  wheel_delta_ = 0;
 
   return next_camera;
 }
@@ -301,6 +315,12 @@ asc::Camera TranslateCameraInput::stepCamera(
   return next_camera;
 }
 
+void TranslateCameraInput::resetImpl()
+{
+  translation_ = TranslationType::None;
+  boost_ = false;
+}
+
 void OrbitCameraInput::handleEvents(const SDL_Event* event)
 {
   switch (event->type) {
@@ -365,13 +385,11 @@ asc::Camera OrbitCameraInput::stepCamera(
 
   if (active()) {
     // todo: need to return nested cameras to idle state when ending
-    next_camera = orbit_cameras_.stepCamera(next_camera, delta_time);
+    next_camera = orbit_cameras_.stepCamera(
+      next_camera, mouse_delta, wheel_delta, delta_time);
   }
 
   if (ending()) {
-    // bit of a hack... fix me
-    orbit_cameras_.last_mouse_position_ = {};
-    orbit_cameras_.current_mouse_position_ = {};
     orbit_cameras_.reset();
 
     next_camera.look_at = next_camera.transform().translation;
@@ -464,7 +482,7 @@ asc::Camera WheelTranslationCameraInput::stepCamera(
 
 asc::Camera smoothCamera(
   const asc::Camera& current_camera, const asc::Camera& target_camera,
-  const float dt)
+  const float delta_time)
 {
   auto clamp_rotation = [](const float angle) {
     return std::fmod(angle + as::k_tau, as::k_tau);
@@ -483,11 +501,11 @@ asc::Camera smoothCamera(
   asc::Camera camera;
   // https://www.gamasutra.com/blogs/ScottLembcke/20180404/316046/Improved_Lerp_Smoothing.php
   const float look_rate = exp2(/*props.look_smoothness*/ 5.0f);
-  const float look_t = exp2(-look_rate * dt);
+  const float look_t = exp2(-look_rate * delta_time);
   camera.pitch = as::mix(target_camera.pitch, current_camera.pitch, look_t);
   camera.yaw = as::mix(target_yaw, current_yaw, look_t);
   const float move_rate = exp2(/*props.move_smoothness*/ 5.0f);
-  const float move_t = exp2(-move_rate * dt);
+  const float move_t = exp2(-move_rate * delta_time);
   camera.look_dist =
     as::mix(target_camera.look_dist, current_camera.look_dist, move_t);
   camera.look_at =
