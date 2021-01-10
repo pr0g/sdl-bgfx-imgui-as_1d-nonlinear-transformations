@@ -1,7 +1,7 @@
 #include "1d-nonlinear-transformations.h"
 #include "SDL.h"
 #include "SDL_syswm.h"
-#include "as-camera/as-camera-sdl.h"
+#include "as-camera/as-camera.h"
 #include "as/as-math-ops.hpp"
 #include "as/as-view.hpp"
 #include "bgfx-imgui/imgui_impl_bgfx.h"
