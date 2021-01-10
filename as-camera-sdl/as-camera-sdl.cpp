@@ -35,19 +35,20 @@ void CameraSystem::handleEvents(const SDL_Event* event)
   cameras_.handleEvents(event);
 }
 
-asc::Camera CameraSystem::stepCamera(const asc::Camera& target_camera, float delta_time)
+asc::Camera CameraSystem::stepCamera(
+  const asc::Camera& target_camera, float delta_time)
 {
   const auto mouse_delta =
     current_mouse_position_.has_value() && last_mouse_position_.has_value()
       ? current_mouse_position_.value() - last_mouse_position_.value()
       : as::vec2i::zero();
-  
+
   if (current_mouse_position_.has_value()) {
     last_mouse_position_ = current_mouse_position_;
   }
 
-  const auto next_camera = cameras_.stepCamera(
-    target_camera, mouse_delta, wheel_delta_, delta_time);
+  const auto next_camera =
+    cameras_.stepCamera(target_camera, mouse_delta, wheel_delta_, delta_time);
 
   wheel_delta_ = 0;
 
@@ -67,7 +68,7 @@ void Cameras::handleEvents(const SDL_Event* event)
 
 asc::Camera Cameras::stepCamera(
   const asc::Camera& target_camera, const as::vec2i& mouse_delta,
-    int32_t wheel_delta, const float delta_time)
+  int32_t wheel_delta, const float delta_time)
 {
   for (int i = 0; i < idle_camera_inputs_.size();) {
     auto* camera_input = idle_camera_inputs_[i];

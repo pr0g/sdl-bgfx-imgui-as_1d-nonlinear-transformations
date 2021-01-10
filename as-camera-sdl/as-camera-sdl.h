@@ -34,7 +34,8 @@ public:
   void continueActivation() { activation_ = Activation::Active; }
   void clearActivation() { activation_ = Activation::Idle; }
 
-  void reset() {
+  void reset()
+  {
     clearActivation();
     resetImpl();
   }
@@ -87,7 +88,9 @@ class RotateCameraInput : public CameraInput
 {
 public:
   explicit RotateCameraInput(const uint8_t button_type)
-    : button_type_(button_type) {}
+    : button_type_(button_type)
+  {
+  }
   void handleEvents(const SDL_Event* event) override;
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,

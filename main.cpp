@@ -241,14 +241,15 @@ int main(int argc, char** argv)
   auto first_person_pan_camera = PanCameraInput{lookPan};
   auto first_person_translate_camera = TranslateCameraInput{lookTranslation};
   auto first_person_wheel_camera = WheelTranslationCameraInput{};
-  
+
   auto orbit_camera = OrbitCameraInput{};
   auto orbit_rotate_camera = RotateCameraInput{SDL_BUTTON_LEFT};
   auto orbit_translate_camera = TranslateCameraInput{orbitTranslation};
   auto orbit_dolly_wheel_camera = OrbitDollyMouseWheelCameraInput{};
   auto orbit_dolly_move_camera = OrbitDollyMouseMoveCameraInput{};
   auto orbit_pan_camera = PanCameraInput{orbitPan};
-  orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(&orbit_rotate_camera);
+  orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(
+    &orbit_rotate_camera);
   orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(
     &orbit_translate_camera);
   orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(
