@@ -110,7 +110,7 @@ void Cameras::reset()
   }
 }
 
-void LookCameraInput::handleEvents(const SDL_Event* event)
+void RotateCameraInput::handleEvents(const SDL_Event* event)
 {
   switch (event->type) {
     case SDL_MOUSEBUTTONDOWN: {
@@ -130,7 +130,7 @@ void LookCameraInput::handleEvents(const SDL_Event* event)
   }
 }
 
-asc::Camera LookCameraInput::stepCamera(
+asc::Camera RotateCameraInput::stepCamera(
   const asc::Camera& target_camera, const as::vec2i& mouse_delta,
   const int32_t wheel_delta, const float delta_time)
 {
@@ -301,7 +301,7 @@ asc::Camera TranslateCameraInput::stepCamera(
   return next_camera;
 }
 
-void OrbitLookCameraInput::handleEvents(const SDL_Event* event)
+void OrbitCameraInput::handleEvents(const SDL_Event* event)
 {
   switch (event->type) {
     case SDL_KEYDOWN: {
@@ -335,7 +335,7 @@ static float intersectPlane(
        / as::vec_dot(direction, as::vec3_from_vec4(plane));
 }
 
-asc::Camera OrbitLookCameraInput::stepCamera(
+asc::Camera OrbitCameraInput::stepCamera(
   const asc::Camera& target_camera, const as::vec2i& mouse_delta,
   const int32_t wheel_delta, float delta_time)
 {

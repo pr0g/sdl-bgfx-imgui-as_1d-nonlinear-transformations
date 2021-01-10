@@ -11,15 +11,6 @@
 
 union SDL_Event;
 
-namespace asc
-{
-
-enum class MotionType;
-struct CameraControl;
-struct CameraProperties;
-
-} // namespace asc
-
 class CameraInput
 {
 public:
@@ -55,8 +46,7 @@ private:
 };
 
 asc::Camera smoothCamera(
-  const asc::Camera& current_camera, const asc::Camera& target_camera,
-  const float dt);
+  const asc::Camera& current_camera, const asc::Camera& target_camera, float dt);
 
 class Cameras // could also be a CameraInput?
 {
@@ -73,10 +63,11 @@ public:
   std::optional<as::vec2i> current_mouse_position_;
 };
 
-class /*Free*/ LookCameraInput : public CameraInput
+class RotateCameraInput : public CameraInput
 {
 public:
-  explicit LookCameraInput(uint8_t button_type) : button_type_(button_type) {}
+  explicit RotateCameraInput(const uint8_t button_type)
+    : button_type_(button_type) {}
   void handleEvents(const SDL_Event* event) override;
   asc::Camera stepCamera(
     const asc::Camera& target_camera, const as::vec2i& mouse_delta,
@@ -226,7 +217,7 @@ struct bec::EnableBitMaskOperators<TranslateCameraInput::TranslationType>
   static const bool Enable = true;
 };
 
-class OrbitLookCameraInput : public CameraInput
+class OrbitCameraInput : public CameraInput
 {
 public:
   void handleEvents(const SDL_Event* event) override;

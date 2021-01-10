@@ -237,32 +237,32 @@ int main(int argc, char** argv)
 
   auto prev = bx::getHPCounter();
 
-  auto look_camera = LookCameraInput{SDL_BUTTON_RIGHT};
-  auto pan_camera = PanCameraInput{lookPan};
-  auto translate_camera = TranslateCameraInput{lookTranslation};
-  auto orbit_camera = OrbitLookCameraInput{};
-  auto wheel_camera = WheelTranslationCameraInput{};
-
-  auto look_camera_orbit = LookCameraInput{SDL_BUTTON_LEFT};
-  auto translate_camera_orbit = TranslateCameraInput{orbitTranslation};
-  auto dolly_wheel_camera_orbit = OrbitDollyMouseWheelCameraInput{};
-  auto dolly_move_camera_orbit = OrbitDollyMouseMoveCameraInput{};
-  auto pan_camera_orbit = PanCameraInput{orbitPan};
-  orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(&look_camera_orbit);
+  auto first_person_rotate_camera = RotateCameraInput{SDL_BUTTON_RIGHT};
+  auto first_person_pan_camera = PanCameraInput{lookPan};
+  auto first_person_translate_camera = TranslateCameraInput{lookTranslation};
+  auto first_person_wheel_camera = WheelTranslationCameraInput{};
+  
+  auto orbit_camera = OrbitCameraInput{};
+  auto orbit_rotate_camera = RotateCameraInput{SDL_BUTTON_LEFT};
+  auto orbit_translate_camera = TranslateCameraInput{orbitTranslation};
+  auto orbit_dolly_wheel_camera = OrbitDollyMouseWheelCameraInput{};
+  auto orbit_dolly_move_camera = OrbitDollyMouseMoveCameraInput{};
+  auto orbit_pan_camera = PanCameraInput{orbitPan};
+  orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(&orbit_rotate_camera);
   orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(
-    &translate_camera_orbit);
+    &orbit_translate_camera);
   orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(
-    &dolly_wheel_camera_orbit);
+    &orbit_dolly_wheel_camera);
   orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(
-    &dolly_move_camera_orbit);
-  orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(&pan_camera_orbit);
+    &orbit_dolly_move_camera);
+  orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(&orbit_pan_camera);
 
   Cameras cameras;
-  cameras.idle_camera_inputs_.push_back(&look_camera);
-  cameras.idle_camera_inputs_.push_back(&pan_camera);
-  cameras.idle_camera_inputs_.push_back(&translate_camera);
+  cameras.idle_camera_inputs_.push_back(&first_person_rotate_camera);
+  cameras.idle_camera_inputs_.push_back(&first_person_pan_camera);
+  cameras.idle_camera_inputs_.push_back(&first_person_translate_camera);
+  cameras.idle_camera_inputs_.push_back(&first_person_wheel_camera);
   cameras.idle_camera_inputs_.push_back(&orbit_camera);
-  cameras.idle_camera_inputs_.push_back(&wheel_camera);
 
   fps::Fps fps;
   for (bool quit = false; !quit;) {
