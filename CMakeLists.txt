@@ -28,7 +28,7 @@ target_sources(
     main.cpp
     sdl-imgui/imgui_impl_sdl.cpp
     bgfx-imgui/imgui_impl_bgfx.cpp
-    as-camera-sdl/as-camera-sdl.cpp
+    as-camera/as-camera-sdl.cpp
     debug-lines.cpp
     debug-circle.cpp
     smooth-line.cpp
