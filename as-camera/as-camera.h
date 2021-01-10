@@ -30,8 +30,36 @@ enum class MouseButton
 
 enum class KeyboardButton
 {
-  A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
-  LAlt, LShift, Ctrl, None
+  A,
+  B,
+  C,
+  D,
+  E,
+  F,
+  G,
+  H,
+  I,
+  J,
+  K,
+  L,
+  M,
+  N,
+  O,
+  P,
+  Q,
+  R,
+  S,
+  T,
+  U,
+  V,
+  W,
+  X,
+  Y,
+  Z,
+  LAlt,
+  LShift,
+  Ctrl,
+  None
 };
 
 enum class ButtonAction
@@ -53,13 +81,9 @@ struct KeyboardButtonEvent
   bool repeat_;
 };
 
-using InputEvent =
-  std::variant<
-    std::monostate,
-    MouseMotionEvent,
-    MouseWheelEvent,
-    MouseButtonEvent,
-    KeyboardButtonEvent>;
+using InputEvent = std::variant<
+  std::monostate, MouseMotionEvent, MouseWheelEvent, MouseButtonEvent,
+  KeyboardButtonEvent>;
 
 class CameraInput
 {

@@ -23,20 +23,22 @@
 #include <optional>
 #include <tuple>
 
-MouseButton mouseFromSdl(const SDL_MouseButtonEvent* event) {
+MouseButton mouseFromSdl(const SDL_MouseButtonEvent* event)
+{
   switch (event->button) {
-  case SDL_BUTTON_LEFT:
-    return MouseButton::Left;
-  case SDL_BUTTON_RIGHT:
-    return MouseButton::Right;
-  case SDL_BUTTON_MIDDLE:
-    return MouseButton::Middle;
-  default:
-    return MouseButton::None;
+    case SDL_BUTTON_LEFT:
+      return MouseButton::Left;
+    case SDL_BUTTON_RIGHT:
+      return MouseButton::Right;
+    case SDL_BUTTON_MIDDLE:
+      return MouseButton::Middle;
+    default:
+      return MouseButton::None;
   }
 }
 
-KeyboardButton keyboardFromSdl(const int key) {
+KeyboardButton keyboardFromSdl(const int key)
+{
   switch (key) {
     case SDL_SCANCODE_W:
       return KeyboardButton::W;
@@ -55,13 +57,14 @@ KeyboardButton keyboardFromSdl(const int key) {
     case SDL_SCANCODE_LSHIFT:
       return KeyboardButton::LShift;
     case SDL_SCANCODE_LCTRL:
-      return KeyboardButton::Ctrl;  
+      return KeyboardButton::Ctrl;
     default:
       return KeyboardButton::None;
   }
 }
 
-InputEvent sdlToInput(const SDL_Event* event) {
+InputEvent sdlToInput(const SDL_Event* event)
+{
   switch (event->type) {
     case SDL_MOUSEMOTION: {
       const auto* mouse_motion_event = (SDL_MouseMotionEvent*)event;
@@ -82,14 +85,14 @@ InputEvent sdlToInput(const SDL_Event* event) {
     case SDL_KEYDOWN: {
       const auto* keyboard_event = (SDL_KeyboardEvent*)event;
       return KeyboardButtonEvent{
-        keyboardFromSdl(keyboard_event->keysym.scancode), ButtonAction::Down, event->key.repeat != 0u
-      };
+        keyboardFromSdl(keyboard_event->keysym.scancode), ButtonAction::Down,
+        event->key.repeat != 0u};
     }
     case SDL_KEYUP: {
       const auto* keyboard_event = (SDL_KeyboardEvent*)event;
       return KeyboardButtonEvent{
-        keyboardFromSdl(keyboard_event->keysym.scancode), ButtonAction::Up, event->key.repeat != 0u
-      };
+        keyboardFromSdl(keyboard_event->keysym.scancode), ButtonAction::Up,
+        event->key.repeat != 0u};
     }
     default:
       return std::monostate{};

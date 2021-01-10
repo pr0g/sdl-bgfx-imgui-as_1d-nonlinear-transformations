@@ -1,4 +1,4 @@
-#include "as-camera-sdl.h"
+#include "as-camera.h"
 
 void CameraSystem::handleEvents(const InputEvent& event)
 {
@@ -8,18 +8,16 @@ void CameraSystem::handleEvents(const InputEvent& event)
     if (
       current_mouse_position_.has_value() && last_mouse_position_.has_value()) {
       if (
-        std::abs(current_mouse_position_->x - last_mouse_position_->x)
-        >= 500) {
+        std::abs(current_mouse_position_->x - last_mouse_position_->x) >= 500) {
         last_mouse_position_->x = current_mouse_position_->x;
       }
       if (
-        std::abs(current_mouse_position_->y - last_mouse_position_->y)
-        >= 500) {
+        std::abs(current_mouse_position_->y - last_mouse_position_->y) >= 500) {
         last_mouse_position_->y = current_mouse_position_->y;
       }
     }
   } else if (const auto& mouse_wheel = std::get_if<MouseWheelEvent>(&event)) {
-      wheel_delta_ = mouse_wheel->delta_;
+    wheel_delta_ = mouse_wheel->delta_;
   }
 
   cameras_.handleEvents(event);
@@ -158,7 +156,7 @@ void PanCameraInput::handleEvents(const InputEvent& event)
       } else if (mouse_button->action_ == ButtonAction::Up) {
         endActivation();
       }
-    } 
+    }
   }
 }
 
@@ -410,7 +408,7 @@ asc::Camera OrbitDollyMouseMoveCameraInput::stepCamera(
 void WheelTranslationCameraInput::handleEvents(const InputEvent& event)
 {
   if (const auto* mouse_wheel = std::get_if<MouseWheelEvent>(&event)) {
-      beginActivation();
+    beginActivation();
   }
 }
 
