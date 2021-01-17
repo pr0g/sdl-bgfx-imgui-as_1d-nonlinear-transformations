@@ -68,7 +68,8 @@ asci::InputEvent sdlToInput(const SDL_Event* event)
   switch (event->type) {
     case SDL_MOUSEMOTION: {
       const auto* mouse_motion_event = (SDL_MouseMotionEvent*)event;
-      return asci::MouseMotionEvent{{mouse_motion_event->x, mouse_motion_event->y}};
+      return asci::MouseMotionEvent{
+        {mouse_motion_event->x, mouse_motion_event->y}};
     }
     case SDL_MOUSEWHEEL: {
       const auto* mouse_wheel_event = (SDL_MouseWheelEvent*)event;
@@ -76,23 +77,25 @@ asci::InputEvent sdlToInput(const SDL_Event* event)
     }
     case SDL_MOUSEBUTTONDOWN: {
       const auto* mouse_event = (SDL_MouseButtonEvent*)event;
-      return asci::MouseButtonEvent{mouseFromSdl(mouse_event), asci::ButtonAction::Down};
+      return asci::MouseButtonEvent{
+        mouseFromSdl(mouse_event), asci::ButtonAction::Down};
     }
     case SDL_MOUSEBUTTONUP: {
       const auto* mouse_event = (SDL_MouseButtonEvent*)event;
-      return asci::MouseButtonEvent{mouseFromSdl(mouse_event), asci::ButtonAction::Up};
+      return asci::MouseButtonEvent{
+        mouseFromSdl(mouse_event), asci::ButtonAction::Up};
     }
     case SDL_KEYDOWN: {
       const auto* keyboard_event = (SDL_KeyboardEvent*)event;
       return asci::KeyboardButtonEvent{
-        keyboardFromSdl(keyboard_event->keysym.scancode), asci::ButtonAction::Down,
-        event->key.repeat != 0u};
+        keyboardFromSdl(keyboard_event->keysym.scancode),
+        asci::ButtonAction::Down, event->key.repeat != 0u};
     }
     case SDL_KEYUP: {
       const auto* keyboard_event = (SDL_KeyboardEvent*)event;
       return asci::KeyboardButtonEvent{
-        keyboardFromSdl(keyboard_event->keysym.scancode), asci::ButtonAction::Up,
-        event->key.repeat != 0u};
+        keyboardFromSdl(keyboard_event->keysym.scancode),
+        asci::ButtonAction::Up, event->key.repeat != 0u};
     }
     default:
       return std::monostate{};
@@ -313,14 +316,17 @@ int main(int argc, char** argv)
 
   auto prev = bx::getHPCounter();
 
-  auto first_person_rotate_camera = asci::RotateCameraInput{asci::MouseButton::Right};
+  auto first_person_rotate_camera =
+    asci::RotateCameraInput{asci::MouseButton::Right};
   auto first_person_pan_camera = asci::PanCameraInput{asci::lookPan};
-  auto first_person_translate_camera = asci::TranslateCameraInput{asci::lookTranslation};
+  auto first_person_translate_camera =
+    asci::TranslateCameraInput{asci::lookTranslation};
   auto first_person_wheel_camera = asci::WheelTranslationCameraInput{};
 
   auto orbit_camera = asci::OrbitCameraInput{};
   auto orbit_rotate_camera = asci::RotateCameraInput{asci::MouseButton::Left};
-  auto orbit_translate_camera = asci::TranslateCameraInput{asci::orbitTranslation};
+  auto orbit_translate_camera =
+    asci::TranslateCameraInput{asci::orbitTranslation};
   auto orbit_dolly_wheel_camera = asci::OrbitDollyMouseWheelCameraInput{};
   auto orbit_dolly_move_camera = asci::OrbitDollyMouseMoveCameraInput{};
   auto orbit_pan_camera = asci::PanCameraInput{asci::orbitPan};
