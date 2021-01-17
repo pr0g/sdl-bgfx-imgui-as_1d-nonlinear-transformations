@@ -1,7 +1,7 @@
 #include "1d-nonlinear-transformations.h"
 #include "SDL.h"
 #include "SDL_syswm.h"
-#include "as-camera/as-camera.h"
+#include "as-camera-input/as-camera-input.hpp"
 #include "as/as-math-ops.hpp"
 #include "as/as-view.hpp"
 #include "bgfx-imgui/imgui_impl_bgfx.h"
@@ -23,75 +23,75 @@
 #include <optional>
 #include <tuple>
 
-MouseButton mouseFromSdl(const SDL_MouseButtonEvent* event)
+asci::MouseButton mouseFromSdl(const SDL_MouseButtonEvent* event)
 {
   switch (event->button) {
     case SDL_BUTTON_LEFT:
-      return MouseButton::Left;
+      return asci::MouseButton::Left;
     case SDL_BUTTON_RIGHT:
-      return MouseButton::Right;
+      return asci::MouseButton::Right;
     case SDL_BUTTON_MIDDLE:
-      return MouseButton::Middle;
+      return asci::MouseButton::Middle;
     default:
-      return MouseButton::None;
+      return asci::MouseButton::None;
   }
 }
 
-KeyboardButton keyboardFromSdl(const int key)
+asci::KeyboardButton keyboardFromSdl(const int key)
 {
   switch (key) {
     case SDL_SCANCODE_W:
-      return KeyboardButton::W;
+      return asci::KeyboardButton::W;
     case SDL_SCANCODE_S:
-      return KeyboardButton::S;
+      return asci::KeyboardButton::S;
     case SDL_SCANCODE_A:
-      return KeyboardButton::A;
+      return asci::KeyboardButton::A;
     case SDL_SCANCODE_D:
-      return KeyboardButton::D;
+      return asci::KeyboardButton::D;
     case SDL_SCANCODE_Q:
-      return KeyboardButton::Q;
+      return asci::KeyboardButton::Q;
     case SDL_SCANCODE_E:
-      return KeyboardButton::E;
+      return asci::KeyboardButton::E;
     case SDL_SCANCODE_LALT:
-      return KeyboardButton::LAlt;
+      return asci::KeyboardButton::LAlt;
     case SDL_SCANCODE_LSHIFT:
-      return KeyboardButton::LShift;
+      return asci::KeyboardButton::LShift;
     case SDL_SCANCODE_LCTRL:
-      return KeyboardButton::Ctrl;
+      return asci::KeyboardButton::Ctrl;
     default:
-      return KeyboardButton::None;
+      return asci::KeyboardButton::None;
   }
 }
 
-InputEvent sdlToInput(const SDL_Event* event)
+asci::InputEvent sdlToInput(const SDL_Event* event)
 {
   switch (event->type) {
     case SDL_MOUSEMOTION: {
       const auto* mouse_motion_event = (SDL_MouseMotionEvent*)event;
-      return MouseMotionEvent{{mouse_motion_event->x, mouse_motion_event->y}};
+      return asci::MouseMotionEvent{{mouse_motion_event->x, mouse_motion_event->y}};
     }
     case SDL_MOUSEWHEEL: {
       const auto* mouse_wheel_event = (SDL_MouseWheelEvent*)event;
-      return MouseWheelEvent{mouse_wheel_event->y};
+      return asci::MouseWheelEvent{mouse_wheel_event->y};
     }
     case SDL_MOUSEBUTTONDOWN: {
       const auto* mouse_event = (SDL_MouseButtonEvent*)event;
-      return MouseButtonEvent{mouseFromSdl(mouse_event), ButtonAction::Down};
+      return asci::MouseButtonEvent{mouseFromSdl(mouse_event), asci::ButtonAction::Down};
     }
     case SDL_MOUSEBUTTONUP: {
       const auto* mouse_event = (SDL_MouseButtonEvent*)event;
-      return MouseButtonEvent{mouseFromSdl(mouse_event), ButtonAction::Up};
+      return asci::MouseButtonEvent{mouseFromSdl(mouse_event), asci::ButtonAction::Up};
     }
     case SDL_KEYDOWN: {
       const auto* keyboard_event = (SDL_KeyboardEvent*)event;
-      return KeyboardButtonEvent{
-        keyboardFromSdl(keyboard_event->keysym.scancode), ButtonAction::Down,
+      return asci::KeyboardButtonEvent{
+        keyboardFromSdl(keyboard_event->keysym.scancode), asci::ButtonAction::Down,
         event->key.repeat != 0u};
     }
     case SDL_KEYUP: {
       const auto* keyboard_event = (SDL_KeyboardEvent*)event;
-      return KeyboardButtonEvent{
-        keyboardFromSdl(keyboard_event->keysym.scancode), ButtonAction::Up,
+      return asci::KeyboardButtonEvent{
+        keyboardFromSdl(keyboard_event->keysym.scancode), asci::ButtonAction::Up,
         event->key.repeat != 0u};
     }
     default:
@@ -313,17 +313,17 @@ int main(int argc, char** argv)
 
   auto prev = bx::getHPCounter();
 
-  auto first_person_rotate_camera = RotateCameraInput{MouseButton::Right};
-  auto first_person_pan_camera = PanCameraInput{lookPan};
-  auto first_person_translate_camera = TranslateCameraInput{lookTranslation};
-  auto first_person_wheel_camera = WheelTranslationCameraInput{};
+  auto first_person_rotate_camera = asci::RotateCameraInput{asci::MouseButton::Right};
+  auto first_person_pan_camera = asci::PanCameraInput{asci::lookPan};
+  auto first_person_translate_camera = asci::TranslateCameraInput{asci::lookTranslation};
+  auto first_person_wheel_camera = asci::WheelTranslationCameraInput{};
 
-  auto orbit_camera = OrbitCameraInput{};
-  auto orbit_rotate_camera = RotateCameraInput{MouseButton::Left};
-  auto orbit_translate_camera = TranslateCameraInput{orbitTranslation};
-  auto orbit_dolly_wheel_camera = OrbitDollyMouseWheelCameraInput{};
-  auto orbit_dolly_move_camera = OrbitDollyMouseMoveCameraInput{};
-  auto orbit_pan_camera = PanCameraInput{orbitPan};
+  auto orbit_camera = asci::OrbitCameraInput{};
+  auto orbit_rotate_camera = asci::RotateCameraInput{asci::MouseButton::Left};
+  auto orbit_translate_camera = asci::TranslateCameraInput{asci::orbitTranslation};
+  auto orbit_dolly_wheel_camera = asci::OrbitDollyMouseWheelCameraInput{};
+  auto orbit_dolly_move_camera = asci::OrbitDollyMouseMoveCameraInput{};
+  auto orbit_pan_camera = asci::PanCameraInput{asci::orbitPan};
   orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(
     &orbit_rotate_camera);
   orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(
@@ -334,14 +334,14 @@ int main(int argc, char** argv)
     &orbit_dolly_move_camera);
   orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(&orbit_pan_camera);
 
-  Cameras cameras;
+  asci::Cameras cameras;
   cameras.idle_camera_inputs_.push_back(&first_person_rotate_camera);
   cameras.idle_camera_inputs_.push_back(&first_person_pan_camera);
   cameras.idle_camera_inputs_.push_back(&first_person_translate_camera);
   cameras.idle_camera_inputs_.push_back(&first_person_wheel_camera);
   cameras.idle_camera_inputs_.push_back(&orbit_camera);
 
-  CameraSystem camera_system;
+  asci::CameraSystem camera_system;
   camera_system.cameras_ = cameras;
 
   fps::Fps fps;
@@ -453,7 +453,7 @@ int main(int argc, char** argv)
     const float delta_time = delta / static_cast<float>(freq);
 
     target_camera = camera_system.stepCamera(target_camera, delta_time);
-    camera = smoothCamera(camera, target_camera, delta_time);
+    camera = asci::smoothCamera(camera, target_camera, delta_time);
 
     float view[16];
     as::mat_to_arr(as::mat4_from_affine(camera.view()), view);

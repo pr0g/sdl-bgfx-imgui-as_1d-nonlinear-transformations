@@ -9,18 +9,14 @@ find_package(imgui REQUIRED CONFIG)
 include(FetchContent)
 
 FetchContent_Declare(
-    as-camera
-    GIT_REPOSITORY https://github.com/pr0g/as-camera.git
-    GIT_TAG        origin/camera-experiments)
-FetchContent_Declare(
-    bec
-    GIT_REPOSITORY https://github.com/pr0g/Bit-Field-Enum-Class.git
+    as-camera-input
+    GIT_REPOSITORY https://github.com/pr0g/as-camera-input.git
     GIT_TAG        origin/main)
 FetchContent_Declare(
     EasyIterator
     GIT_REPOSITORY https://github.com/TheLartians/EasyIterator.git)
 
-FetchContent_MakeAvailable(as-camera EasyIterator bec)
+FetchContent_MakeAvailable(as-camera-input EasyIterator)
 
 add_executable(${PROJECT_NAME})
 target_sources(
@@ -28,7 +24,6 @@ target_sources(
     main.cpp
     sdl-imgui/imgui_impl_sdl.cpp
     bgfx-imgui/imgui_impl_bgfx.cpp
-    as-camera/as-camera.cpp
     debug-lines.cpp
     debug-circle.cpp
     smooth-line.cpp
@@ -40,13 +35,8 @@ target_link_libraries(
     SDL2::SDL2main
     bgfx::bgfx
     imgui::imgui
-    as-camera
-    EasyIterator
-    bec)
-
-# required by as library
-target_compile_definitions(
-    ${PROJECT_NAME} PRIVATE -DAS_PRECISION_FLOAT -DAS_COL_MAJOR)
+    as-camera-input
+    EasyIterator)
 
 target_compile_features(
     ${PROJECT_NAME} PRIVATE cxx_std_17)
@@ -55,6 +45,12 @@ target_compile_features(
 set_target_properties(
     ${PROJECT_NAME} PROPERTIES
     VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+target_compile_definitions(${PROJECT_NAME}
+    PRIVATE $<$<BOOL:${AS_PRECISION_FLOAT}>:AS_PRECISION_FLOAT>
+            $<$<BOOL:${AS_PRECISION_DOUBLE}>:AS_PRECISION_DOUBLE>
+            $<$<BOOL:${AS_COL_MAJOR}>:AS_COL_MAJOR>
+            $<$<BOOL:${AS_ROW_MAJOR}>:AS_ROW_MAJOR>)
 
 if (WIN32)
 # copy the SDL2.dll to the same folder as the executable
