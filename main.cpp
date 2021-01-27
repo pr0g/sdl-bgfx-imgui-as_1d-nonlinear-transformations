@@ -10,8 +10,10 @@
 #include "bx/math.h"
 #include "bx/timer.h"
 #include "curve-handles.h"
-#include "debug-circle.h"
-#include "debug-lines.h"
+#include "thh-bgfx-debug/debug-line.hpp"
+#include "thh-bgfx-debug/debug-sphere.hpp"
+#include "thh-bgfx-debug/debug-shader.hpp"
+#include "thh-bgfx-debug/debug-quad.hpp"
 #include "easy_iterator.h"
 #include "file-ops.h"
 #include "fps.h"
@@ -238,15 +240,11 @@ int main(int argc, char** argv)
   ImGui_ImplSDL2_InitForMetal(window);
 #endif // BX_PLATFORM_WINDOWS ? BX_PLATFORM_OSX
 
-  const bgfx::ProgramHandle program_col =
-    createShaderProgram(
-      "shader/simple/v_simple.bin", "shader/simple/f_simple.bin")
-      .value_or(bgfx::ProgramHandle(BGFX_INVALID_HANDLE));
+  dbg::EmbeddedShaderProgram simple_program;
+  simple_program.init(dbg::g_simple_embedded_shader_args);
 
-  const bgfx::ProgramHandle program_inst =
-    createShaderProgram(
-      "shader/instance/v_instance.bin", "shader/instance/f_instance.bin")
-      .value_or(bgfx::ProgramHandle(BGFX_INVALID_HANDLE));
+  dbg::EmbeddedShaderProgram instance_program;
+  instance_program.init(dbg::g_instance_embedded_shader_args);
 
   asc::Camera camera{};
   // initial camera position and orientation
@@ -408,7 +406,7 @@ int main(int argc, char** argv)
       }
     }
 
-    dbg::DebugCircles debug_circles(main_view, program_inst);
+    dbg::DebugCircles debug_circles(main_view, instance_program.handle());
     dbg::DebugSpheres debug_spheres(debug_circles);
 
     if (curve_handles.dragging() && hit_distance > 0.0f) {
@@ -534,7 +532,7 @@ int main(int argc, char** argv)
     ImGui::SliderFloat("d", &normalized_bezier_d, 0.0f, 1.0f);
     ImGui::SliderFloat("e", &normalized_bezier_e, 0.0f, 1.0f);
 
-    auto debug_lines = dbg::DebugLines(main_view, program_col);
+    auto debug_lines = dbg::DebugLines(main_view, simple_program.handle());
 
     // draw alignment transform
     debug_lines.addLine(
@@ -805,7 +803,7 @@ int main(int argc, char** argv)
     const auto smooth_line_begin =
       curve_handles.getHandle(smooth_line_begin_index);
     const auto smooth_line_end = curve_handles.getHandle(smooth_line_end_index);
-    auto smooth_line = dbg::SmoothLine(main_view, program_col);
+    auto smooth_line = dbg::SmoothLine(main_view, simple_program.handle());
     smooth_line.draw(smooth_line_begin, smooth_line_end);
 
     static float (*interpolations[])(float) = {
@@ -876,7 +874,7 @@ int main(int argc, char** argv)
     const auto end_screen = as::world_to_screen(
       end, perspective_projection, camera.view(), screen_dimension);
 
-    dbg::DebugLines dl_screen(ortho_view, program_col);
+    dbg::DebugLines dl_screen(ortho_view, simple_program.handle());
     dl_screen.addLine(
       as::vec3(start_screen.x, start_screen.y - 10.0f, 0.0f),
       as::vec3(start_screen.x, start_screen.y + 10.0f, 0.0f), 0xff000000);
@@ -962,7 +960,7 @@ int main(int argc, char** argv)
     }
 
     const size_t quad_dimension = 100;
-    dbg::DebugQuads debug_quads(main_view, program_inst);
+    dbg::DebugQuads debug_quads(main_view, instance_program.handle());
     debug_quads.reserveQuads(quad_dimension * quad_dimension);
 
     const auto noise_position = as::vec2_from_arr(noise2d_position);
@@ -1007,8 +1005,8 @@ int main(int argc, char** argv)
     bgfx::frame();
   }
 
-  bgfx::destroy(program_col);
-  bgfx::destroy(program_inst);
+  simple_program.deinit();
+  instance_program.deinit();
 
   ImGui_ImplSDL2_Shutdown();
   ImGui_Implbgfx_Shutdown();

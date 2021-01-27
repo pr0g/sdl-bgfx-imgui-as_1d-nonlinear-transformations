@@ -1,6 +1,6 @@
 #pragma once
 
-#include "debug-lines.h"
+#include "thh-bgfx-debug/debug-line.hpp"
 
 namespace dbg
 {

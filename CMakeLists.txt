@@ -15,8 +15,12 @@ FetchContent_Declare(
 FetchContent_Declare(
     EasyIterator
     GIT_REPOSITORY https://github.com/TheLartians/EasyIterator.git)
+FetchContent_Declare(
+    thh-bgfx-debug
+    GIT_REPOSITORY https://github.com/pr0g/thh-bgfx-debug
+    GIT_TAG        origin/main)
 
-FetchContent_MakeAvailable(as-camera-input EasyIterator)
+FetchContent_MakeAvailable(as-camera-input EasyIterator thh-bgfx-debug)
 
 add_executable(${PROJECT_NAME})
 target_sources(
@@ -24,8 +28,6 @@ target_sources(
     main.cpp
     sdl-imgui/imgui_impl_sdl.cpp
     bgfx-imgui/imgui_impl_bgfx.cpp
-    debug-lines.cpp
-    debug-circle.cpp
     smooth-line.cpp
     fps.cpp)
 
@@ -36,7 +38,8 @@ target_link_libraries(
     bgfx::bgfx
     imgui::imgui
     as-camera-input
-    EasyIterator)
+    EasyIterator
+    thh-bgfx-debug)
 
 target_compile_features(
     ${PROJECT_NAME} PRIVATE cxx_std_17)
