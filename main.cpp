@@ -241,10 +241,10 @@ int main(int argc, char** argv)
 #endif // BX_PLATFORM_WINDOWS ? BX_PLATFORM_OSX
 
   dbg::EmbeddedShaderProgram simple_program;
-  simple_program.init(dbg::g_simple_embedded_shader_args);
+  simple_program.init(dbg::SimpleEmbeddedShaderArgs);
 
   dbg::EmbeddedShaderProgram instance_program;
-  instance_program.init(dbg::g_instance_embedded_shader_args);
+  instance_program.init(dbg::InstanceEmbeddedShaderArgs);
 
   asc::Camera camera{};
   // initial camera position and orientation
