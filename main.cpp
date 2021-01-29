@@ -246,25 +246,12 @@ int main(int argc, char** argv)
   dbg::EmbeddedShaderProgram instance_program;
   instance_program.init(dbg::InstanceEmbeddedShaderArgs);
 
+  asci::SmoothProps smooth_props{};
   asc::Camera camera{};
   // initial camera position and orientation
   camera.look_at = as::vec3(24.3f, 1.74f, -33.0f);
 
   asc::Camera target_camera = camera;
-
-  // camera properties
-  float rotate_speed = 0.005f;
-  float pan_speed = 0.01f;
-  float translate_speed = 10.0f;
-  float orbit_speed = 0.0f;
-  float look_smoothness = 5.0f;
-  float move_smoothness = 5.0f;
-  float dolly_speed = 0.2f;
-  float translation_multiplier = 3.0f;
-  float default_orbit_distance = 15.0f;
-  float orbit_max_distance = 100.0f;
-  bool pan_invert_x = true;
-  bool pan_invert_y = true;
 
   const float fov = as::radians(60.0f);
   const as::mat4 perspective_projection =
@@ -421,28 +408,23 @@ int main(int argc, char** argv)
 
     ImGui::Begin("Camera");
     ImGui::PushItemWidth(70);
-    ImGui::InputFloat("Rotate Speed", &rotate_speed);
-    ImGui::InputFloat("Pan Speed", &pan_speed);
-    ImGui::InputFloat("Translate Speed", &translate_speed);
-    ImGui::InputFloat("Look Smoothness", &look_smoothness);
-    ImGui::InputFloat("Move Smoothness", &move_smoothness);
-    ImGui::InputFloat("Translation Multiplier", &translation_multiplier);
-    ImGui::InputFloat("Default Orbit Distance", &default_orbit_distance);
-    ImGui::InputFloat("Orbit Max Distance", &orbit_max_distance);
-    ImGui::InputFloat("Orbit Speed", &orbit_speed);
-    ImGui::InputFloat("Dolly Speed", &dolly_speed);
+    ImGui::InputFloat("Free Look Rotate Speed", &first_person_rotate_camera.props_.rotate_speed_);
+    ImGui::InputFloat("Free Look Pan Speed", &first_person_pan_camera.props_.pan_speed_);
+    ImGui::InputFloat("Translate Speed", &first_person_translate_camera.props_.translate_speed_);
+    ImGui::InputFloat("Look Smoothness", &smooth_props.look_smoothness_);
+    ImGui::InputFloat("Move Smoothness", &smooth_props.move_smoothness_);
+    ImGui::InputFloat("Boost Multiplier", &first_person_translate_camera.props_.boost_multiplier_);
+    ImGui::InputFloat("Default Orbit Distance", &orbit_camera.props_.default_orbit_distance_);
+    ImGui::InputFloat("Max Orbit Distance", &orbit_camera.props_.max_orbit_distance_);
+    ImGui::InputFloat("Orbit Speed", &orbit_rotate_camera.props_.rotate_speed_);
+    ImGui::InputFloat("Dolly Mouse Speed", &orbit_dolly_move_camera.props_.dolly_speed_);
+    ImGui::InputFloat("Dolly Wheel Speed", &orbit_dolly_wheel_camera.props_.dolly_speed_);
     ImGui::PopItemWidth();
-    ImGui::Checkbox("Pan Invert X", &pan_invert_x);
-    ImGui::Checkbox("Pan Invert Y", &pan_invert_y);
-    // ImGui::Text("Yaw Control: ");
-    // ImGui::SameLine(100);
-    // ImGui::Text("%f", as::degrees(camera_control.yaw));
+    ImGui::Checkbox("Pan Invert X", &first_person_pan_camera.props_.pan_invert_x_);
+    ImGui::Checkbox("Pan Invert Y", &first_person_pan_camera.props_.pan_invert_y_);
     ImGui::Text("Yaw Camera: ");
     ImGui::SameLine(100);
     ImGui::Text("%f", as::degrees(camera.yaw));
-    // ImGui::Text("Wheel: ");
-    // ImGui::SameLine(100);
-    // ImGui::Text("%f", as::degrees(camera_control.wheel_delta));
     ImGui::End();
 
     const auto freq = double(bx::getHPFrequency());
@@ -457,7 +439,8 @@ int main(int argc, char** argv)
     const float delta_time = delta / static_cast<float>(freq);
 
     target_camera = camera_system.stepCamera(target_camera, delta_time);
-    camera = asci::smoothCamera(camera, target_camera, delta_time);
+    camera = asci::smoothCamera(
+      camera, target_camera, smooth_props, delta_time);
 
     float view[16];
     as::mat_to_arr(as::mat4_from_affine(camera.view()), view);
