@@ -35,7 +35,7 @@ asci::MouseButton mouseFromSdl(const SDL_MouseButtonEvent* event)
     case SDL_BUTTON_MIDDLE:
       return asci::MouseButton::Middle;
     default:
-      return asci::MouseButton::None;
+      return asci::MouseButton::Nil;
   }
 }
 
@@ -61,7 +61,7 @@ asci::KeyboardButton keyboardFromSdl(const int key)
     case SDL_SCANCODE_LCTRL:
       return asci::KeyboardButton::Ctrl;
     default:
-      return asci::KeyboardButton::None;
+      return asci::KeyboardButton::Nil;
   }
 }
 
