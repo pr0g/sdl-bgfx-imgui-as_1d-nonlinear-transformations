@@ -170,6 +170,17 @@ std::tuple<float, float, float> eulerAngles(const as::mat3& orientation)
   return {x, y, z};
 }
 
+void drawTransform(dbg::DebugLines& debug_lines, const as::mat4& mat)
+{
+    const auto translation = mat4_translation(mat);
+    debug_lines.addLine(
+      translation, translation + as::mat4_basis_x(mat), 0xff0000ff);
+    debug_lines.addLine(
+      translation, translation + as::mat4_basis_y(mat), 0xff00ff00);
+    debug_lines.addLine(
+      translation, translation + as::mat4_basis_z(mat), 0xffff0000);
+}
+
 int main(int argc, char** argv)
 {
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -376,8 +387,6 @@ int main(int argc, char** argv)
     const auto hit_distance =
       intersectPlane(ray_origin, ray_direction, as::vec4(as::vec3::axis_z()));
 
-    static as::mat3 m = as::mat3::identity();
-
     SDL_Event current_event;
     while (SDL_PollEvent(&current_event) != 0) {
       camera_system.handleEvents(sdlToInput(&current_event));
@@ -523,12 +532,7 @@ int main(int argc, char** argv)
     auto debug_lines = dbg::DebugLines(main_view, simple_program.handle());
 
     // draw alignment transform
-    debug_lines.addLine(
-      camera.look_at, camera.look_at + as::mat3_basis_x(m), 0xff0000ff);
-    debug_lines.addLine(
-      camera.look_at, camera.look_at + as::mat3_basis_y(m), 0xff00ff00);
-    debug_lines.addLine(
-      camera.look_at, camera.look_at + as::mat3_basis_z(m), 0xffff0000);
+    drawTransform(debug_lines, as::mat4_from_vec3(camera.look_at));
 
     // grid
     const auto grid_scale = 10.0f;
