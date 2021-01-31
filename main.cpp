@@ -202,7 +202,10 @@ int main(int argc, char** argv)
   pd.nwh = wmi.info.win.window;
 #elif BX_PLATFORM_OSX
   pd.nwh = wmi.info.cocoa.window;
-#endif // BX_PLATFORM_WINDOWS ? BX_PLATFORM_OSX
+#elif BX_PLATFORM_LINUX
+  pd.ndt = wmi.info.x11.display;
+  pd.nwh = (void*)(uintptr_t)wmi.info.x11.window;
+#endif // BX_PLATFORM_WINDOWS ? BX_PLATFORM_OSX ? BX_PLATFORM_LINUX
 
   bgfx::Init bgfx_init;
   bgfx_init.type = bgfx::RendererType::Count; // auto choose renderer
@@ -238,7 +241,9 @@ int main(int argc, char** argv)
   ImGui_ImplSDL2_InitForD3D(window);
 #elif BX_PLATFORM_OSX
   ImGui_ImplSDL2_InitForMetal(window);
-#endif // BX_PLATFORM_WINDOWS ? BX_PLATFORM_OSX
+#elif BX_PLATFORM_LINUX
+  ImGui_ImplSDL2_InitForOpenGL(window, nullptr);
+#endif // BX_PLATFORM_WINDOWS ? BX_PLATFORM_OSX ? BX_PLATFORM_LINUX
 
   dbg::EmbeddedShaderProgram simple_program;
   simple_program.init(dbg::SimpleEmbeddedShaderArgs);
