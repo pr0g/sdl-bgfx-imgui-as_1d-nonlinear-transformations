@@ -10,10 +10,6 @@
 #include "bx/math.h"
 #include "bx/timer.h"
 #include "curve-handles.h"
-#include "thh-bgfx-debug/debug-line.hpp"
-#include "thh-bgfx-debug/debug-sphere.hpp"
-#include "thh-bgfx-debug/debug-shader.hpp"
-#include "thh-bgfx-debug/debug-quad.hpp"
 #include "easy_iterator.h"
 #include "file-ops.h"
 #include "fps.h"
@@ -21,6 +17,10 @@
 #include "noise.h"
 #include "sdl-imgui/imgui_impl_sdl.h"
 #include "smooth-line.h"
+#include "thh-bgfx-debug/debug-line.hpp"
+#include "thh-bgfx-debug/debug-quad.hpp"
+#include "thh-bgfx-debug/debug-shader.hpp"
+#include "thh-bgfx-debug/debug-sphere.hpp"
 
 #include <optional>
 #include <tuple>
@@ -170,15 +170,15 @@ std::tuple<float, float, float> eulerAngles(const as::mat3& orientation)
   return {x, y, z};
 }
 
-void drawTransform(dbg::DebugLines& debug_lines, const as::mat4& mat)
+void drawTransform(dbg::DebugLines& debug_lines, const as::affine& affine)
 {
-    const auto translation = mat4_translation(mat);
-    debug_lines.addLine(
-      translation, translation + as::mat4_basis_x(mat), 0xff0000ff);
-    debug_lines.addLine(
-      translation, translation + as::mat4_basis_y(mat), 0xff00ff00);
-    debug_lines.addLine(
-      translation, translation + as::mat4_basis_z(mat), 0xffff0000);
+  const auto& translation = affine.translation;
+  debug_lines.addLine(
+    translation, translation + as::mat3_basis_x(affine.rotation), 0xff0000ff);
+  debug_lines.addLine(
+    translation, translation + as::mat3_basis_y(affine.rotation), 0xff00ff00);
+  debug_lines.addLine(
+    translation, translation + as::mat3_basis_z(affine.rotation), 0xffff0000);
 }
 
 int main(int argc, char** argv)
@@ -351,6 +351,18 @@ int main(int argc, char** argv)
   asci::CameraSystem camera_system;
   camera_system.cameras_ = cameras;
 
+  as::rigid camera_transform_start = as::rigid(as::quat::identity());
+  as::rigid camera_transform_end = as::rigid(as::quat::identity());
+
+  enum class CameraMode
+  {
+    Control,
+    Animation
+  };
+
+  float camera_animation_t = 0.0f;
+  CameraMode camera_mode = CameraMode::Control;
+
   fps::Fps fps;
   for (bool quit = false; !quit;) {
     int global_x;
@@ -379,7 +391,6 @@ int main(int argc, char** argv)
     int x;
     int y;
     SDL_GetMouseState(&x, &y);
-    const auto orientation = as::affine_inverse(camera.view()).rotation;
     const auto world_position = as::screen_to_world(
       as::vec2i(x, y), perspective_projection, camera.view(), screen_dimension);
     const auto ray_origin = camera.transform().translation;
@@ -401,9 +412,20 @@ int main(int argc, char** argv)
           curve_handles.tryBeginDrag(hit);
         }
       }
-
       if (current_event.type == SDL_MOUSEBUTTONUP) {
         curve_handles.clearDrag();
+      }
+      if (current_event.type == SDL_KEYDOWN) {
+        const auto* keyboard_event = (SDL_KeyboardEvent*)&current_event;
+        const auto key = keyboard_event->keysym.scancode;
+        if (key == SDL_SCANCODE_R) {
+          camera_transform_end = as::rigid_from_affine(camera.transform());
+        }
+        if (key == SDL_SCANCODE_P) {
+          camera_animation_t = 0.0f;
+          camera_mode = CameraMode::Animation;
+          camera_transform_start = as::rigid_from_affine(camera.transform());
+        }
       }
     }
 
@@ -422,20 +444,33 @@ int main(int argc, char** argv)
 
     ImGui::Begin("Camera");
     ImGui::PushItemWidth(70);
-    ImGui::InputFloat("Free Look Rotate Speed", &first_person_rotate_camera.props_.rotate_speed_);
-    ImGui::InputFloat("Free Look Pan Speed", &first_person_pan_camera.props_.pan_speed_);
-    ImGui::InputFloat("Translate Speed", &first_person_translate_camera.props_.translate_speed_);
+    ImGui::InputFloat(
+      "Free Look Rotate Speed",
+      &first_person_rotate_camera.props_.rotate_speed_);
+    ImGui::InputFloat(
+      "Free Look Pan Speed", &first_person_pan_camera.props_.pan_speed_);
+    ImGui::InputFloat(
+      "Translate Speed",
+      &first_person_translate_camera.props_.translate_speed_);
     ImGui::InputFloat("Look Smoothness", &smooth_props.look_smoothness_);
     ImGui::InputFloat("Move Smoothness", &smooth_props.move_smoothness_);
-    ImGui::InputFloat("Boost Multiplier", &first_person_translate_camera.props_.boost_multiplier_);
-    ImGui::InputFloat("Default Orbit Distance", &orbit_camera.props_.default_orbit_distance_);
-    ImGui::InputFloat("Max Orbit Distance", &orbit_camera.props_.max_orbit_distance_);
+    ImGui::InputFloat(
+      "Boost Multiplier",
+      &first_person_translate_camera.props_.boost_multiplier_);
+    ImGui::InputFloat(
+      "Default Orbit Distance", &orbit_camera.props_.default_orbit_distance_);
+    ImGui::InputFloat(
+      "Max Orbit Distance", &orbit_camera.props_.max_orbit_distance_);
     ImGui::InputFloat("Orbit Speed", &orbit_rotate_camera.props_.rotate_speed_);
-    ImGui::InputFloat("Dolly Mouse Speed", &orbit_dolly_move_camera.props_.dolly_speed_);
-    ImGui::InputFloat("Dolly Wheel Speed", &orbit_dolly_wheel_camera.props_.dolly_speed_);
+    ImGui::InputFloat(
+      "Dolly Mouse Speed", &orbit_dolly_move_camera.props_.dolly_speed_);
+    ImGui::InputFloat(
+      "Dolly Wheel Speed", &orbit_dolly_wheel_camera.props_.dolly_speed_);
     ImGui::PopItemWidth();
-    ImGui::Checkbox("Pan Invert X", &first_person_pan_camera.props_.pan_invert_x_);
-    ImGui::Checkbox("Pan Invert Y", &first_person_pan_camera.props_.pan_invert_y_);
+    ImGui::Checkbox(
+      "Pan Invert X", &first_person_pan_camera.props_.pan_invert_x_);
+    ImGui::Checkbox(
+      "Pan Invert Y", &first_person_pan_camera.props_.pan_invert_y_);
     ImGui::Text("Yaw Camera: ");
     ImGui::SameLine(100);
     ImGui::Text("%f", as::degrees(camera.yaw));
@@ -452,12 +487,41 @@ int main(int argc, char** argv)
 
     const float delta_time = delta / static_cast<float>(freq);
 
-    target_camera = camera_system.stepCamera(target_camera, delta_time);
-    camera = asci::smoothCamera(
-      camera, target_camera, smooth_props, delta_time);
+    as::mat4 camera_view;
+    if (camera_mode == CameraMode::Control) {
+      target_camera = camera_system.stepCamera(target_camera, delta_time);
+      camera =
+        asci::smoothCamera(camera, target_camera, smooth_props, delta_time);
+      camera_view = as::mat4_from_affine(camera.view());
+    } else if (camera_mode == CameraMode::Animation) {
+      auto camera_transform_current = as::rigid(
+        as::quat_slerp(
+          camera_transform_start.rotation, camera_transform_end.rotation,
+          as::smoother_step(camera_animation_t)),
+        as::vec_mix(
+          camera_transform_start.translation, camera_transform_end.translation,
+          as::smoother_step(camera_animation_t)));
+
+      camera_view = as::mat4_from_rigid(
+        as::rigid_inverse(camera_transform_current));
+
+      auto angles = eulerAngles(
+        as::mat3_from_quat(camera_transform_current.rotation));
+      camera.pitch = std::get<0>(angles);
+      camera.yaw = std::get<1>(angles);
+      camera.look_at = camera_transform_current.translation;
+      target_camera = camera;
+
+      if (camera_animation_t >= 1.0f) {
+        camera_mode = CameraMode::Control;
+      }
+
+      camera_animation_t =
+        as::clamp(camera_animation_t + (delta_time / 1.0f), 0.0f, 1.0f);
+    }
 
     float view[16];
-    as::mat_to_arr(as::mat4_from_affine(camera.view()), view);
+    as::mat_to_arr(camera_view, view);
 
     float proj_p[16];
     as::mat_to_arr(perspective_projection, proj_p);
@@ -532,7 +596,8 @@ int main(int argc, char** argv)
     auto debug_lines = dbg::DebugLines(main_view, simple_program.handle());
 
     // draw alignment transform
-    drawTransform(debug_lines, as::mat4_from_vec3(camera.look_at));
+    drawTransform(debug_lines, as::affine_from_vec3(camera.look_at));
+    drawTransform(debug_lines, as::affine_from_rigid(camera_transform_end));
 
     // grid
     const auto grid_scale = 10.0f;
