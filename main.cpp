@@ -1071,7 +1071,7 @@ int main(int argc, char** argv)
         as::radians(Rotation[2])),
       as::vec3_from_arr(Translation));
     const as::vec3 next_position_affine =
-      as::affine_transform_pos(affine_transformation, as::vec3::axis_z(-0.5f));
+      as::affine_transform_pos(affine_transformation, as::vec3::axis_z(0.5f));
 
     const as::rigid next_rigid =
       as::rigid_mul(as::rigid(as::quat::identity()), rigid_transformation);
@@ -1081,28 +1081,26 @@ int main(int argc, char** argv)
     as::rigid another_rigid =
       as::rigid_mul(as::rigid(as::vec3::axis_z(-0.5f)), next_rigid);
     as::affine another_affine =
-      as::affine_mul(as::affine(as::vec3::axis_z(0.5f)), next_affine);
+      as::affine_mul(as::affine(as::vec3::axis_z(-0.5f)), next_affine);
 
     debug_cubes.addCube(
       as::mat4_from_rigid(next_rigid), as::vec4::one());
     debug_cubes.addCube(
-      as::mat4_from_affine(next_affine), as::vec4(1.0f, 255.0f, 0.0f, 1.0f));
+      as::mat4_from_affine(next_affine), as::vec4::axis_w());
     
     debug_spheres.addSphere(
       as::mat4_from_vec3(next_position_rigid)
         * as::mat4_from_mat3(as::mat3_scale(0.2f)), as::vec4::one());
     debug_spheres.addSphere(
       as::mat4_from_vec3(next_position_affine)
-        * as::mat4_from_mat3(as::mat3_scale(0.2f)),
-      as::vec4(1.0f, 255.0f, 0.0f, 1.0f));
+        * as::mat4_from_mat3(as::mat3_scale(0.2f)), as::vec4::axis_w());
 
     debug_spheres.addSphere(
       as::mat4_from_rigid(another_rigid)
         * as::mat4_from_mat3(as::mat3_scale(0.2f)), as::vec4::one());
     debug_spheres.addSphere(
       as::mat4_from_affine(another_affine)
-        * as::mat4_from_mat3(as::mat3_scale(0.2f)),
-      as::vec4(1.0f, 255.0f, 255.0f, 1.0f));
+        * as::mat4_from_mat3(as::mat3_scale(0.2f)), as::vec4::axis_w());
 
     debug_lines.submit();
     debug_quads.submit();
