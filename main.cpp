@@ -508,11 +508,11 @@ int main(int argc, char** argv)
           camera_transform_start.translation, camera_transform_end.translation,
           as::smoother_step(camera_animation_t)));
 
-      camera_view = as::mat4_from_rigid(
-        as::rigid_inverse(camera_transform_current));
+      camera_view =
+        as::mat4_from_rigid(as::rigid_inverse(camera_transform_current));
 
-      auto angles = eulerAngles(
-        as::mat3_from_quat(camera_transform_current.rotation));
+      auto angles =
+        eulerAngles(as::mat3_from_quat(camera_transform_current.rotation));
       camera.pitch = std::get<0>(angles);
       camera.yaw = std::get<1>(angles);
       camera.look_at = camera_transform_current.translation;
@@ -1065,7 +1065,7 @@ int main(int argc, char** argv)
     dbg::DebugCubes debug_cubes(main_view, instance_program.handle());
 
     const as::vec3 start_position = as::vec3::zero();
-  
+
     const as::rigid rigid_transformation(
       as::quat_rotation_zxy(
         as::radians(Rotation[0]), as::radians(Rotation[1]),
@@ -1092,24 +1092,26 @@ int main(int argc, char** argv)
     as::affine another_affine =
       as::affine_mul(as::affine(as::vec3::axis_z(-0.5f)), next_affine);
 
-    debug_cubes.addCube(
-      as::mat4_from_rigid(next_rigid), as::vec4::one());
-    debug_cubes.addCube(
-      as::mat4_from_affine(next_affine), as::vec4::axis_w());
-    
+    debug_cubes.addCube(as::mat4_from_rigid(next_rigid), as::vec4::one());
+    debug_cubes.addCube(as::mat4_from_affine(next_affine), as::vec4::axis_w());
+
     debug_spheres.addSphere(
       as::mat4_from_vec3(next_position_rigid)
-        * as::mat4_from_mat3(as::mat3_scale(0.2f)), as::vec4::one());
+        * as::mat4_from_mat3(as::mat3_scale(0.2f)),
+      as::vec4::one());
     debug_spheres.addSphere(
       as::mat4_from_vec3(next_position_affine)
-        * as::mat4_from_mat3(as::mat3_scale(0.2f)), as::vec4::axis_w());
+        * as::mat4_from_mat3(as::mat3_scale(0.2f)),
+      as::vec4::axis_w());
 
     debug_spheres.addSphere(
       as::mat4_from_rigid(another_rigid)
-        * as::mat4_from_mat3(as::mat3_scale(0.2f)), as::vec4::one());
+        * as::mat4_from_mat3(as::mat3_scale(0.2f)),
+      as::vec4::one());
     debug_spheres.addSphere(
       as::mat4_from_affine(another_affine)
-        * as::mat4_from_mat3(as::mat3_scale(0.2f)), as::vec4::axis_w());
+        * as::mat4_from_mat3(as::mat3_scale(0.2f)),
+      as::vec4::axis_w());
 
     debug_lines.submit();
     debug_quads.submit();
