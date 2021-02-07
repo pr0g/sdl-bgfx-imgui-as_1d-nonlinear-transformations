@@ -331,22 +331,18 @@ int main(int argc, char** argv)
   auto orbit_dolly_wheel_camera = asci::OrbitDollyMouseWheelCameraInput{};
   auto orbit_dolly_move_camera = asci::OrbitDollyMouseMoveCameraInput{};
   auto orbit_pan_camera = asci::PanCameraInput{asci::orbitPan};
-  orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(
-    &orbit_rotate_camera);
-  orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(
-    &orbit_translate_camera);
-  orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(
-    &orbit_dolly_wheel_camera);
-  orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(
-    &orbit_dolly_move_camera);
-  orbit_camera.orbit_cameras_.idle_camera_inputs_.push_back(&orbit_pan_camera);
+  orbit_camera.orbit_cameras_.addCamera(&orbit_rotate_camera);
+  orbit_camera.orbit_cameras_.addCamera(&orbit_translate_camera);
+  orbit_camera.orbit_cameras_.addCamera(&orbit_dolly_wheel_camera);
+  orbit_camera.orbit_cameras_.addCamera(&orbit_dolly_move_camera);
+  orbit_camera.orbit_cameras_.addCamera(&orbit_pan_camera);
 
   asci::Cameras cameras;
-  cameras.idle_camera_inputs_.push_back(&first_person_rotate_camera);
-  cameras.idle_camera_inputs_.push_back(&first_person_pan_camera);
-  cameras.idle_camera_inputs_.push_back(&first_person_translate_camera);
-  cameras.idle_camera_inputs_.push_back(&first_person_wheel_camera);
-  cameras.idle_camera_inputs_.push_back(&orbit_camera);
+  cameras.addCamera(&first_person_rotate_camera);
+  cameras.addCamera(&first_person_pan_camera);
+  cameras.addCamera(&first_person_translate_camera);
+  cameras.addCamera(&first_person_wheel_camera);
+  cameras.addCamera(&orbit_camera);
 
   asci::CameraSystem camera_system;
   camera_system.cameras_ = cameras;
