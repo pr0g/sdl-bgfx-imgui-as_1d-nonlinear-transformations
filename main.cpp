@@ -17,6 +17,7 @@
 #include "noise.h"
 #include "sdl-imgui/imgui_impl_sdl.h"
 #include "smooth-line.h"
+#include "thh-bgfx-debug/debug-cube.hpp"
 #include "thh-bgfx-debug/debug-line.hpp"
 #include "thh-bgfx-debug/debug-quad.hpp"
 #include "thh-bgfx-debug/debug-shader.hpp"
@@ -228,6 +229,7 @@ int main(int argc, char** argv)
 
   dbg::DebugVertex::init();
   dbg::DebugCircles::init();
+  dbg::DebugCubes::init();
 
   const auto screen_dimension = as::vec2i(width, height);
   const bgfx::ViewId main_view = 0;
@@ -1044,9 +1046,68 @@ int main(int argc, char** argv)
       }
     }
 
+    ImGui::Begin("Transforms");
+    static float Translation[] = {0.0f, 0.0f, 0.0f};
+    ImGui::SliderFloat3("Translation", Translation, -50.0f, 50.0f);
+    static float Rotation[] = {0.0f, 0.0f, 0.0f};
+    ImGui::SliderFloat3("Rotation", Rotation, -360.0f, 360.0f);
+    ImGui::End();
+
+    dbg::DebugCubes debug_cubes(main_view, instance_program.handle());
+
+    const as::vec3 start_position = as::vec3::zero();
+  
+    const as::rigid rigid_transformation(
+      as::quat_rotation_zxy(
+        as::radians(Rotation[0]), as::radians(Rotation[1]),
+        as::radians(Rotation[2])),
+      as::vec3_from_arr(Translation));
+    const as::vec3 next_position_rigid =
+      as::rigid_transform_pos(rigid_transformation, as::vec3::axis_z(0.5f));
+
+    const as::affine affine_transformation(
+      as::mat3_rotation_zxy(
+        as::radians(Rotation[0]), as::radians(Rotation[1]),
+        as::radians(Rotation[2])),
+      as::vec3_from_arr(Translation));
+    const as::vec3 next_position_affine =
+      as::affine_transform_pos(affine_transformation, as::vec3::axis_z(-0.5f));
+
+    const as::rigid next_rigid =
+      as::rigid_mul(as::rigid(as::quat::identity()), rigid_transformation);
+    const as::affine next_affine =
+      as::affine_mul(as::affine(as::mat3::identity()), affine_transformation);
+
+    as::rigid another_rigid =
+      as::rigid_mul(as::rigid(as::vec3::axis_z(-0.5f)), next_rigid);
+    as::affine another_affine =
+      as::affine_mul(as::affine(as::vec3::axis_z(0.5f)), next_affine);
+
+    debug_cubes.addCube(
+      as::mat4_from_rigid(next_rigid), as::vec4::one());
+    debug_cubes.addCube(
+      as::mat4_from_affine(next_affine), as::vec4(1.0f, 255.0f, 0.0f, 1.0f));
+    
+    debug_spheres.addSphere(
+      as::mat4_from_vec3(next_position_rigid)
+        * as::mat4_from_mat3(as::mat3_scale(0.2f)), as::vec4::one());
+    debug_spheres.addSphere(
+      as::mat4_from_vec3(next_position_affine)
+        * as::mat4_from_mat3(as::mat3_scale(0.2f)),
+      as::vec4(1.0f, 255.0f, 0.0f, 1.0f));
+
+    debug_spheres.addSphere(
+      as::mat4_from_rigid(another_rigid)
+        * as::mat4_from_mat3(as::mat3_scale(0.2f)), as::vec4::one());
+    debug_spheres.addSphere(
+      as::mat4_from_affine(another_affine)
+        * as::mat4_from_mat3(as::mat3_scale(0.2f)),
+      as::vec4(1.0f, 255.0f, 255.0f, 1.0f));
+
     debug_lines.submit();
     debug_quads.submit();
     debug_circles.submit();
+    debug_cubes.submit();
 
     // include this in case nothing was submitted to draw
     bgfx::touch(main_view);
