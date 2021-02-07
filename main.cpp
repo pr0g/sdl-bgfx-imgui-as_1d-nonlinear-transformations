@@ -171,15 +171,23 @@ std::tuple<float, float, float> eulerAngles(const as::mat3& orientation)
   return {x, y, z};
 }
 
-void drawTransform(dbg::DebugLines& debug_lines, const as::affine& affine)
+static void drawTransform(
+  dbg::DebugLines& debug_lines, const as::affine& affine,
+  const float alpha = 1.0f)
 {
+  const uint8_t alpha_8 = static_cast<uint8_t>(255.0f * alpha);
+  const uint32_t alpha_32 = alpha_8 << 24;
+
   const auto& translation = affine.translation;
   debug_lines.addLine(
-    translation, translation + as::mat3_basis_x(affine.rotation), 0xff0000ff);
+    translation, translation + as::mat3_basis_x(affine.rotation),
+    0x000000ff | alpha_32);
   debug_lines.addLine(
-    translation, translation + as::mat3_basis_y(affine.rotation), 0xff00ff00);
+    translation, translation + as::mat3_basis_y(affine.rotation),
+    0x0000ff00 | alpha_32);
   debug_lines.addLine(
-    translation, translation + as::mat3_basis_z(affine.rotation), 0xffff0000);
+    translation, translation + as::mat3_basis_z(affine.rotation),
+    0x00ff0000 | alpha_32);
 }
 
 int main(int argc, char** argv)
@@ -594,7 +602,6 @@ int main(int argc, char** argv)
     auto debug_lines = dbg::DebugLines(main_view, simple_program.handle());
 
     // draw alignment transform
-    drawTransform(debug_lines, as::affine_from_vec3(camera.look_at));
     drawTransform(debug_lines, as::affine_from_rigid(camera_transform_end));
 
     // grid
@@ -619,9 +626,11 @@ int main(int argc, char** argv)
 
     // draw camera look at
     if (!as::real_near(camera.look_dist, 0.0f, 0.01f)) {
+      float alpha = as::max(camera.look_dist, -5.0f) / -5.0f;
+      drawTransform(debug_lines, as::affine_from_vec3(camera.look_at), alpha);
       debug_spheres.addSphere(
         as::mat4_from_mat3_vec3(as::mat3::identity(), camera.look_at),
-        as::vec4(as::vec3::zero(), 1.0f));
+        as::vec4(as::vec3::zero(), alpha));
     }
 
     const auto p0 = curve_handles.getHandle(p0_index);
@@ -1047,7 +1056,7 @@ int main(int argc, char** argv)
     }
 
     ImGui::Begin("Transforms");
-    static float Translation[] = {0.0f, 0.0f, 0.0f};
+    static float Translation[] = {-15.0f, 5.0f, 0.0f};
     ImGui::SliderFloat3("Translation", Translation, -50.0f, 50.0f);
     static float Rotation[] = {0.0f, 0.0f, 0.0f};
     ImGui::SliderFloat3("Rotation", Rotation, -360.0f, 360.0f);
