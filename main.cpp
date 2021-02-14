@@ -79,12 +79,12 @@ asci::InputEvent sdlToInput(const SDL_Event* event)
   switch (event->type) {
     case SDL_MOUSEMOTION: {
       const auto* mouse_motion_event = (SDL_MouseMotionEvent*)event;
-      return asci::MouseMotionEvent{
+      return asci::CursorMotionEvent{
         {mouse_motion_event->x, mouse_motion_event->y}};
     }
     case SDL_MOUSEWHEEL: {
       const auto* mouse_wheel_event = (SDL_MouseWheelEvent*)event;
-      return asci::MouseWheelEvent{mouse_wheel_event->y};
+      return asci::ScrollEvent{mouse_wheel_event->y};
     }
     case SDL_MOUSEBUTTONDOWN: {
       const auto* mouse_event = (SDL_MouseButtonEvent*)event;
@@ -340,14 +340,14 @@ int main(int argc, char** argv)
   auto first_person_pan_camera = asci::PanCameraInput{asci::lookPan};
   auto first_person_translate_camera =
     asci::TranslateCameraInput{asci::lookTranslation};
-  auto first_person_wheel_camera = asci::WheelTranslationCameraInput{};
+  auto first_person_wheel_camera = asci::ScrollTranslationCameraInput{};
 
   auto orbit_camera = asci::OrbitCameraInput{};
   auto orbit_rotate_camera = asci::RotateCameraInput{asci::MouseButton::Left};
   auto orbit_translate_camera =
     asci::TranslateCameraInput{asci::orbitTranslation};
-  auto orbit_dolly_wheel_camera = asci::OrbitDollyMouseWheelCameraInput{};
-  auto orbit_dolly_move_camera = asci::OrbitDollyMouseMoveCameraInput{};
+  auto orbit_dolly_wheel_camera = asci::OrbitDollyScrollCameraInput{};
+  auto orbit_dolly_move_camera = asci::OrbitDollyCursorMoveCameraInput{};
   auto orbit_pan_camera = asci::PanCameraInput{asci::orbitPan};
   orbit_camera.orbit_cameras_.addCamera(&orbit_rotate_camera);
   orbit_camera.orbit_cameras_.addCamera(&orbit_translate_camera);
