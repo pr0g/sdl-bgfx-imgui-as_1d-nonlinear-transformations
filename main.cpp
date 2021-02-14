@@ -30,7 +30,7 @@ namespace asc
 {
   Handedness handedness()
   {
-    return Handedness::Right;
+    return Handedness::Left;
   }
 }
 
@@ -433,14 +433,12 @@ int main(int argc, char** argv)
         const auto* keyboard_event = (SDL_KeyboardEvent*)&current_event;
         const auto key = keyboard_event->keysym.scancode;
         if (key == SDL_SCANCODE_R) {
-          camera_transform_end =
-            as::rigid_from_affine(camera.internal_transform());
+          camera_transform_end = as::rigid_from_affine(camera.transform());
         }
         if (key == SDL_SCANCODE_P) {
           camera_animation_t = 0.0f;
           camera_mode = CameraMode::Animation;
-          camera_transform_start =
-            as::rigid_from_affine(camera.internal_transform());
+          camera_transform_start = as::rigid_from_affine(camera.transform());
         }
       }
     }
