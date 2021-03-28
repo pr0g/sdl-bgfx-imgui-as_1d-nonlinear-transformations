@@ -201,6 +201,50 @@ static void drawTransform(
     0x00ff0000 | alpha_32);
 }
 
+void imguiHierarchy(
+  thh::container_t<hy::entity_t> entities, hy::interaction_t& interaction,
+  const std::vector<thh::handle_t>& root_handles)
+{
+  ImGui::Begin("Hierarchy", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+  if (ImGui::IsWindowCollapsed()) {
+    ImGui::End();
+    return;
+  }
+  ImVec2 size(320.0f, 180.0f);
+  ImGui::InvisibleButton("canvas", size);
+  ImVec2 p0 = ImGui::GetItemRectMin();
+  ImVec2 p1 = ImGui::GetItemRectMax();
+
+  ImDrawList* draw_list = ImGui::GetWindowDrawList();
+  draw_list->PushClipRect(p0, p1);
+
+  int g_row_count = 0;
+  int g_row = 0;
+  int g_col = 0;
+  const auto display_name = [&g_row, &g_col, &g_row_count, draw_list, p0](
+                              int row, int col, bool selected,
+                              bool hidden_children, const std::string& name) {
+    g_row = p0.y + (g_row_count * 12);
+    g_col = 0;
+    g_row_count++;
+    const auto entry = std::string("|-- ") + name;
+    draw_list->AddText(ImVec2(p0.x + col * 7, g_row), 0xffffffff, entry.c_str());
+  };
+
+  const auto display_connection = [draw_list, p0](int row, int col) {
+    draw_list->AddText(ImVec2(p0.x + col * 7, row + 12), 0xffffffff, "|");
+  };
+
+  const auto get_row_col = [&g_row, &g_col] { return std::pair(g_row, g_col); };
+
+  hy::display_hierarchy(
+    entities, interaction, root_handles, display_name, display_connection,
+    get_row_col);
+
+  draw_list->PopClipRect();
+  ImGui::End();
+}
+
 int main(int argc, char** argv)
 {
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -1080,36 +1124,7 @@ int main(int argc, char** argv)
     ImGui::SliderFloat3("Rotation", Rotation, -360.0f, 360.0f);
     ImGui::End();
 
-    int g_row = 0;
-    int g_col = 0;
-    const auto display_name = [&g_row, &g_col](
-                                int row, int col, bool selected,
-                                bool hidden_children, const std::string& name) {
-      const float indent = 4.0f;
-      g_row = row;
-      g_col = 0;
-      for (int i = 0; i < col; ++i) {
-        ImGui::Indent(indent);
-      }
-      ImGui::Text("|-- %s", name.c_str());
-      for (int i = 0; i < col; ++i) {
-        ImGui::Unindent(indent);
-      }
-    };
-
-    const auto display_connection = [](int row, int col) {
-      // noop
-    };
-
-    const auto get_row_col = [&g_row, &g_col] {
-      return std::pair(g_row, g_col);
-    };
-
-    ImGui::Begin("Hierarchy");
-    hy::display_hierarchy(
-      entities, interaction, root_handles, display_name, display_connection,
-      get_row_col);
-    ImGui::End();
+    imguiHierarchy(entities, interaction, root_handles);
 
     dbg::DebugCubes debug_cubes(main_view, instance_program.handle());
 
