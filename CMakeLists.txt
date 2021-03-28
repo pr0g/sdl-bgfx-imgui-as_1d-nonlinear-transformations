@@ -19,8 +19,11 @@ FetchContent_Declare(
     thh-bgfx-debug
     GIT_REPOSITORY https://github.com/pr0g/thh-bgfx-debug
     GIT_TAG        origin/main)
+FetchContent_Declare(
+    hierarchy
+    SOURCE_DIR     ../../../hierarchy)
 
-FetchContent_MakeAvailable(as-camera-input EasyIterator thh-bgfx-debug)
+FetchContent_MakeAvailable(as-camera-input EasyIterator thh-bgfx-debug hierarchy)
 
 add_executable(${PROJECT_NAME})
 target_sources(
@@ -39,7 +42,8 @@ target_link_libraries(
     imgui::imgui
     as-camera-input
     EasyIterator
-    thh-bgfx-debug)
+    thh-bgfx-debug
+    hierarchy)
 
 target_compile_features(
     ${PROJECT_NAME} PRIVATE cxx_std_17)

@@ -13,6 +13,7 @@
 #include "easy_iterator.h"
 #include "file-ops.h"
 #include "fps.h"
+#include "hierarchy/entity.hpp"
 #include "imgui.h"
 #include "noise.h"
 #include "sdl-imgui/imgui_impl_sdl.h"
@@ -28,11 +29,13 @@
 
 namespace asc
 {
-  Handedness handedness()
-  {
-    return Handedness::Left;
-  }
+
+Handedness handedness()
+{
+  return Handedness::Left;
 }
+
+} // namespace asc
 
 asci::MouseButton mouseFromSdl(const SDL_MouseButtonEvent* event)
 {
@@ -376,6 +379,13 @@ int main(int argc, char** argv)
 
   float camera_animation_t = 0.0f;
   CameraMode camera_mode = CameraMode::Control;
+
+  thh::container_t<hy::entity_t> entities;
+  auto root_handles = demo::create_sample_entities(entities);
+
+  hy::interaction_t interaction;
+  interaction.selected_ = root_handles.front();
+  interaction.neighbors_ = root_handles;
 
   fps::Fps fps;
   for (bool quit = false; !quit;) {
@@ -1068,6 +1078,37 @@ int main(int argc, char** argv)
     ImGui::SliderFloat3("Translation", Translation, -50.0f, 50.0f);
     static float Rotation[] = {0.0f, 0.0f, 0.0f};
     ImGui::SliderFloat3("Rotation", Rotation, -360.0f, 360.0f);
+    ImGui::End();
+
+    int g_row = 0;
+    int g_col = 0;
+    const auto display_name = [&g_row, &g_col](
+                                int row, int col, bool selected,
+                                bool hidden_children, const std::string& name) {
+      const float indent = 4.0f;
+      g_row = row;
+      g_col = 0;
+      for (int i = 0; i < col; ++i) {
+        ImGui::Indent(indent);
+      }
+      ImGui::Text("|-- %s", name.c_str());
+      for (int i = 0; i < col; ++i) {
+        ImGui::Unindent(indent);
+      }
+    };
+
+    const auto display_connection = [](int row, int col) {
+      // noop
+    };
+
+    const auto get_row_col = [&g_row, &g_col] {
+      return std::pair(g_row, g_col);
+    };
+
+    ImGui::Begin("Hierarchy");
+    hy::display_hierarchy(
+      entities, interaction, root_handles, display_name, display_connection,
+      get_row_col);
     ImGui::End();
 
     dbg::DebugCubes debug_cubes(main_view, instance_program.handle());
