@@ -63,6 +63,13 @@ void imgui_interaction_normal_hierarchy(
 {
   ImGui::Begin("Hierarchy Interaction Normal");
 
+  // if window is collapsed, collapse all root nodes to have interaction_t stay
+  // in sync with imgui (otherwise push/pop ids get out of sync)
+  // future: could strore collapsed_ state before/after to restore correctly
+  if (ImGui::IsWindowCollapsed()) {
+    interaction.collapsed_ = root_handles;
+  }
+
   const auto display =
     [&interaction](
       int level, int indent, const thh::handle_t entity_handle, bool selected,
