@@ -14,14 +14,16 @@ FetchContent_Declare(
     GIT_TAG        777d7895874115bb81933f8e117414bf8efc9d29)
 FetchContent_Declare(
     EasyIterator
-    GIT_REPOSITORY https://github.com/TheLartians/EasyIterator.git)
+    GIT_REPOSITORY https://github.com/TheLartians/EasyIterator.git
+    GIT_TAG        aab0c0d8fd17708c64522408d9b304729dbc3a3f)
 FetchContent_Declare(
     thh-bgfx-debug
     GIT_REPOSITORY https://github.com/pr0g/thh-bgfx-debug
-    GIT_TAG        origin/main)
+    GIT_TAG        b0eb4ddeb9cfe19ee18986444eb437c08fb323fe)
 FetchContent_Declare(
     hierarchy
-    SOURCE_DIR     ../../../hierarchy)
+    GIT_REPOSITORY https://github.com/pr0g/hierarchy.git
+    GIT_TAG        51ed7524fa5e8c04eab7b16a8cc51d372578be7c)
 
 FetchContent_MakeAvailable(as-camera-input EasyIterator thh-bgfx-debug hierarchy)
 

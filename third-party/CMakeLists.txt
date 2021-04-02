@@ -25,19 +25,19 @@ ExternalProject_Add(
 ExternalProject_Add(
     bgfx
     GIT_REPOSITORY https://github.com/pr0g/bgfx.cmake.git
-    GIT_TAG        origin/main
+    GIT_TAG        1971d7268bab35d09e9aa073634bb9c1ba9998e2
     GIT_SHALLOW    1
     BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/bgfx/build/${build_type_dir}
     INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}
     CMAKE_ARGS ${build_type_arg}
                -D CMAKE_INSTALL_PREFIX=<INSTALL_DIR>
-               -D CMAKE_DEBUG_POSTFIX=d
+               "$<$<CONFIG:Debug>:-DCMAKE_DEBUG_POSTFIX=d>"
                -D BGFX_BUILD_EXAMPLES=OFF)
 
 ExternalProject_Add(
     cmakefied
     GIT_REPOSITORY https://github.com/pr0g/cmakefied.git
-    GIT_TAG        origin/main
+    GIT_TAG        5b201e9be3fa85fdd987110c4a9a2f91f28c0af1
     UPDATE_COMMAND bash <SOURCE_DIR>/git-clone.sh imgui
     SOURCE_SUBDIR ../imgui
     BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/imgui/build/${build_type_dir}
