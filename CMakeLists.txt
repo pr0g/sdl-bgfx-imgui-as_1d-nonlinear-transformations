@@ -34,7 +34,8 @@ target_sources(
     sdl-imgui/imgui_impl_sdl.cpp
     bgfx-imgui/imgui_impl_bgfx.cpp
     smooth-line.cpp
-    fps.cpp)
+    fps.cpp
+    hierarchy-imgui.cpp)
 
 target_link_libraries(
     ${PROJECT_NAME} PRIVATE
