@@ -35,7 +35,10 @@ target_sources(
     bgfx-imgui/imgui_impl_bgfx.cpp
     smooth-line.cpp
     fps.cpp
-    hierarchy-imgui.cpp)
+    hierarchy-imgui.cpp
+    bgfx-helpers.cpp
+    marching-cube-scene.cpp
+    math-utils.cpp)
 
 target_link_libraries(
     ${PROJECT_NAME} PRIVATE

@@ -4,6 +4,7 @@
 #include "as-camera-input/as-camera-input.hpp"
 #include "as/as-math-ops.hpp"
 #include "as/as-view.hpp"
+#include "bgfx-helpers.h"
 #include "bgfx-imgui/imgui_impl_bgfx.h"
 #include "bgfx/bgfx.h"
 #include "bgfx/platform.h"
@@ -14,7 +15,10 @@
 #include "file-ops.h"
 #include "fps.h"
 #include "hierarchy-imgui.h"
+#include "hsv-rgb.h"
 #include "imgui.h"
+#include "marching-cube-scene.h"
+#include "marching-cubes/marching-cubes.h"
 #include "noise.h"
 #include "sdl-imgui/imgui_impl_sdl.h"
 #include "smooth-line.h"
@@ -114,34 +118,6 @@ asci::InputEvent sdlToInput(const SDL_Event* event)
     default:
       return std::monostate{};
   }
-}
-
-static bgfx::ShaderHandle createShader(
-  const std::string& shader, const char* name)
-{
-  const bgfx::Memory* mem = bgfx::copy(shader.data(), shader.size());
-  const bgfx::ShaderHandle handle = bgfx::createShader(mem);
-  bgfx::setName(handle, name);
-  return handle;
-}
-
-std::optional<bgfx::ProgramHandle> createShaderProgram(
-  const char* vert_shader_path, const char* frag_shader_path)
-{
-  std::string vshader;
-  if (!fileops::readFile(vert_shader_path, vshader)) {
-    return {};
-  }
-
-  std::string fshader;
-  if (!fileops::readFile(frag_shader_path, fshader)) {
-    return {};
-  }
-
-  bgfx::ShaderHandle vsh = createShader(vshader, "vshader");
-  bgfx::ShaderHandle fsh = createShader(fshader, "fshader");
-
-  return bgfx::createProgram(vsh, fsh, true);
 }
 
 static float intersectPlane(
