@@ -384,8 +384,7 @@ int main(int argc, char** argv)
   auto root_handles = demo::create_sample_entities(entities);
 
   hy::interaction_t interaction;
-  interaction.selected_ = root_handles.front();
-  interaction.neighbors_ = root_handles;
+  interaction.select(root_handles.front(), entities, root_handles);
 
   fps::Fps fps;
   for (bool quit = false; !quit;) {

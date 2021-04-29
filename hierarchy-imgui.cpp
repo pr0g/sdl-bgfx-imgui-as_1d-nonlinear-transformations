@@ -31,16 +31,13 @@ void imgui_interaction_draw_list_hierarchy(
   ImDrawList* draw_list = ImGui::GetWindowDrawList();
   draw_list->PushClipRect(p0, p1);
 
-  const auto display_name = [draw_list, p0](
-                              int level, int indent, thh::handle_t,
-                              bool selected, bool collapsed, bool has_children,
-                              const std::string& name) {
-    const auto entry = std::string("|-- ") + name;
-    const ImU32 col = selected   ? 0xffffff00
-                    : !collapsed ? 0xffffffff
-                                 : 0xff00ffff;
+  const auto display_name = [draw_list, p0](const hy::display_info_t& di) {
+    const auto entry = std::string("|-- ") + di.name;
+    const ImU32 col = di.selected   ? 0xffffff00
+                    : !di.collapsed ? 0xffffffff
+                                    : 0xff00ffff;
     draw_list->AddText(
-      ImVec2(p0.x + indent * 28, p0.y + level * 12), col, entry.c_str());
+      ImVec2(p0.x + di.indent * 28, p0.y + di.level * 12), col, entry.c_str());
   };
 
   const auto display_connection = [draw_list, p0](int level, int indent) {
@@ -63,44 +60,37 @@ void imgui_interaction_normal_hierarchy(
 {
   ImGui::Begin("Hierarchy Interaction Normal");
 
-  // if window is collapsed, collapse all root nodes to have interaction_t stay
-  // in sync with imgui (otherwise push/pop ids get out of sync)
-  // future: could strore collapsed_ state before/after to restore correctly
   if (ImGui::IsWindowCollapsed()) {
-    interaction.collapsed_ = root_handles;
+    ImGui::End();
+    return;
   }
 
-  const auto display =
-    [&interaction](
-      int level, int indent, const thh::handle_t entity_handle, bool selected,
-      bool collapsed, bool has_children, const std::string& name) {
-      if (has_children) {
-        ImGui::SetNextItemOpen(!collapsed);
-        bool open = ImGui::TreeNodeEx(name.c_str());
-        if (ImGui::IsItemClicked()) {
-          if (open) {
-            interaction.collapsed_.erase(
-              std::remove(
-                interaction.collapsed_.begin(), interaction.collapsed_.end(),
-                entity_handle),
-              interaction.collapsed_.end());
-          } else {
-            interaction.collapsed_.push_back(entity_handle);
-          }
+  const auto display = [&interaction, &entities,
+                        &root_handles](const hy::display_info_t& di) {
+    if (di.has_children) {
+      ImGui::SetNextItemOpen(!di.collapsed);
+      bool open = ImGui::TreeNodeEx(di.name.c_str());
+      if (ImGui::IsItemClicked()) {
+        if (open) {
+          interaction.expand(di.entity_handle);
+        } else {
+          interaction.collapse(di.entity_handle, entities);
         }
-      } else {
-        ImGui::Text("%s", name.c_str());
       }
-      if (ImGui::IsItemHovered()) {
-        interaction.selected_ = entity_handle;
-      }
-    };
+    } else {
+      ImGui::Text("%s", di.name.c_str());
+    }
+    if (ImGui::IsItemHovered()) {
+      interaction.select(di.entity_handle, entities, root_handles);
+    }
+  };
 
   const auto display_pop = []() { ImGui::TreePop(); };
 
   const auto display_connection = [](int level, int indent) {};
 
-  interaction.selected_ = thh::handle_t(-1, -1);
+  interaction.select(thh::handle_t(-1, -1), entities, root_handles);
+
   hy::display_hierarchy(
     entities, interaction, root_handles, display, display_pop,
     display_connection);
