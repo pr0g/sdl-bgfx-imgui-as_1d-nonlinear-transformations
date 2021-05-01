@@ -74,6 +74,10 @@ std::tuple<float, float, float> eulerAngles(const as::mat3& orientation)
 
 void setup(transforms_scene_t& scene, uint16_t width, uint16_t height)
 {
+  dbg::DebugVertex::init();
+  dbg::DebugCircles::init();
+  dbg::DebugCubes::init();
+
   scene.screen_dimension = as::vec2i(width, height);
 
   // cornflower clear color

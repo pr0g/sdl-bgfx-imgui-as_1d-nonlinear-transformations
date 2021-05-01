@@ -1,12 +1,8 @@
 #include "bgfx-imgui/imgui_impl_bgfx.h"
-#include "sdl-imgui/imgui_impl_sdl.h"
 #include "hierarchy-imgui.h"
+#include "sdl-imgui/imgui_impl_sdl.h"
 #include "marching-cube-scene.h"
 #include "transforms-scene.h"
-
-#include <thh-bgfx-debug/debug-cube.hpp>
-#include <thh-bgfx-debug/debug-line.hpp>
-#include <thh-bgfx-debug/debug-sphere.hpp>
 
 #include <SDL.h>
 #include <SDL_syswm.h>
@@ -71,10 +67,6 @@ int main(int argc, char** argv)
   bgfx_init.resolution.reset = BGFX_RESET_VSYNC;
   bgfx_init.platformData = pd;
   bgfx::init(bgfx_init);
-
-  dbg::DebugVertex::init();
-  dbg::DebugCircles::init();
-  dbg::DebugCubes::init();
 
   transforms_scene_t transform_scene;
   setup(transform_scene, width, height);

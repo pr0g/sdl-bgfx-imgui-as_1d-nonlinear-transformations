@@ -1,6 +1,6 @@
 #pragma once
 
-#include "hierarchy/entity.hpp"
+#include <hierarchy/entity.hpp>
 
 namespace hy_ig
 {
