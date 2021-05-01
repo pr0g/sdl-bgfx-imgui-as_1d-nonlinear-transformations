@@ -38,6 +38,8 @@ target_sources(
     hierarchy-imgui.cpp
     bgfx-helpers.cpp
     marching-cube-scene.cpp
+    transforms-scene.cpp
+    sdl-camera-input.cpp
     math-utils.cpp)
 
 target_link_libraries(

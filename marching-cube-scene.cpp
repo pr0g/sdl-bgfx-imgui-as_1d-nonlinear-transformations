@@ -2,6 +2,7 @@
 
 #include "bgfx-helpers.h"
 #include "file-ops.h"
+#include "marching-cubes/marching-cubes.h"
 
 #include <as/as-math-ops.hpp>
 #include <thh-bgfx-debug/debug-shader.hpp>

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <as/as-view.hpp>
+
 #include <cstdint>
 #include <numeric>
 
