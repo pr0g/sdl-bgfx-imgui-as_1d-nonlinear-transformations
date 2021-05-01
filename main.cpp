@@ -72,8 +72,6 @@ int main(int argc, char** argv)
   setup(transform_scene, width, height);
 
   ImGui::CreateContext();
-  ImGuiIO& io = ImGui::GetIO();
-
   ImGui_Implbgfx_Init(255);
 #if BX_PLATFORM_WINDOWS
   ImGui_ImplSDL2_InitForD3D(window);
