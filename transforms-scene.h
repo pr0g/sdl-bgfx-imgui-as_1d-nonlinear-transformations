@@ -6,7 +6,11 @@
 #include <as-camera-input/as-camera-input.hpp>
 #include <as/as-math-ops.hpp>
 #include <bgfx/bgfx.h>
+#include <thh-bgfx-debug/debug-cube.hpp>
+#include <thh-bgfx-debug/debug-line.hpp>
+#include <thh-bgfx-debug/debug-quad.hpp>
 #include <thh-bgfx-debug/debug-shader.hpp>
+#include <thh-bgfx-debug/debug-sphere.hpp>
 
 union SDL_Event;
 
@@ -45,6 +49,16 @@ enum class CameraMode
 {
   Control,
   Animation
+};
+
+struct debug_draw_t
+{
+  dbg::DebugCircles* debug_circles = nullptr;
+  dbg::DebugSpheres* debug_spheres = nullptr;
+  dbg::DebugLines* debug_lines = nullptr;
+  dbg::DebugLines* debug_lines_screen = nullptr;
+  dbg::DebugCubes* debug_cubes = nullptr;
+  dbg::DebugQuads* debug_quads = nullptr;
 };
 
 struct transforms_scene_t
@@ -107,5 +121,5 @@ struct transforms_scene_t
 
 void setup(transforms_scene_t& scene, uint16_t width, uint16_t height);
 void input(transforms_scene_t& scene, const SDL_Event& current_event);
-void update(transforms_scene_t& scene);
+void update(transforms_scene_t& scene, debug_draw_t& debug_draw);
 void teardown(transforms_scene_t& scene);

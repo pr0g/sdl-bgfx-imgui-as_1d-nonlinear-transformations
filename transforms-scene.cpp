@@ -74,10 +74,6 @@ std::tuple<float, float, float> eulerAngles(const as::mat3& orientation)
 
 void setup(transforms_scene_t& scene, uint16_t width, uint16_t height)
 {
-  dbg::DebugVertex::init();
-  dbg::DebugCircles::init();
-  dbg::DebugCubes::init();
-
   scene.screen_dimension = as::vec2i(width, height);
 
   // cornflower clear color
@@ -166,7 +162,7 @@ void input(transforms_scene_t& scene, const SDL_Event& current_event)
   }
 }
 
-void update(transforms_scene_t& scene)
+void update(transforms_scene_t& scene, debug_draw_t& debug_draw)
 {
   int global_x;
   int global_y;
@@ -201,10 +197,6 @@ void update(transforms_scene_t& scene)
   scene.ray_direction = as::vec_normalize(world_position - scene.ray_origin);
   scene.hit_distance = intersectPlane(
     scene.ray_origin, scene.ray_direction, as::vec4(as::vec3::axis_z()));
-
-  dbg::DebugCircles debug_circles(
-    scene.main_view, scene.instance_program.handle());
-  dbg::DebugSpheres debug_spheres(debug_circles);
 
   if (scene.curve_handles.dragging() && scene.hit_distance > 0.0f) {
     const auto next_hit =
@@ -371,11 +363,9 @@ void update(transforms_scene_t& scene)
   ImGui::SliderFloat("d", &scene.debug.normalized_bezier_d, 0.0f, 1.0f);
   ImGui::SliderFloat("e", &scene.debug.normalized_bezier_e, 0.0f, 1.0f);
 
-  auto debug_lines =
-    dbg::DebugLines(scene.main_view, scene.simple_program.handle());
-
   // draw alignment transform
-  drawTransform(debug_lines, as::affine_from_rigid(scene.camera_transform_end));
+  drawTransform(
+    *debug_draw.debug_lines, as::affine_from_rigid(scene.camera_transform_end));
 
   // grid
   const auto grid_scale = 10.0f;
@@ -389,10 +379,10 @@ void update(transforms_scene_t& scene)
     const auto start = (static_cast<float>(line) * grid_scale) - grid_offset;
     const auto flattened_offset =
       as::vec3(grid_camera_offset.x, 0.0f, grid_camera_offset.z);
-    debug_lines.addLine(
+    debug_draw.debug_lines->addLine(
       as::vec3(-grid_offset, 0.0f, start) + flattened_offset,
       as::vec3(0.0f + grid_offset, 0.0f, start) + flattened_offset, 0xff000000);
-    debug_lines.addLine(
+    debug_draw.debug_lines->addLine(
       as::vec3(start, 0.0f, -grid_offset) + flattened_offset,
       as::vec3(start, 0.0f, grid_offset) + flattened_offset, 0xff000000);
   }
@@ -401,8 +391,9 @@ void update(transforms_scene_t& scene)
   if (!as::real_near(scene.camera.look_dist, 0.0f, 0.01f)) {
     float alpha = as::max(scene.camera.look_dist, -5.0f) / -5.0f;
     drawTransform(
-      debug_lines, as::affine_from_vec3(scene.camera.look_at), alpha);
-    debug_spheres.addSphere(
+      *debug_draw.debug_lines, as::affine_from_vec3(scene.camera.look_at),
+      alpha);
+    debug_draw.debug_spheres->addSphere(
       as::mat4_from_mat3_vec3(as::mat3::identity(), scene.camera.look_at),
       as::vec4(as::vec3::zero(), alpha));
   }
@@ -428,7 +419,8 @@ void update(transforms_scene_t& scene)
 
   // control lines
   for (as::index i = 0; i < points[order].size(); i += 2) {
-    debug_lines.addLine(points[order][i], points[order][i + 1], 0xffaaaaaa);
+    debug_draw.debug_lines->addLine(
+      points[order][i], points[order][i + 1], 0xffaaaaaa);
   }
 
   // control handles
@@ -438,7 +430,7 @@ void update(transforms_scene_t& scene)
     const auto scale =
       as::mat4_from_mat3(as::mat3_scale(dbg::CurveHandles::HandleRadius));
 
-    debug_circles.addCircle(
+    debug_draw.debug_circles->addCircle(
       as::mat_mul(scale, translation), as::vec4(as::vec3::zero(), 1.0f));
   }
 
@@ -452,38 +444,38 @@ void update(transforms_scene_t& scene)
     float x_end = end * line_length;
 
     const auto sample_curve =
-      [line_length, begin, end, &debug_lines, x_begin,
+      [line_length, begin, end, &debug_draw, x_begin,
        x_end](auto fn, const uint32_t col = 0xff000000) {
-        debug_lines.addLine(
+        debug_draw.debug_lines->addLine(
           as::vec3(x_begin, as::mix(0.0f, line_length, fn(begin)), 0.0f),
           as::vec3(x_end, as::mix(0.0f, line_length, fn(end)), 0.0f), col);
       };
 
     if (order == 0) {
-      debug_lines.addLine(
+      debug_draw.debug_lines->addLine(
         nlt::bezier1(p0, p1, begin), nlt::bezier1(p0, p1, end), 0xff000000);
     }
 
     if (order == 1) {
-      debug_lines.addLine(
+      debug_draw.debug_lines->addLine(
         nlt::bezier2(p0, p1, c0, begin), nlt::bezier2(p0, p1, c0, end),
         0xff000000);
     }
 
     if (order == 2) {
-      debug_lines.addLine(
+      debug_draw.debug_lines->addLine(
         nlt::bezier3(p0, p1, c0, c1, begin), nlt::bezier3(p0, p1, c0, c1, end),
         0xff000000);
     }
 
     if (order == 3) {
-      debug_lines.addLine(
+      debug_draw.debug_lines->addLine(
         nlt::bezier4(p0, p1, c0, c1, c2, begin),
         nlt::bezier4(p0, p1, c0, c1, c2, end), 0xff000000);
     }
 
     if (order == 4) {
-      debug_lines.addLine(
+      debug_draw.debug_lines->addLine(
         nlt::bezier5(p0, p1, c0, c1, c2, c3, begin),
         nlt::bezier5(p0, p1, c0, c1, c2, c3, end), 0xff000000);
     }
@@ -626,7 +618,7 @@ void update(transforms_scene_t& scene)
   const auto start = as::vec3(2.0f, -1.5f, 0.0f);
   const auto end = as::vec3(18.0f, -1.5f, 0.0f);
 
-  debug_lines.addLine(start, end, 0xff000000);
+  debug_draw.debug_lines->addLine(start, end, 0xff000000);
 
   // draw smooth line handles
   for (auto index :
@@ -636,7 +628,7 @@ void update(transforms_scene_t& scene)
     const auto scale =
       as::mat4_from_mat3(as::mat3_scale(dbg::CurveHandles::HandleRadius));
 
-    debug_circles.addCircle(
+    debug_draw.debug_circles->addCircle(
       as::mat_mul(scale, translation), as::vec4(as::vec3::zero(), 1.0f));
   }
 
@@ -672,7 +664,7 @@ void update(transforms_scene_t& scene)
   const auto scale =
     as::mat4_from_mat3(as::mat3_scale(dbg::CurveHandles::HandleRadius));
 
-  debug_circles.addCircle(
+  debug_draw.debug_circles->addCircle(
     as::mat_mul(scale, translation), as::vec4(as::vec3::zero(), 1.0f));
 
   const auto curve_position = [p0, p1, c0, c1, c2, c3] {
@@ -694,7 +686,7 @@ void update(transforms_scene_t& scene)
     return as::vec3::zero();
   }();
 
-  debug_circles.addCircle(
+  debug_draw.debug_circles->addCircle(
     as::mat_mul(
       as::mat4_from_mat3(as::mat3_scale(dbg::CurveHandles::HandleRadius)),
       as::mat4_from_mat3_vec3(as::mat3::identity(), curve_position)),
@@ -719,14 +711,12 @@ void update(transforms_scene_t& scene)
     end, scene.perspective_projection, scene.camera.view(),
     scene.screen_dimension);
 
-  dbg::DebugLines dl_screen(scene.ortho_view, scene.simple_program.handle());
-  dl_screen.addLine(
+  debug_draw.debug_lines_screen->addLine(
     as::vec3(start_screen.x, start_screen.y - 10.0f, 0.0f),
     as::vec3(start_screen.x, start_screen.y + 10.0f, 0.0f), 0xff000000);
-  dl_screen.addLine(
+  debug_draw.debug_lines_screen->addLine(
     as::vec3(end_screen.x, end_screen.y - 10.0f, 0.0f),
     as::vec3(end_screen.x, end_screen.y + 10.0f, 0.0f), 0xff000000);
-  dl_screen.submit();
 
   ImGui::Text("Framerate: ");
   ImGui::SameLine(100);
@@ -767,10 +757,10 @@ void update(transforms_scene_t& scene)
   // draw random noise
   for (int64_t i = 0; i < 160; ++i) {
     const float offset = (i * 0.1f) + 2.0f;
-    debug_lines.addLine(
+    debug_draw.debug_lines->addLine(
       as::vec3(offset, -10.0f, 0.0f),
       as::vec3(offset, -10.0f + ns::noise1dZeroToOne(i), 0.0f), 0xff000000);
-    debug_lines.addLine(
+    debug_draw.debug_lines->addLine(
       as::vec3(offset, -12.0f, 0.0f),
       as::vec3(offset, -12.0f + ns::noise1dMinusOneToOne(i), 0.0f), 0xff000000);
   }
@@ -779,7 +769,7 @@ void update(transforms_scene_t& scene)
   for (int64_t i = 0; i < 320; ++i) {
     const float offset = (i * 0.05f) + 2.0f;
     const float next_offset = ((float(i + 1)) * 0.05f) + 2.0f;
-    debug_lines.addLine(
+    debug_draw.debug_lines->addLine(
       as::vec3(
         offset,
         -14.0f
@@ -800,10 +790,6 @@ void update(transforms_scene_t& scene)
       0xff000000);
   }
 
-  const size_t quad_dimension = 100;
-  dbg::DebugQuads debug_quads(scene.main_view, scene.instance_program.handle());
-  debug_quads.reserveQuads(quad_dimension * quad_dimension);
-
   const auto noise_position = as::vec2_from_arr(noise2d_position);
   const auto starting_offset = as::vec3::axis_x(-12.0f);
   for (size_t r = 0; r < 100; ++r) {
@@ -817,7 +803,7 @@ void update(transforms_scene_t& scene)
       if (draw_gradients && c % 10 == 0 && r % 10 == 0) {
         const as::vec2 p0 = as::vec_floor(p);
         const as::vec2 g0 = ns::gradient(ns::angle(p0, noise2d_offset));
-        debug_lines.addLine(
+        debug_draw.debug_lines->addLine(
           starting_offset + as::vec3(p0) / noise2d_freq,
           starting_offset + (as::vec3(p0) + as::vec3(g0)) / noise2d_freq,
           0xff000000);
@@ -827,7 +813,7 @@ void update(transforms_scene_t& scene)
         as::mat4_from_vec3(as::vec3(p) + starting_offset);
       const auto scale = as::mat4_from_mat3(as::mat3_scale(0.1f));
 
-      debug_quads.addQuad(
+      debug_draw.debug_quads->addQuad(
         as::mat_mul(scale, translation), as::vec4(as::vec3(grey), 1.0f));
     }
   }
@@ -838,10 +824,6 @@ void update(transforms_scene_t& scene)
   static float Rotation[] = {0.0f, 0.0f, 0.0f};
   ImGui::SliderFloat3("Rotation", Rotation, -360.0f, 360.0f);
   ImGui::End();
-
-  dbg::DebugCubes debug_cubes(scene.main_view, scene.instance_program.handle());
-
-  const as::vec3 start_position = as::vec3::zero();
 
   const as::rigid rigid_transformation(
     as::quat_rotation_zxy(
@@ -869,31 +851,28 @@ void update(transforms_scene_t& scene)
   as::affine another_affine =
     as::affine_mul(as::affine(as::vec3::axis_z(-0.5f)), next_affine);
 
-  debug_cubes.addCube(as::mat4_from_rigid(next_rigid), as::vec4::one());
-  debug_cubes.addCube(as::mat4_from_affine(next_affine), as::vec4::axis_w());
+  debug_draw.debug_cubes->addCube(
+    as::mat4_from_rigid(next_rigid), as::vec4::one());
+  debug_draw.debug_cubes->addCube(
+    as::mat4_from_affine(next_affine), as::vec4::axis_w());
 
-  debug_spheres.addSphere(
+  debug_draw.debug_spheres->addSphere(
     as::mat4_from_vec3(next_position_rigid)
       * as::mat4_from_mat3(as::mat3_scale(0.2f)),
     as::vec4::one());
-  debug_spheres.addSphere(
+  debug_draw.debug_spheres->addSphere(
     as::mat4_from_vec3(next_position_affine)
       * as::mat4_from_mat3(as::mat3_scale(0.2f)),
     as::vec4::axis_w());
 
-  debug_spheres.addSphere(
+  debug_draw.debug_spheres->addSphere(
     as::mat4_from_rigid(another_rigid)
       * as::mat4_from_mat3(as::mat3_scale(0.2f)),
     as::vec4::one());
-  debug_spheres.addSphere(
+  debug_draw.debug_spheres->addSphere(
     as::mat4_from_affine(another_affine)
       * as::mat4_from_mat3(as::mat3_scale(0.2f)),
     as::vec4::axis_w());
-
-  debug_lines.submit();
-  debug_quads.submit();
-  debug_circles.submit();
-  debug_cubes.submit();
 
   // include this in case nothing was submitted to draw
   bgfx::touch(scene.main_view);

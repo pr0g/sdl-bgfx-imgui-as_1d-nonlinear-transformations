@@ -1,7 +1,7 @@
 #include "bgfx-imgui/imgui_impl_bgfx.h"
 #include "hierarchy-imgui.h"
-#include "sdl-imgui/imgui_impl_sdl.h"
 #include "marching-cube-scene.h"
+#include "sdl-imgui/imgui_impl_sdl.h"
 #include "transforms-scene.h"
 
 #include <SDL.h>
@@ -9,6 +9,10 @@
 #include <bgfx/bgfx.h>
 #include <bgfx/platform.h>
 #include <imgui.h>
+#include <thh-bgfx-debug/debug-cube.hpp>
+#include <thh-bgfx-debug/debug-line.hpp>
+#include <thh-bgfx-debug/debug-quad.hpp>
+#include <thh-bgfx-debug/debug-sphere.hpp>
 
 #include <optional>
 #include <tuple>
@@ -87,6 +91,10 @@ int main(int argc, char** argv)
   hy::interaction_t interaction;
   interaction.select(root_handles.front(), entities, root_handles);
 
+  dbg::DebugVertex::init();
+  dbg::DebugCircles::init();
+  dbg::DebugCubes::init();
+
   for (; !transform_scene.quit;) {
     SDL_Event current_event;
     while (SDL_PollEvent(&current_event) != 0) {
@@ -98,7 +106,30 @@ int main(int argc, char** argv)
     ImGui_ImplSDL2_NewFrame(window);
     ImGui::NewFrame();
 
-    update(transform_scene);
+    dbg::DebugLines debug_lines(
+      transform_scene.main_view, transform_scene.simple_program.handle());
+    dbg::DebugLines debug_lines_screen(
+      transform_scene.ortho_view, transform_scene.simple_program.handle());
+    dbg::DebugCircles debug_circles(
+      transform_scene.main_view, transform_scene.instance_program.handle());
+    dbg::DebugSpheres debug_spheres(debug_circles);
+    const size_t quad_dimension = 100;
+    dbg::DebugQuads debug_quads(
+      transform_scene.main_view, transform_scene.instance_program.handle());
+    debug_quads.reserveQuads(quad_dimension * quad_dimension);
+    dbg::DebugCubes debug_cubes(
+      transform_scene.main_view, transform_scene.instance_program.handle());
+
+    debug_draw_t debug_draw{&debug_circles,      &debug_spheres, &debug_lines,
+                            &debug_lines_screen, &debug_cubes,   &debug_quads};
+
+    update(transform_scene, debug_draw);
+
+    debug_lines.submit();
+    debug_lines_screen.submit();
+    debug_quads.submit();
+    debug_circles.submit();
+    debug_cubes.submit();
 
     // imgui hierarchy experiments
     hy_ig::imgui_interaction_draw_list_hierarchy(
