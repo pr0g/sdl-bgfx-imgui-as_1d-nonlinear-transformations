@@ -2,15 +2,12 @@
 
 #include "curve-handles.h"
 #include "fps.h"
+#include "scene.h"
 
 #include <as-camera-input/as-camera-input.hpp>
 #include <as/as-math-ops.hpp>
 #include <bgfx/bgfx.h>
-#include <thh-bgfx-debug/debug-cube.hpp>
-#include <thh-bgfx-debug/debug-line.hpp>
-#include <thh-bgfx-debug/debug-quad.hpp>
 #include <thh-bgfx-debug/debug-shader.hpp>
-#include <thh-bgfx-debug/debug-sphere.hpp>
 
 union SDL_Event;
 
@@ -49,16 +46,6 @@ enum class CameraMode
 {
   Control,
   Animation
-};
-
-struct debug_draw_t
-{
-  dbg::DebugCircles* debug_circles = nullptr;
-  dbg::DebugSpheres* debug_spheres = nullptr;
-  dbg::DebugLines* debug_lines = nullptr;
-  dbg::DebugLines* debug_lines_screen = nullptr;
-  dbg::DebugCubes* debug_cubes = nullptr;
-  dbg::DebugQuads* debug_quads = nullptr;
 };
 
 struct transforms_scene_t
