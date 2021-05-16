@@ -3,9 +3,17 @@
 #include "bgfx-helpers.h"
 #include "file-ops.h"
 #include "marching-cubes/marching-cubes.h"
+#include "sdl-camera-input.h"
 
+#include <SDL.h>
 #include <as/as-math-ops.hpp>
-#include <thh-bgfx-debug/debug-shader.hpp>
+#include <as/as-view.hpp>
+#include <bx/timer.h>
+#include <imgui.h>
+#include <thh-bgfx-debug/debug-cube.hpp>
+#include <thh-bgfx-debug/debug-line.hpp>
+#include <thh-bgfx-debug/debug-quad.hpp>
+#include <thh-bgfx-debug/debug-sphere.hpp>
 
 struct PosColorVertex
 {
@@ -35,98 +43,332 @@ static const uint16_t CubeTriListCol[] = {
   1, 5, 3, 5, 7, 3, 0, 4, 1, 4, 5, 1, 2, 3, 6, 6, 3, 7,
 };
 
-template<class T>
-inline void hashCombine(std::size_t& seed, const T& v)
+void marching_cube_scene_t::setup(const uint16_t width, const uint16_t height)
 {
-  std::hash<T> hasher;
-  seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-}
+  screen_dimension = as::vec2i(width, height);
 
-namespace std
-{
-
-template<>
-struct hash<as::vec3>
-{
-  std::size_t operator()(const as::vec3& vec) const
-  {
-    size_t seed = 0;
-    hashCombine(seed, vec.x);
-    hashCombine(seed, vec.y);
-    hashCombine(seed, vec.z);
-    return seed;
-  }
-};
-
-} // namespace std
-
-struct Vec3EqualFn
-{
-  bool operator()(const as::vec3& lhs, const as::vec3& rhs) const
-  {
-    return as::vec_near(lhs, rhs);
-  }
-};
-
-void setup(
-  marching_cube_scene_t& scene, const uint16_t width, const uint16_t height)
-{
   // cornflower clear colour
   bgfx::setViewClear(
-    scene.main_view, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x6495EDFF, 1.0f, 0);
-  bgfx::setViewRect(scene.main_view, 0, 0, width, height);
+    main_view_, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x6495EDFF, 1.0f, 0);
+  bgfx::setViewRect(main_view_, 0, 0, width, height);
 
   // size and placement of gizmo on screen
   const float gizmo_offset_percent = 0.85f;
   const float gizmo_size_percent = 0.1f;
-  bgfx::setViewClear(scene.gizmo_view, BGFX_CLEAR_DEPTH);
+  bgfx::setViewClear(gizmo_view_, BGFX_CLEAR_DEPTH);
   bgfx::setViewRect(
-    scene.gizmo_view, width * gizmo_offset_percent,
-    height * gizmo_offset_percent, width * gizmo_size_percent,
-    height * gizmo_size_percent);
+    gizmo_view_, width * gizmo_offset_percent, height * gizmo_offset_percent,
+    width * gizmo_size_percent, height * gizmo_size_percent);
 
-  dbg::EmbeddedShaderProgram simple_program;
+  perspective_projection = as::perspective_d3d_lh(
+    as::radians(35.0f), float(width) / float(height), 0.01f, 100.0f);
+
   simple_program.init(dbg::SimpleEmbeddedShaderArgs);
+  instance_program.init(dbg::InstanceEmbeddedShaderArgs);
 
-  bgfx::VertexLayout pos_col_vert_layout;
   pos_col_vert_layout.begin()
     .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
     .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
     .end();
 
-  bgfx::VertexLayout pos_norm_vert_layout;
   pos_norm_vert_layout.begin()
     .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
     .add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float, true)
     .end();
 
-  bgfx::VertexBufferHandle cube_col_vbh = bgfx::createVertexBuffer(
+  cube_col_vbh = bgfx::createVertexBuffer(
     bgfx::makeRef(CubeVerticesCol, sizeof(CubeVerticesCol)),
     pos_col_vert_layout);
-  bgfx::IndexBufferHandle cube_col_ibh = bgfx::createIndexBuffer(
+  cube_col_ibh = bgfx::createIndexBuffer(
     bgfx::makeRef(CubeTriListCol, sizeof(CubeTriListCol)));
 
-  const bgfx::ProgramHandle program_norm =
+  program_norm =
     createShaderProgram("shader/next/v_next.bin", "shader/next/f_next.bin")
       .value_or(bgfx::ProgramHandle(BGFX_INVALID_HANDLE));
 
-  const bgfx::ProgramHandle program_col =
-    createShaderProgram(
-      "shader/simple/v_simple.bin", "shader/simple/f_simple.bin")
-      .value_or(bgfx::ProgramHandle(BGFX_INVALID_HANDLE));
+  program_col = createShaderProgram(
+                  "shader/simple/v_simple.bin", "shader/simple/f_simple.bin")
+                  .value_or(bgfx::ProgramHandle(BGFX_INVALID_HANDLE));
 
-  const bgfx::UniformHandle u_light_dir =
-    bgfx::createUniform("u_lightDir", bgfx::UniformType::Vec4, 1);
-  const bgfx::UniformHandle u_camera_pos =
-    bgfx::createUniform("u_cameraPos", bgfx::UniformType::Vec4, 1);
+  u_light_dir = bgfx::createUniform("u_lightDir", bgfx::UniformType::Vec4, 1);
+  u_camera_pos = bgfx::createUniform("u_cameraPos", bgfx::UniformType::Vec4, 1);
 
-  as::vec3 light_dir{0.0f, 1.0f, -1.0f};
+  // initial camera position and orientation
+  camera.look_at = as::vec3::zero();
+  target_camera = camera;
+
+  cameras.addCamera(&first_person_rotate_camera);
+  cameras.addCamera(&first_person_pan_camera);
+  cameras.addCamera(&first_person_translate_camera);
+  cameras.addCamera(&first_person_wheel_camera);
+
+  camera_system.cameras_ = cameras;
+
+  prev = bx::getHPCounter();
+
+  points = mc::createPointVolume(dimension, 10000.0f);
+  cell_values = mc::createCellValues(dimension);
+  cell_positions = mc::createCellPositions(dimension);
+
+  scene_alias = (int*)&scene;
 }
 
-void update(marching_cube_scene_t& scene)
+void marching_cube_scene_t::input(const SDL_Event& current_event)
 {
+  if (current_event.type == SDL_QUIT) {
+    quit_ = true;
+    return;
+  }
+
+  camera_system.handleEvents(sdlToInput(&current_event));
 }
 
-void teardown(marching_cube_scene_t& scene)
+void marching_cube_scene_t::update(debug_draw_t& debug_draw)
 {
+  auto freq = double(bx::getHPFrequency());
+  int64_t time_window = fps::calculateWindow(fps, bx::getHPCounter());
+  double framerate = time_window > -1 ? (double)(fps.MaxSamples - 1)
+                                          / (double(time_window) / freq)
+                                      : 0.0;
+
+  // frame dt
+  auto now = bx::getHPCounter();
+  auto delta = now - prev;
+  prev = now;
+
+  const float delta_time = delta / static_cast<float>(freq);
+  target_camera = camera_system.stepCamera(target_camera, delta_time);
+  camera =
+    asci::smoothCamera(camera, target_camera, asci::SmoothProps{}, delta_time);
+
+  // marching cube scene
+  {
+    float view[16];
+    as::mat_to_arr(as::mat4_from_affine(camera.view()), view);
+
+    float proj[16];
+    as::mat_to_arr(perspective_projection, proj);
+
+    bgfx::setViewTransform(main_view_, view, proj);
+
+    auto marching_cube_begin = bx::getHPCounter();
+
+    static bool analytical_normals = true;
+    static bool draw_normals = false;
+
+    const as::mat3 cam_orientation = camera.transform().rotation;
+    static float camera_adjust_noise = (float(dimension) * 0.5f) + 1.0f;
+    static float camera_adjust_sphere = 50.0f;
+
+    const as::vec3 lookat = camera.look_at;
+
+    static float tesselation = 1.0f;
+    static float scale = 14.0f;
+    static float threshold = 4.0f; // initial
+
+    switch (scene) {
+      case Scene::Noise: {
+        const as::vec3 offset =
+          lookat + cam_orientation * as::vec3::axis_z(camera_adjust_noise);
+        generatePointData(points, dimension, scale, tesselation, offset);
+      } break;
+        break;
+      case Scene::Sphere: {
+        int x;
+        int y;
+        SDL_GetMouseState(&x, &y);
+        const auto orientation = as::affine_inverse(camera.view()).rotation;
+        const auto world_position = as::screen_to_world(
+          as::vec2i(x, y), perspective_projection, camera.view(),
+          screen_dimension);
+        const auto ray_origin = camera.look_at;
+        const auto ray_direction =
+          as::vec_normalize(world_position - ray_origin);
+        const as::vec3 offset =
+          lookat + cam_orientation * as::vec3::axis_z(camera_adjust_sphere);
+        generatePointData(
+          points, dimension, tesselation, offset, ray_origin, ray_direction,
+          50.0f);
+      } break;
+    }
+
+    generateCellData(cell_positions, cell_values, points, dimension);
+
+    const auto triangles =
+      mc::march(cell_positions, cell_values, dimension, threshold);
+
+    std::vector<as::index> indices;
+    indices.resize(triangles.size() * 3);
+
+    as::index index = 0;
+    as::index unique = 0;
+    for (const auto& tri : triangles) {
+      for (int64_t i = 0; i < 3; ++i) {
+        const auto vert = tri.verts_[i];
+        const auto norm = tri.norms_[i];
+        const auto exists = unique_verts.find(vert);
+        if (exists == std::end(unique_verts)) {
+          filtered_verts.push_back(vert);
+          filtered_norms.push_back(norm);
+          unique_verts.insert({vert, unique});
+          indices[index] = unique;
+          unique++;
+        } else {
+          indices[index] = exists->second;
+        }
+        index++;
+      }
+    }
+
+    uint32_t max_vertices = 32 << 10;
+    const auto available_vertex_count =
+      bgfx::getAvailTransientVertexBuffer(max_vertices, pos_norm_vert_layout);
+
+    const auto available_index_count =
+      bgfx::getAvailTransientIndexBuffer(max_vertices);
+
+    if (
+      available_vertex_count == max_vertices
+      && available_index_count == max_vertices) {
+
+      bgfx::TransientVertexBuffer mc_triangle_tvb;
+      bgfx::allocTransientVertexBuffer(
+        &mc_triangle_tvb, max_vertices, pos_norm_vert_layout);
+
+      bgfx::TransientIndexBuffer tib;
+      bgfx::allocTransientIndexBuffer(&tib, max_vertices);
+
+      PosNormalVertex* vertex = (PosNormalVertex*)mc_triangle_tvb.data;
+      int16_t* index_data = (int16_t*)tib.data;
+
+      for (as::index i = 0; i < filtered_verts.size(); i++) {
+        vertex[i].normal = analytical_normals
+                           ? as::vec_normalize(filtered_norms[i])
+                           : as::vec3::zero();
+        vertex[i].position = filtered_verts[i];
+      }
+
+      for (as::index indice = 0; indice < indices.size(); indice++) {
+        index_data[indice] = indices[indice];
+      }
+
+      if (!analytical_normals) {
+        for (as::index indice = 0; indice < indices.size(); indice += 3) {
+          const as::vec3 e1 = filtered_verts[indices[indice]]
+                            - filtered_verts[indices[indice + 1]];
+          const as::vec3 e2 = filtered_verts[indices[indice + 2]]
+                            - filtered_verts[indices[indice + 1]];
+          const as::vec3 normal = as::vec3_cross(e1, e2);
+
+          vertex[indices[indice]].normal += normal;
+          vertex[indices[indice + 1]].normal += normal;
+          vertex[indices[indice + 2]].normal += normal;
+        }
+
+        for (as::index i = 0; i < filtered_verts.size(); i++) {
+          vertex[i].normal = as::vec_normalize(vertex[i].normal);
+        }
+      }
+
+      float model[16];
+      as::mat_to_arr(as::mat4::identity(), model);
+      bgfx::setTransform(model);
+
+      bgfx::setUniform(u_light_dir, (void*)&light_dir, 1);
+      bgfx::setUniform(u_camera_pos, (void*)&camera.look_at, 1);
+
+      bgfx::setIndexBuffer(&tib, 0, indices.size());
+      bgfx::setVertexBuffer(0, &mc_triangle_tvb, 0, filtered_verts.size());
+      bgfx::setState(BGFX_STATE_DEFAULT);
+      bgfx::submit(main_view_, program_norm);
+
+      if (draw_normals) {
+        auto debug_lines = dbg::DebugLines(main_view_, simple_program.handle());
+        for (as::index i = 0; i < filtered_verts.size(); i++) {
+          debug_lines.addLine(
+            vertex[i].position, vertex[i].position + vertex[i].normal,
+            0xff000000);
+        }
+        debug_lines.submit();
+      }
+    }
+
+    bgfx::touch(main_view_);
+
+    const double to_ms = 1000.0 / freq;
+    auto marching_cube_time = double(bx::getHPCounter() - marching_cube_begin);
+
+    ImGui::Text("Framerate: ");
+    ImGui::SameLine(100);
+    ImGui::Text("%f", framerate);
+
+    ImGui::Text("Marching Cube update: ");
+    ImGui::SameLine(160);
+    ImGui::Text("%f", marching_cube_time * to_ms);
+
+    float light_dir_arr[3];
+    as::vec_to_arr(light_dir, light_dir_arr);
+    ImGui::InputFloat3("Light Dir", light_dir_arr);
+    light_dir = as::vec_from_arr(light_dir_arr);
+
+    ImGui::SliderFloat("Threshold", &threshold, 0.0f, 10.0f);
+    ImGui::SliderFloat("Back Noise", &camera_adjust_noise, 0.0f, 100.0f);
+    ImGui::SliderFloat("Scale", &scale, 0.0f, 100.0f);
+    ImGui::SliderFloat("Tesselation", &tesselation, 0.001f, 10.0f);
+    ImGui::Checkbox("Draw Normals", &draw_normals);
+    ImGui::Checkbox("Analytical Normals", &analytical_normals);
+    static const char* scenes[] = {"Noise", "Sphere"};
+    ImGui::Combo("Marching Cubes Scene", scene_alias, scenes, std::size(scenes));
+  }
+
+  // gizmo cube
+  {
+    float view[16];
+    as::mat_to_arr(
+      as::mat4_from_mat3_vec3(camera.view().rotation, as::vec3::axis_z(10.0f)),
+      view);
+
+    const float extent_y = 10.0f;
+    const float extent_x = extent_y * (screen_dimension.x / screen_dimension.y);
+
+    float proj[16];
+    as::mat_to_arr(
+      as::ortho_d3d_lh(-extent_x, extent_x, -extent_y, extent_y, 0.01f, 100.0f),
+      proj);
+
+    bgfx::setViewTransform(gizmo_view_, view, proj);
+
+    as::mat4 rot = as::mat4_from_mat3(as::mat3_scale(4.0f));
+
+    float model[16];
+    as::mat_to_arr(rot, model);
+
+    bgfx::setTransform(model);
+
+    bgfx::setVertexBuffer(0, cube_col_vbh);
+    bgfx::setIndexBuffer(cube_col_ibh);
+
+    bgfx::submit(gizmo_view_, program_col);
+  }
+
+  filtered_verts.clear();
+  filtered_norms.clear();
+  unique_verts.clear();
+}
+
+void marching_cube_scene_t::teardown()
+{
+  mc::destroyCellValues(cell_values, dimension);
+  mc::destroyCellPositions(cell_positions, dimension);
+  mc::destroyPointVolume(points, dimension);
+
+  simple_program.deinit();
+  instance_program.deinit();
+
+  bgfx::destroy(u_camera_pos);
+  bgfx::destroy(u_light_dir);
+  bgfx::destroy(cube_col_vbh);
+  bgfx::destroy(cube_col_ibh);
+  bgfx::destroy(program_norm);
+  bgfx::destroy(program_col);
 }

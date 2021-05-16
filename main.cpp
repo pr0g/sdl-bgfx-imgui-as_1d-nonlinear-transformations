@@ -3,6 +3,7 @@
 #include "marching-cube-scene.h"
 #include "sdl-imgui/imgui_impl_sdl.h"
 #include "transforms-scene.h"
+#include "marching-cube-scene.h"
 
 #include <SDL.h>
 #include <SDL_syswm.h>
@@ -36,7 +37,6 @@ int main(int argc, char** argv)
 
   const int width = 1024;
   const int height = 768;
-  const float aspect = float(width) / float(height);
   SDL_Window* window = SDL_CreateWindow(
     argv[0], SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height,
     SDL_WINDOW_SHOWN);
@@ -72,7 +72,8 @@ int main(int argc, char** argv)
   bgfx_init.platformData = pd;
   bgfx::init(bgfx_init);
 
-  std::unique_ptr<scene_t> scene = std::make_unique<transforms_scene_t>();
+  // std::unique_ptr<scene_t> scene = std::make_unique<transforms_scene_t>();
+  std::unique_ptr<scene_t> scene = std::make_unique<marching_cube_scene_t>();
   scene->setup(width, height);
 
   ImGui::CreateContext();

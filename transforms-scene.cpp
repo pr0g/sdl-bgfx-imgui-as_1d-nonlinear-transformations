@@ -108,8 +108,6 @@ void transforms_scene_t::setup(const uint16_t width, const uint16_t height)
   smooth_line_begin_index = curve_handles.addHandle(as::vec3::axis_x(22.0f));
   smooth_line_end_index = curve_handles.addHandle(as::vec3(25.0f, 4.0f, 0.0f));
 
-  prev = bx::getHPCounter();
-
   orbit_camera.orbit_cameras_.addCamera(&orbit_rotate_camera);
   orbit_camera.orbit_cameras_.addCamera(&orbit_translate_camera);
   orbit_camera.orbit_cameras_.addCamera(&orbit_dolly_wheel_camera);
@@ -123,6 +121,8 @@ void transforms_scene_t::setup(const uint16_t width, const uint16_t height)
   cameras.addCamera(&orbit_camera);
 
   camera_system.cameras_ = cameras;
+
+  prev = bx::getHPCounter();
 }
 
 void transforms_scene_t::input(const SDL_Event& current_event)
