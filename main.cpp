@@ -72,8 +72,8 @@ int main(int argc, char** argv)
   bgfx_init.platformData = pd;
   bgfx::init(bgfx_init);
 
-  transforms_scene_t transform_scene;
-  setup(transform_scene, width, height);
+  std::unique_ptr<scene_t> scene = std::make_unique<transforms_scene_t>();
+  scene->setup(width, height);
 
   ImGui::CreateContext();
   ImGui_Implbgfx_Init(255);
@@ -95,35 +95,32 @@ int main(int argc, char** argv)
   dbg::DebugCircles::init();
   dbg::DebugCubes::init();
 
-  for (; !transform_scene.quit;) {
+  for (; !scene->quit();) {
     SDL_Event current_event;
     while (SDL_PollEvent(&current_event) != 0) {
       ImGui_ImplSDL2_ProcessEvent(&current_event);
-      input(transform_scene, current_event);
+      scene->input(current_event);
     }
 
     ImGui_Implbgfx_NewFrame();
     ImGui_ImplSDL2_NewFrame(window);
     ImGui::NewFrame();
 
-    dbg::DebugLines debug_lines(
-      transform_scene.main_view, transform_scene.simple_program.handle());
+    dbg::DebugLines debug_lines(scene->main_view(), scene->simple_handle());
     dbg::DebugLines debug_lines_screen(
-      transform_scene.ortho_view, transform_scene.simple_program.handle());
+      scene->ortho_view(), scene->simple_handle());
     dbg::DebugCircles debug_circles(
-      transform_scene.main_view, transform_scene.instance_program.handle());
+      scene->main_view(), scene->instance_handle());
     dbg::DebugSpheres debug_spheres(debug_circles);
     const size_t quad_dimension = 100;
-    dbg::DebugQuads debug_quads(
-      transform_scene.main_view, transform_scene.instance_program.handle());
+    dbg::DebugQuads debug_quads(scene->main_view(), scene->instance_handle());
     debug_quads.reserveQuads(quad_dimension * quad_dimension);
-    dbg::DebugCubes debug_cubes(
-      transform_scene.main_view, transform_scene.instance_program.handle());
+    dbg::DebugCubes debug_cubes(scene->main_view(), scene->instance_handle());
 
     debug_draw_t debug_draw{&debug_circles,      &debug_spheres, &debug_lines,
                             &debug_lines_screen, &debug_cubes,   &debug_quads};
 
-    update(transform_scene, debug_draw);
+    scene->update(debug_draw);
 
     debug_lines.submit();
     debug_lines_screen.submit();
@@ -144,7 +141,7 @@ int main(int argc, char** argv)
     bgfx::frame();
   }
 
-  teardown(transform_scene);
+  scene->teardown();
 
   ImGui_ImplSDL2_Shutdown();
   ImGui_Implbgfx_Shutdown();

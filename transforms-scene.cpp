@@ -72,97 +72,92 @@ std::tuple<float, float, float> eulerAngles(const as::mat3& orientation)
   return {x, y, z};
 }
 
-void setup(transforms_scene_t& scene, uint16_t width, uint16_t height)
+void transforms_scene_t::setup(const uint16_t width, const uint16_t height)
 {
-  scene.screen_dimension = as::vec2i(width, height);
+  screen_dimension = as::vec2i(width, height);
 
   // cornflower clear color
   bgfx::setViewClear(
-    scene.main_view, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x6495EDFF, 1.0f, 0);
-  bgfx::setViewRect(scene.main_view, 0, 0, width, height);
-  bgfx::setViewClear(scene.ortho_view, BGFX_CLEAR_DEPTH);
-  bgfx::setViewRect(scene.ortho_view, 0, 0, width, height);
-  // dummy draw call to make sure main_view is cleared if no other draw calls
+    main_view_, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x6495EDFF, 1.0f, 0);
+  bgfx::setViewRect(main_view_, 0, 0, width, height);
+  bgfx::setViewClear(ortho_view_, BGFX_CLEAR_DEPTH);
+  bgfx::setViewRect(ortho_view_, 0, 0, width, height);
+  // dummy draw call to make sure main_view_ is cleared if no other draw calls
   // are submitted
-  bgfx::touch(scene.main_view);
-  bgfx::touch(scene.ortho_view);
+  bgfx::touch(main_view_);
+  bgfx::touch(ortho_view_);
 
-  scene.simple_program.init(dbg::SimpleEmbeddedShaderArgs);
-  scene.instance_program.init(dbg::InstanceEmbeddedShaderArgs);
+  simple_program.init(dbg::SimpleEmbeddedShaderArgs);
+  instance_program.init(dbg::InstanceEmbeddedShaderArgs);
 
   // initial camera position and orientation
-  scene.camera.look_at = as::vec3(24.3f, 1.74f, -33.0f);
-  scene.target_camera = scene.camera;
+  camera.look_at = as::vec3(24.3f, 1.74f, -33.0f);
+  target_camera = camera;
 
   const float fov = as::radians(60.0f);
-  scene.perspective_projection =
+  perspective_projection =
     as::perspective_d3d_lh(fov, float(width) / float(height), 0.01f, 1000.0f);
 
-  scene.p0_index = scene.curve_handles.addHandle(as::vec3(2.0f, -8.0f, 0.0f));
-  scene.p1_index = scene.curve_handles.addHandle(as::vec3(18.0f, -8.0f, 0.0f));
-  scene.c0_index = scene.curve_handles.addHandle(as::vec3(5.2f, -4.0f, 0.0f));
-  scene.c1_index = scene.curve_handles.addHandle(as::vec3(8.4f, -4.0f, 0.0f));
-  scene.c2_index = scene.curve_handles.addHandle(as::vec3(11.6f, -4.0f, 0.0f));
-  scene.c3_index = scene.curve_handles.addHandle(as::vec3(14.8f, -4.0f, 0.0f));
+  p0_index = curve_handles.addHandle(as::vec3(2.0f, -8.0f, 0.0f));
+  p1_index = curve_handles.addHandle(as::vec3(18.0f, -8.0f, 0.0f));
+  c0_index = curve_handles.addHandle(as::vec3(5.2f, -4.0f, 0.0f));
+  c1_index = curve_handles.addHandle(as::vec3(8.4f, -4.0f, 0.0f));
+  c2_index = curve_handles.addHandle(as::vec3(11.6f, -4.0f, 0.0f));
+  c3_index = curve_handles.addHandle(as::vec3(14.8f, -4.0f, 0.0f));
 
-  scene.smooth_line_begin_index =
-    scene.curve_handles.addHandle(as::vec3::axis_x(22.0f));
-  scene.smooth_line_end_index =
-    scene.curve_handles.addHandle(as::vec3(25.0f, 4.0f, 0.0f));
+  smooth_line_begin_index = curve_handles.addHandle(as::vec3::axis_x(22.0f));
+  smooth_line_end_index = curve_handles.addHandle(as::vec3(25.0f, 4.0f, 0.0f));
 
-  scene.prev = bx::getHPCounter();
+  prev = bx::getHPCounter();
 
-  scene.orbit_camera.orbit_cameras_.addCamera(&scene.orbit_rotate_camera);
-  scene.orbit_camera.orbit_cameras_.addCamera(&scene.orbit_translate_camera);
-  scene.orbit_camera.orbit_cameras_.addCamera(&scene.orbit_dolly_wheel_camera);
-  scene.orbit_camera.orbit_cameras_.addCamera(&scene.orbit_dolly_move_camera);
-  scene.orbit_camera.orbit_cameras_.addCamera(&scene.orbit_pan_camera);
+  orbit_camera.orbit_cameras_.addCamera(&orbit_rotate_camera);
+  orbit_camera.orbit_cameras_.addCamera(&orbit_translate_camera);
+  orbit_camera.orbit_cameras_.addCamera(&orbit_dolly_wheel_camera);
+  orbit_camera.orbit_cameras_.addCamera(&orbit_dolly_move_camera);
+  orbit_camera.orbit_cameras_.addCamera(&orbit_pan_camera);
 
-  scene.cameras.addCamera(&scene.first_person_rotate_camera);
-  scene.cameras.addCamera(&scene.first_person_pan_camera);
-  scene.cameras.addCamera(&scene.first_person_translate_camera);
-  scene.cameras.addCamera(&scene.first_person_wheel_camera);
-  scene.cameras.addCamera(&scene.orbit_camera);
+  cameras.addCamera(&first_person_rotate_camera);
+  cameras.addCamera(&first_person_pan_camera);
+  cameras.addCamera(&first_person_translate_camera);
+  cameras.addCamera(&first_person_wheel_camera);
+  cameras.addCamera(&orbit_camera);
 
-  scene.camera_system.cameras_ = scene.cameras;
+  camera_system.cameras_ = cameras;
 }
 
-void input(transforms_scene_t& scene, const SDL_Event& current_event)
+void transforms_scene_t::input(const SDL_Event& current_event)
 {
   if (current_event.type == SDL_QUIT) {
-    scene.quit = true;
+    quit_ = true;
     return;
   }
 
-  scene.camera_system.handleEvents(sdlToInput(&current_event));
+  camera_system.handleEvents(sdlToInput(&current_event));
 
   if (current_event.type == SDL_MOUSEBUTTONDOWN) {
-    if (scene.hit_distance >= 0.0f) {
-      const auto hit =
-        scene.ray_origin + scene.ray_direction * scene.hit_distance;
-      scene.curve_handles.tryBeginDrag(hit);
+    if (hit_distance >= 0.0f) {
+      const auto hit = ray_origin + ray_direction * hit_distance;
+      curve_handles.tryBeginDrag(hit);
     }
   }
   if (current_event.type == SDL_MOUSEBUTTONUP) {
-    scene.curve_handles.clearDrag();
+    curve_handles.clearDrag();
   }
   if (current_event.type == SDL_KEYDOWN) {
     const auto* keyboard_event = (SDL_KeyboardEvent*)&current_event;
     const auto key = keyboard_event->keysym.scancode;
     if (key == SDL_SCANCODE_R) {
-      scene.camera_transform_end =
-        as::rigid_from_affine(scene.camera.transform());
+      camera_transform_end = as::rigid_from_affine(camera.transform());
     }
     if (key == SDL_SCANCODE_P) {
-      scene.camera_animation_t = 0.0f;
-      scene.camera_mode = CameraMode::Animation;
-      scene.camera_transform_start =
-        as::rigid_from_affine(scene.camera.transform());
+      camera_animation_t = 0.0f;
+      camera_mode = CameraMode::Animation;
+      camera_transform_start = as::rigid_from_affine(camera.transform());
     }
   }
 }
 
-void update(transforms_scene_t& scene, debug_draw_t& debug_draw)
+void transforms_scene_t::update(debug_draw_t& debug_draw)
 {
   int global_x;
   int global_y;
@@ -191,141 +186,130 @@ void update(transforms_scene_t& scene, debug_draw_t& debug_draw)
   int y;
   SDL_GetMouseState(&x, &y);
   const auto world_position = as::screen_to_world(
-    as::vec2i(x, y), scene.perspective_projection, scene.camera.view(),
-    scene.screen_dimension);
-  scene.ray_origin = scene.camera.transform().translation;
-  scene.ray_direction = as::vec_normalize(world_position - scene.ray_origin);
-  scene.hit_distance = intersectPlane(
-    scene.ray_origin, scene.ray_direction, as::vec4(as::vec3::axis_z()));
+    as::vec2i(x, y), perspective_projection, camera.view(), screen_dimension);
+  ray_origin = camera.transform().translation;
+  ray_direction = as::vec_normalize(world_position - ray_origin);
+  hit_distance =
+    intersectPlane(ray_origin, ray_direction, as::vec4(as::vec3::axis_z()));
 
-  if (scene.curve_handles.dragging() && scene.hit_distance > 0.0f) {
-    const auto next_hit =
-      scene.ray_origin + scene.ray_direction * scene.hit_distance;
-    scene.curve_handles.updateDrag(next_hit);
+  if (curve_handles.dragging() && hit_distance > 0.0f) {
+    const auto next_hit = ray_origin + ray_direction * hit_distance;
+    curve_handles.updateDrag(next_hit);
   }
 
   ImGui::Begin("Camera");
   ImGui::PushItemWidth(70);
   ImGui::InputFloat(
-    "Free Look Rotate Speed",
-    &scene.first_person_rotate_camera.props_.rotate_speed_);
+    "Free Look Rotate Speed", &first_person_rotate_camera.props_.rotate_speed_);
   ImGui::InputFloat(
-    "Free Look Pan Speed", &scene.first_person_pan_camera.props_.pan_speed_);
+    "Free Look Pan Speed", &first_person_pan_camera.props_.pan_speed_);
   ImGui::InputFloat(
-    "Translate Speed",
-    &scene.first_person_translate_camera.props_.translate_speed_);
-  ImGui::InputFloat("Look Smoothness", &scene.smooth_props.look_smoothness_);
-  ImGui::InputFloat("Move Smoothness", &scene.smooth_props.move_smoothness_);
+    "Translate Speed", &first_person_translate_camera.props_.translate_speed_);
+  ImGui::InputFloat("Look Smoothness", &smooth_props.look_smoothness_);
+  ImGui::InputFloat("Move Smoothness", &smooth_props.move_smoothness_);
   ImGui::InputFloat(
     "Boost Multiplier",
-    &scene.first_person_translate_camera.props_.boost_multiplier_);
+    &first_person_translate_camera.props_.boost_multiplier_);
   ImGui::InputFloat(
-    "Default Orbit Distance",
-    &scene.orbit_camera.props_.default_orbit_distance_);
+    "Default Orbit Distance", &orbit_camera.props_.default_orbit_distance_);
   ImGui::InputFloat(
-    "Max Orbit Distance", &scene.orbit_camera.props_.max_orbit_distance_);
+    "Max Orbit Distance", &orbit_camera.props_.max_orbit_distance_);
+  ImGui::InputFloat("Orbit Speed", &orbit_rotate_camera.props_.rotate_speed_);
   ImGui::InputFloat(
-    "Orbit Speed", &scene.orbit_rotate_camera.props_.rotate_speed_);
+    "Dolly Mouse Speed", &orbit_dolly_move_camera.props_.dolly_speed_);
   ImGui::InputFloat(
-    "Dolly Mouse Speed", &scene.orbit_dolly_move_camera.props_.dolly_speed_);
-  ImGui::InputFloat(
-    "Dolly Wheel Speed", &scene.orbit_dolly_wheel_camera.props_.dolly_speed_);
+    "Dolly Wheel Speed", &orbit_dolly_wheel_camera.props_.dolly_speed_);
   ImGui::PopItemWidth();
   ImGui::Checkbox(
-    "Pan Invert X", &scene.first_person_pan_camera.props_.pan_invert_x_);
+    "Pan Invert X", &first_person_pan_camera.props_.pan_invert_x_);
   ImGui::Checkbox(
-    "Pan Invert Y", &scene.first_person_pan_camera.props_.pan_invert_y_);
+    "Pan Invert Y", &first_person_pan_camera.props_.pan_invert_y_);
   ImGui::Text("Yaw Camera: ");
   ImGui::SameLine(100);
-  ImGui::Text("%f", as::degrees(scene.camera.yaw));
+  ImGui::Text("%f", as::degrees(camera.yaw));
   ImGui::End();
 
   const auto freq = double(bx::getHPFrequency());
-  int64_t time_window = fps::calculateWindow(scene.fps, bx::getHPCounter());
-  const double framerate = time_window > -1 ? (double)(scene.fps.MaxSamples - 1)
+  int64_t time_window = fps::calculateWindow(fps, bx::getHPCounter());
+  const double framerate = time_window > -1 ? (double)(fps.MaxSamples - 1)
                                                 / (double(time_window) / freq)
                                             : 0.0;
   const auto now = bx::getHPCounter();
-  const auto delta = now - scene.prev;
-  scene.prev = now;
+  const auto delta = now - prev;
+  prev = now;
 
   const float delta_time = delta / static_cast<float>(freq);
 
   as::mat4 camera_view;
-  if (scene.camera_mode == CameraMode::Control) {
-    scene.target_camera =
-      scene.camera_system.stepCamera(scene.target_camera, delta_time);
-    scene.camera = asci::smoothCamera(
-      scene.camera, scene.target_camera, scene.smooth_props, delta_time);
-    camera_view = as::mat4_from_affine(scene.camera.view());
-  } else if (scene.camera_mode == CameraMode::Animation) {
+  if (camera_mode == CameraMode::Control) {
+    target_camera = camera_system.stepCamera(target_camera, delta_time);
+    camera =
+      asci::smoothCamera(camera, target_camera, smooth_props, delta_time);
+    camera_view = as::mat4_from_affine(camera.view());
+  } else if (camera_mode == CameraMode::Animation) {
     auto camera_transform_current = as::rigid(
       as::quat_slerp(
-        scene.camera_transform_start.rotation,
-        scene.camera_transform_end.rotation,
-        as::smoother_step(scene.camera_animation_t)),
+        camera_transform_start.rotation, camera_transform_end.rotation,
+        as::smoother_step(camera_animation_t)),
       as::vec_mix(
-        scene.camera_transform_start.translation,
-        scene.camera_transform_end.translation,
-        as::smoother_step(scene.camera_animation_t)));
+        camera_transform_start.translation, camera_transform_end.translation,
+        as::smoother_step(camera_animation_t)));
 
     camera_view =
       as::mat4_from_rigid(as::rigid_inverse(camera_transform_current));
 
     auto angles =
       eulerAngles(as::mat3_from_quat(camera_transform_current.rotation));
-    scene.camera.pitch = std::get<0>(angles);
-    scene.camera.yaw = std::get<1>(angles);
-    scene.camera.look_at = camera_transform_current.translation;
-    scene.target_camera = scene.camera;
+    camera.pitch = std::get<0>(angles);
+    camera.yaw = std::get<1>(angles);
+    camera.look_at = camera_transform_current.translation;
+    target_camera = camera;
 
-    if (scene.camera_animation_t >= 1.0f) {
-      scene.camera_mode = CameraMode::Control;
+    if (camera_animation_t >= 1.0f) {
+      camera_mode = CameraMode::Control;
     }
 
-    scene.camera_animation_t =
-      as::clamp(scene.camera_animation_t + (delta_time / 1.0f), 0.0f, 1.0f);
+    camera_animation_t =
+      as::clamp(camera_animation_t + (delta_time / 1.0f), 0.0f, 1.0f);
   }
 
   float view[16];
   as::mat_to_arr(camera_view, view);
 
   float proj_p[16];
-  as::mat_to_arr(scene.perspective_projection, proj_p);
-  bgfx::setViewTransform(scene.main_view, view, proj_p);
+  as::mat_to_arr(perspective_projection, proj_p);
+  bgfx::setViewTransform(main_view_, view, proj_p);
 
   const float smooth_stop_start_mix = as::mix(
-    nlt::smoothStart2(scene.debug.smooth_stop_start_mix_t),
-    nlt::smoothStop2(scene.debug.smooth_stop_start_mix_t),
-    scene.debug.smooth_stop_start_mix_t);
+    nlt::smoothStart2(debug.smooth_stop_start_mix_t),
+    nlt::smoothStop2(debug.smooth_stop_start_mix_t),
+    debug.smooth_stop_start_mix_t);
   const float smoother_stop_start_mix = as::mix(
-    nlt::smoothStart3(scene.debug.smooth_stop_start_mix_t),
-    nlt::smoothStop3(scene.debug.smooth_stop_start_mix_t),
-    as::smooth_step(scene.debug.smooth_stop_start_mix_t));
+    nlt::smoothStart3(debug.smooth_stop_start_mix_t),
+    nlt::smoothStop3(debug.smooth_stop_start_mix_t),
+    as::smooth_step(debug.smooth_stop_start_mix_t));
   const float bezier3_1d =
     nlt::bezier3(
       as::vec3::zero(), as::vec3::axis_x(1.0f), as::vec3::axis_x(0.0f),
-      as::vec3::axis_x(1.0f), scene.debug.smooth_stop_start_mix_t)
+      as::vec3::axis_x(1.0f), debug.smooth_stop_start_mix_t)
       .x;
   const float bezier5_1d =
     nlt::bezier5(
       as::vec3::zero(), as::vec3::axis_x(1.0f), as::vec3::axis_x(0.0f),
       as::vec3::axis_x(0.0f), as::vec3::axis_x(1.0f), as::vec3::axis_x(1.0f),
-      scene.debug.smooth_stop_start_mix_t)
+      debug.smooth_stop_start_mix_t)
       .x;
 
   ImGui::Begin("Curves");
-  ImGui::Checkbox("Linear", &scene.debug.linear);
-  ImGui::Checkbox("Smooth Step", &scene.debug.smooth_step);
-  ImGui::Checkbox("Smoother Step", &scene.debug.smoother_step);
-  ImGui::Checkbox(
-    "Smooth Stop Start Mix 2", &scene.debug.smooth_stop_start_mix2);
-  ImGui::Checkbox(
-    "Smooth Stop Start Mix 3", &scene.debug.smooth_stop_start_mix3);
-  ImGui::SliderFloat("t", &scene.debug.smooth_stop_start_mix_t, 0.0f, 1.0f);
+  ImGui::Checkbox("Linear", &debug.linear);
+  ImGui::Checkbox("Smooth Step", &debug.smooth_step);
+  ImGui::Checkbox("Smoother Step", &debug.smoother_step);
+  ImGui::Checkbox("Smooth Stop Start Mix 2", &debug.smooth_stop_start_mix2);
+  ImGui::Checkbox("Smooth Stop Start Mix 3", &debug.smooth_stop_start_mix3);
+  ImGui::SliderFloat("t", &debug.smooth_stop_start_mix_t, 0.0f, 1.0f);
   ImGui::Text("Smooth Step: ");
   ImGui::SameLine(180);
-  ImGui::Text("%f", as::smooth_step(scene.debug.smooth_stop_start_mix_t));
+  ImGui::Text("%f", as::smooth_step(debug.smooth_stop_start_mix_t));
   ImGui::Text("Smooth Stop Start Mix 2: ");
   ImGui::SameLine(180);
   ImGui::Text("%f", smooth_stop_start_mix);
@@ -334,43 +318,42 @@ void update(transforms_scene_t& scene, debug_draw_t& debug_draw)
   ImGui::Text("%f", bezier3_1d);
   ImGui::Text("Smoother Step: ");
   ImGui::SameLine(180);
-  ImGui::Text("%f", as::smoother_step(scene.debug.smooth_stop_start_mix_t));
+  ImGui::Text("%f", as::smoother_step(debug.smooth_stop_start_mix_t));
   ImGui::Text("Smooth Stop Start Mix 3: ");
   ImGui::SameLine(180);
   ImGui::Text("%f", smoother_stop_start_mix);
   ImGui::Text("Bezier5 1d: ");
   ImGui::SameLine(180);
   ImGui::Text("%f", bezier5_1d);
-  ImGui::Checkbox("Smooth Start 2", &scene.debug.smooth_start2);
-  ImGui::Checkbox("Smooth Start 3", &scene.debug.smooth_start3);
-  ImGui::Checkbox("Smooth Start 4", &scene.debug.smooth_start4);
-  ImGui::Checkbox("Smooth Start 5", &scene.debug.smooth_start5);
-  ImGui::Checkbox("Smooth Stop 2", &scene.debug.smooth_stop2);
-  ImGui::Checkbox("Smooth Stop 3", &scene.debug.smooth_stop3);
-  ImGui::Checkbox("Smooth Stop 4", &scene.debug.smooth_stop4);
-  ImGui::Checkbox("Smooth Stop 5", &scene.debug.smooth_stop5);
-  ImGui::Checkbox("Arch 2", &scene.debug.arch2);
-  ImGui::Checkbox("Smooth Start Arch 3", &scene.debug.smooth_start_arch3);
-  ImGui::Checkbox("Smooth Stop Arch 3", &scene.debug.smooth_stop_arch3);
-  ImGui::Checkbox("Smooth Step Arch 4", &scene.debug.smooth_step_arch4);
-  ImGui::Checkbox("Normalized Bezier 2", &scene.debug.normalized_bezier2);
-  ImGui::Checkbox("Bezier Smooth Step", &scene.debug.bezier_smooth_step);
-  ImGui::Checkbox("Normalized Bezier 3", &scene.debug.normalized_bezier3);
-  ImGui::Checkbox("Normalized Bezier 4", &scene.debug.normalized_bezier4);
-  ImGui::Checkbox("Normalized Bezier 5", &scene.debug.normalized_bezier5);
-  ImGui::SliderFloat("b", &scene.debug.normalized_bezier_b, 0.0f, 1.0f);
-  ImGui::SliderFloat("c", &scene.debug.normalized_bezier_c, 0.0f, 1.0f);
-  ImGui::SliderFloat("d", &scene.debug.normalized_bezier_d, 0.0f, 1.0f);
-  ImGui::SliderFloat("e", &scene.debug.normalized_bezier_e, 0.0f, 1.0f);
+  ImGui::Checkbox("Smooth Start 2", &debug.smooth_start2);
+  ImGui::Checkbox("Smooth Start 3", &debug.smooth_start3);
+  ImGui::Checkbox("Smooth Start 4", &debug.smooth_start4);
+  ImGui::Checkbox("Smooth Start 5", &debug.smooth_start5);
+  ImGui::Checkbox("Smooth Stop 2", &debug.smooth_stop2);
+  ImGui::Checkbox("Smooth Stop 3", &debug.smooth_stop3);
+  ImGui::Checkbox("Smooth Stop 4", &debug.smooth_stop4);
+  ImGui::Checkbox("Smooth Stop 5", &debug.smooth_stop5);
+  ImGui::Checkbox("Arch 2", &debug.arch2);
+  ImGui::Checkbox("Smooth Start Arch 3", &debug.smooth_start_arch3);
+  ImGui::Checkbox("Smooth Stop Arch 3", &debug.smooth_stop_arch3);
+  ImGui::Checkbox("Smooth Step Arch 4", &debug.smooth_step_arch4);
+  ImGui::Checkbox("Normalized Bezier 2", &debug.normalized_bezier2);
+  ImGui::Checkbox("Bezier Smooth Step", &debug.bezier_smooth_step);
+  ImGui::Checkbox("Normalized Bezier 3", &debug.normalized_bezier3);
+  ImGui::Checkbox("Normalized Bezier 4", &debug.normalized_bezier4);
+  ImGui::Checkbox("Normalized Bezier 5", &debug.normalized_bezier5);
+  ImGui::SliderFloat("b", &debug.normalized_bezier_b, 0.0f, 1.0f);
+  ImGui::SliderFloat("c", &debug.normalized_bezier_c, 0.0f, 1.0f);
+  ImGui::SliderFloat("d", &debug.normalized_bezier_d, 0.0f, 1.0f);
+  ImGui::SliderFloat("e", &debug.normalized_bezier_e, 0.0f, 1.0f);
 
   // draw alignment transform
   drawTransform(
-    *debug_draw.debug_lines, as::affine_from_rigid(scene.camera_transform_end));
+    *debug_draw.debug_lines, as::affine_from_rigid(camera_transform_end));
 
   // grid
   const auto grid_scale = 10.0f;
-  const auto grid_camera_offset =
-    as::vec_snap(scene.camera.look_at, grid_scale);
+  const auto grid_camera_offset = as::vec_snap(camera.look_at, grid_scale);
   const auto grid_dimension = 20;
   const auto grid_size = static_cast<float>(grid_dimension) * grid_scale;
   const auto grid_offset = grid_size * 0.5f;
@@ -388,22 +371,21 @@ void update(transforms_scene_t& scene, debug_draw_t& debug_draw)
   }
 
   // draw camera look at
-  if (!as::real_near(scene.camera.look_dist, 0.0f, 0.01f)) {
-    float alpha = as::max(scene.camera.look_dist, -5.0f) / -5.0f;
+  if (!as::real_near(camera.look_dist, 0.0f, 0.01f)) {
+    float alpha = as::max(camera.look_dist, -5.0f) / -5.0f;
     drawTransform(
-      *debug_draw.debug_lines, as::affine_from_vec3(scene.camera.look_at),
-      alpha);
+      *debug_draw.debug_lines, as::affine_from_vec3(camera.look_at), alpha);
     debug_draw.debug_spheres->addSphere(
-      as::mat4_from_mat3_vec3(as::mat3::identity(), scene.camera.look_at),
+      as::mat4_from_mat3_vec3(as::mat3::identity(), camera.look_at),
       as::vec4(as::vec3::zero(), alpha));
   }
 
-  const auto p0 = scene.curve_handles.getHandle(scene.p0_index);
-  const auto p1 = scene.curve_handles.getHandle(scene.p1_index);
-  const auto c0 = scene.curve_handles.getHandle(scene.c0_index);
-  const auto c1 = scene.curve_handles.getHandle(scene.c1_index);
-  const auto c2 = scene.curve_handles.getHandle(scene.c2_index);
-  const auto c3 = scene.curve_handles.getHandle(scene.c3_index);
+  const auto p0 = curve_handles.getHandle(p0_index);
+  const auto p1 = curve_handles.getHandle(p1_index);
+  const auto c0 = curve_handles.getHandle(c0_index);
+  const auto c1 = curve_handles.getHandle(c1_index);
+  const auto c2 = curve_handles.getHandle(c2_index);
+  const auto c3 = curve_handles.getHandle(c3_index);
 
   std::vector<std::vector<as::vec3>> points = {
     {},
@@ -426,7 +408,7 @@ void update(transforms_scene_t& scene, debug_draw_t& debug_draw)
   // control handles
   for (as::index index = 0; index < order + 2; ++index) {
     const auto translation = as::mat4_from_mat3_vec3(
-      as::mat3::identity(), scene.curve_handles.getHandle(index));
+      as::mat3::identity(), curve_handles.getHandle(index));
     const auto scale =
       as::mat4_from_mat3(as::mat3_scale(dbg::CurveHandles::HandleRadius));
 
@@ -480,126 +462,121 @@ void update(transforms_scene_t& scene, debug_draw_t& debug_draw)
         nlt::bezier5(p0, p1, c0, c1, c2, c3, end), 0xff000000);
     }
 
-    if (scene.debug.linear) {
+    if (debug.linear) {
       sample_curve([](const float a) { return a; });
     }
 
-    if (scene.debug.arch2) {
+    if (debug.arch2) {
       sample_curve(nlt::arch2);
     }
 
-    if (scene.debug.smooth_start_arch3) {
+    if (debug.smooth_start_arch3) {
       sample_curve(nlt::smoothStartArch3);
     }
 
-    if (scene.debug.smooth_stop_arch3) {
+    if (debug.smooth_stop_arch3) {
       sample_curve(nlt::smoothStopArch3);
     }
 
-    if (scene.debug.smooth_step_arch4) {
+    if (debug.smooth_step_arch4) {
       sample_curve(nlt::smoothStepArch4);
     }
 
-    if (scene.debug.smooth_step) {
+    if (debug.smooth_step) {
       sample_curve(as::smooth_step<float>);
     }
 
-    if (scene.debug.smoother_step) {
+    if (debug.smoother_step) {
       sample_curve(as::smoother_step<float>);
     }
 
-    if (scene.debug.smooth_stop_start_mix2) {
+    if (debug.smooth_stop_start_mix2) {
       sample_curve(nlt::smoothStepMixed);
       sample_curve(
-        [&scene](const float sample) {
-          return nlt::smoothStepMixer(
-            sample, scene.debug.smooth_stop_start_mix_t);
+        [this](const float sample) {
+          return nlt::smoothStepMixer(sample, debug.smooth_stop_start_mix_t);
         },
         0xff00ff00);
     }
 
-    if (scene.debug.smooth_stop_start_mix3) {
+    if (debug.smooth_stop_start_mix3) {
       sample_curve(nlt::smootherStepMixed);
       sample_curve(
-        [&scene](const float sample) {
-          return nlt::smootherStepMixer(
-            sample, scene.debug.smooth_stop_start_mix_t);
+        [this](const float sample) {
+          return nlt::smootherStepMixer(sample, debug.smooth_stop_start_mix_t);
         },
         0xff00ff00);
     }
 
-    if (scene.debug.smooth_start2) {
+    if (debug.smooth_start2) {
       sample_curve(nlt::smoothStart2);
     }
 
-    if (scene.debug.smooth_start3) {
+    if (debug.smooth_start3) {
       sample_curve(nlt::smoothStart3);
     }
 
-    if (scene.debug.smooth_start4) {
+    if (debug.smooth_start4) {
       sample_curve(nlt::smoothStart4);
     }
 
-    if (scene.debug.smooth_start5) {
+    if (debug.smooth_start5) {
       sample_curve(nlt::smoothStart5);
     }
 
-    if (scene.debug.smooth_stop2) {
+    if (debug.smooth_stop2) {
       sample_curve(nlt::smoothStop2);
     }
 
-    if (scene.debug.smooth_stop3) {
+    if (debug.smooth_stop3) {
       sample_curve(nlt::smoothStop3);
     }
 
-    if (scene.debug.smooth_stop4) {
+    if (debug.smooth_stop4) {
       sample_curve(nlt::smoothStop4);
     }
 
-    if (scene.debug.smooth_stop5) {
+    if (debug.smooth_stop5) {
       sample_curve(nlt::smoothStop5);
     }
 
-    if (scene.debug.bezier_smooth_step) {
+    if (debug.bezier_smooth_step) {
       sample_curve(nlt::bezierSmoothStep);
     }
 
-    if (scene.debug.normalized_bezier2) {
+    if (debug.normalized_bezier2) {
       sample_curve(
-        [&scene](const float sample) {
-          return nlt::normalizedBezier2(
-            scene.debug.normalized_bezier_b, sample);
+        [this](const float sample) {
+          return nlt::normalizedBezier2(debug.normalized_bezier_b, sample);
         },
         0xff0000ff);
     }
 
-    if (scene.debug.normalized_bezier3) {
+    if (debug.normalized_bezier3) {
       sample_curve(
-        [&scene](const float sample) {
+        [this](const float sample) {
           return nlt::normalizedBezier3(
-            scene.debug.normalized_bezier_b, scene.debug.normalized_bezier_c,
-            sample);
+            debug.normalized_bezier_b, debug.normalized_bezier_c, sample);
         },
         0xff0000ff);
     }
 
-    if (scene.debug.normalized_bezier4) {
+    if (debug.normalized_bezier4) {
       sample_curve(
-        [&scene](const float sample) {
+        [this](const float sample) {
           return nlt::normalizedBezier4(
-            scene.debug.normalized_bezier_b, scene.debug.normalized_bezier_c,
-            scene.debug.normalized_bezier_d, sample);
+            debug.normalized_bezier_b, debug.normalized_bezier_c,
+            debug.normalized_bezier_d, sample);
         },
         0xff0000ff);
     }
 
-    if (scene.debug.normalized_bezier5) {
+    if (debug.normalized_bezier5) {
       sample_curve(
-        [scene](const float sample) {
+        [this](const float sample) {
           return nlt::normalizedBezier5(
-            scene.debug.normalized_bezier_b, scene.debug.normalized_bezier_c,
-            scene.debug.normalized_bezier_d, scene.debug.normalized_bezier_e,
-            sample);
+            debug.normalized_bezier_b, debug.normalized_bezier_c,
+            debug.normalized_bezier_d, debug.normalized_bezier_e, sample);
         },
         0xff0000ff);
     }
@@ -621,10 +598,9 @@ void update(transforms_scene_t& scene, debug_draw_t& debug_draw)
   debug_draw.debug_lines->addLine(start, end, 0xff000000);
 
   // draw smooth line handles
-  for (auto index :
-       {scene.smooth_line_begin_index, scene.smooth_line_end_index}) {
+  for (auto index : {smooth_line_begin_index, smooth_line_end_index}) {
     const auto translation = as::mat4_from_mat3_vec3(
-      as::mat3::identity(), scene.curve_handles.getHandle(index));
+      as::mat3::identity(), curve_handles.getHandle(index));
     const auto scale =
       as::mat4_from_mat3(as::mat3_scale(dbg::CurveHandles::HandleRadius));
 
@@ -634,11 +610,9 @@ void update(transforms_scene_t& scene, debug_draw_t& debug_draw)
 
   // draw smooth line
   const auto smooth_line_begin =
-    scene.curve_handles.getHandle(scene.smooth_line_begin_index);
-  const auto smooth_line_end =
-    scene.curve_handles.getHandle(scene.smooth_line_end_index);
-  auto smooth_line =
-    dbg::SmoothLine(scene.main_view, scene.simple_program.handle());
+    curve_handles.getHandle(smooth_line_begin_index);
+  const auto smooth_line_end = curve_handles.getHandle(smooth_line_end_index);
+  auto smooth_line = dbg::SmoothLine(main_view_, simple_program.handle());
   smooth_line.draw(smooth_line_begin, smooth_line_end);
 
   static float (*interpolations[])(float) = {
@@ -698,18 +672,16 @@ void update(transforms_scene_t& scene, debug_draw_t& debug_draw)
   as::mat_to_arr(as::mat4::identity(), view_o);
 
   const as::mat4 orthographic_projection = as::ortho_d3d_lh(
-    0.0f, scene.screen_dimension.x, scene.screen_dimension.y, 0.0f, 0.0f, 1.0f);
+    0.0f, screen_dimension.x, screen_dimension.y, 0.0f, 0.0f, 1.0f);
 
   float proj_o[16];
   as::mat_to_arr(orthographic_projection, proj_o);
-  bgfx::setViewTransform(scene.ortho_view, view_o, proj_o);
+  bgfx::setViewTransform(ortho_view_, view_o, proj_o);
 
   const auto start_screen = as::world_to_screen(
-    start, scene.perspective_projection, scene.camera.view(),
-    scene.screen_dimension);
+    start, perspective_projection, camera.view(), screen_dimension);
   const auto end_screen = as::world_to_screen(
-    end, scene.perspective_projection, scene.camera.view(),
-    scene.screen_dimension);
+    end, perspective_projection, camera.view(), screen_dimension);
 
   debug_draw.debug_lines_screen->addLine(
     as::vec3(start_screen.x, start_screen.y - 10.0f, 0.0f),
@@ -875,12 +847,12 @@ void update(transforms_scene_t& scene, debug_draw_t& debug_draw)
     as::vec4::axis_w());
 
   // include this in case nothing was submitted to draw
-  bgfx::touch(scene.main_view);
-  bgfx::touch(scene.ortho_view);
+  bgfx::touch(main_view_);
+  bgfx::touch(ortho_view_);
 }
 
-void teardown(transforms_scene_t& scene)
+void transforms_scene_t::teardown()
 {
-  scene.simple_program.deinit();
-  scene.instance_program.deinit();
+  simple_program.deinit();
+  instance_program.deinit();
 }

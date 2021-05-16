@@ -48,13 +48,25 @@ enum class CameraMode
   Animation
 };
 
-struct transforms_scene_t
+struct transforms_scene_t : public scene_t
 {
-  bool quit = false;
+  void setup(uint16_t width, uint16_t height) override;
+  void input(const SDL_Event& current_event) override;
+  void update(debug_draw_t& debug_draw) override;
+  void teardown() override;
+
+  uint16_t main_view() const override { return main_view_; }
+  uint16_t ortho_view() const override { return ortho_view_; }
+  bool quit() const override { return quit_; }
+
+  bgfx::ProgramHandle simple_handle() const override { return simple_program.handle(); };
+  bgfx::ProgramHandle instance_handle() const override { return instance_program.handle(); };
+
+  bool quit_ = false;
 
   as::vec2i screen_dimension{};
-  const bgfx::ViewId main_view = 0;
-  const bgfx::ViewId ortho_view = 1;
+  const bgfx::ViewId main_view_ = 0;
+  const bgfx::ViewId ortho_view_ = 1;
   dbg::EmbeddedShaderProgram simple_program;
   dbg::EmbeddedShaderProgram instance_program;
 
@@ -105,8 +117,3 @@ struct transforms_scene_t
   as::vec3 ray_origin;
   as::vec3 ray_direction;
 };
-
-void setup(transforms_scene_t& scene, uint16_t width, uint16_t height);
-void input(transforms_scene_t& scene, const SDL_Event& current_event);
-void update(transforms_scene_t& scene, debug_draw_t& debug_draw);
-void teardown(transforms_scene_t& scene);
