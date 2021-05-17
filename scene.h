@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 union SDL_Event;
 
 namespace bgfx

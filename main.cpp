@@ -1,9 +1,10 @@
 #include "bgfx-imgui/imgui_impl_bgfx.h"
-#include "hierarchy-imgui.h"
+
 #include "marching-cube-scene.h"
 #include "sdl-imgui/imgui_impl_sdl.h"
 #include "transforms-scene.h"
 #include "marching-cube-scene.h"
+#include "hierarchy-scene.h"
 
 #include <SDL.h>
 #include <SDL_syswm.h>
@@ -73,7 +74,8 @@ int main(int argc, char** argv)
   bgfx::init(bgfx_init);
 
   // std::unique_ptr<scene_t> scene = std::make_unique<transforms_scene_t>();
-  std::unique_ptr<scene_t> scene = std::make_unique<marching_cube_scene_t>();
+  // std::unique_ptr<scene_t> scene = std::make_unique<marching_cube_scene_t>();
+  std::unique_ptr<scene_t> scene = std::make_unique<imgui_hierarchy_scene_t>();
   scene->setup(width, height);
 
   ImGui::CreateContext();
@@ -85,12 +87,6 @@ int main(int argc, char** argv)
 #elif BX_PLATFORM_LINUX
   ImGui_ImplSDL2_InitForOpenGL(window, nullptr);
 #endif // BX_PLATFORM_WINDOWS ? BX_PLATFORM_OSX ? BX_PLATFORM_LINUX
-
-  // move
-  thh::container_t<hy::entity_t> entities;
-  auto root_handles = demo::create_sample_entities(entities);
-  hy::interaction_t interaction;
-  interaction.select(root_handles.front(), entities, root_handles);
 
   dbg::DebugVertex::init();
   dbg::DebugCircles::init();
@@ -128,13 +124,6 @@ int main(int argc, char** argv)
     debug_quads.submit();
     debug_circles.submit();
     debug_cubes.submit();
-
-    // imgui hierarchy experiments
-    hy_ig::imgui_interaction_draw_list_hierarchy(
-      entities, interaction, root_handles);
-    hy_ig::imgui_interaction_normal_hierarchy(
-      entities, interaction, root_handles);
-    hy_ig::imgui_only_recursive_hierarchy(entities, root_handles);
 
     ImGui::Render();
     ImGui_Implbgfx_RenderDrawLists(ImGui::GetDrawData());

@@ -41,6 +41,7 @@ target_sources(
           marching-cubes/marching-cubes.cpp
           marching-cube-scene.cpp
           transforms-scene.cpp
+          hierarchy-scene.cpp
           sdl-camera-input.cpp
           math-utils.cpp)
 
