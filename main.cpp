@@ -72,7 +72,8 @@ int main(int argc, char** argv)
   bgfx_init.platformData = pd;
   bgfx::init(bgfx_init);
 
-  const char* scene_names[] = {"Transforms", "MarchingCubes", "Hierarchy"};
+  const char* scene_names[] = {
+    "Non-Linear Transformations", "Marching Cubes", "Hierarchy"};
 
   std::unique_ptr<scene_t> scene = nullptr;
   auto scene_builder = [](const int scene_id) -> std::unique_ptr<scene_t> {
