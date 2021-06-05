@@ -1,10 +1,9 @@
 #include "bgfx-imgui/imgui_impl_bgfx.h"
 
+#include "hierarchy-scene.h"
 #include "marching-cube-scene.h"
 #include "sdl-imgui/imgui_impl_sdl.h"
 #include "transforms-scene.h"
-#include "marching-cube-scene.h"
-#include "hierarchy-scene.h"
 
 #include <SDL.h>
 #include <SDL_syswm.h>
@@ -73,10 +72,21 @@ int main(int argc, char** argv)
   bgfx_init.platformData = pd;
   bgfx::init(bgfx_init);
 
-  // std::unique_ptr<scene_t> scene = std::make_unique<transforms_scene_t>();
-  // std::unique_ptr<scene_t> scene = std::make_unique<marching_cube_scene_t>();
-  std::unique_ptr<scene_t> scene = std::make_unique<imgui_hierarchy_scene_t>();
-  scene->setup(width, height);
+  const char* scene_names[] = {"Transforms", "MarchingCubes", "Hierarchy"};
+
+  std::unique_ptr<scene_t> scene = nullptr;
+  auto scene_builder = [](const int scene_id) -> std::unique_ptr<scene_t> {
+    switch (scene_id) {
+      case 0:
+        return std::make_unique<transforms_scene_t>();
+      case 1:
+        return std::make_unique<marching_cube_scene_t>();
+      case 2:
+        return std::make_unique<imgui_hierarchy_scene_t>();
+      default:
+        return nullptr;
+    }
+  };
 
   ImGui::CreateContext();
   ImGui_Implbgfx_Init(255);
@@ -92,38 +102,87 @@ int main(int argc, char** argv)
   dbg::DebugCircles::init();
   dbg::DebugCubes::init();
 
-  for (; !scene->quit();) {
+  enum class mode_e
+  {
+    waiting_for_scene,
+    running_scene
+  };
+
+  bgfx::ViewId main_view = 0;
+  bgfx::ViewId ortho_view = 1;
+
+  int scene_index = 0;
+  mode_e mode = mode_e::waiting_for_scene;
+
+  bgfx::setViewClear(
+    main_view, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x6495EDFF, 1.0f, 0);
+  bgfx::setViewRect(main_view, 0, 0, width, height);
+  bgfx::setViewClear(ortho_view, BGFX_CLEAR_DEPTH);
+  bgfx::setViewRect(ortho_view, 0, 0, width, height);
+
+  for (bool quit = false; !quit;) {
     SDL_Event current_event;
     while (SDL_PollEvent(&current_event) != 0) {
       ImGui_ImplSDL2_ProcessEvent(&current_event);
-      scene->input(current_event);
+      if (current_event.type == SDL_QUIT) {
+        quit = true;
+        break;
+      }
+
+      if (scene) {
+        scene->input(current_event);
+      }
+
+      if (current_event.type == SDL_KEYDOWN) {
+        const auto* keyboard_event = (SDL_KeyboardEvent*)&current_event;
+        if (keyboard_event->keysym.scancode == SDL_SCANCODE_ESCAPE) {
+          scene->teardown();
+          scene.reset();
+          mode = mode_e::waiting_for_scene;
+        }
+      }
     }
 
     ImGui_Implbgfx_NewFrame();
     ImGui_ImplSDL2_NewFrame(window);
     ImGui::NewFrame();
 
-    dbg::DebugLines debug_lines(scene->main_view(), scene->simple_handle());
-    dbg::DebugLines debug_lines_screen(
-      scene->ortho_view(), scene->simple_handle());
-    dbg::DebugCircles debug_circles(
-      scene->main_view(), scene->instance_handle());
-    dbg::DebugSpheres debug_spheres(debug_circles);
-    const size_t quad_dimension = 100;
-    dbg::DebugQuads debug_quads(scene->main_view(), scene->instance_handle());
-    debug_quads.reserveQuads(quad_dimension * quad_dimension);
-    dbg::DebugCubes debug_cubes(scene->main_view(), scene->instance_handle());
+    switch (mode) {
+      case mode_e::waiting_for_scene:
+        ImGui::Combo(
+          "Scene Select", &scene_index, scene_names, std::size(scene_names));
+        if (ImGui::Button("Launch Scene")) {
+          scene = scene_builder(scene_index);
+          scene->setup(main_view, ortho_view, width, height);
+          mode = mode_e::running_scene;
+        }
+        break;
+      case mode_e::running_scene: {
+        dbg::DebugLines debug_lines(main_view, scene->simple_handle());
+        dbg::DebugLines debug_lines_screen(ortho_view, scene->simple_handle());
+        dbg::DebugCircles debug_circles(main_view, scene->instance_handle());
+        dbg::DebugSpheres debug_spheres(debug_circles);
+        const size_t quad_dimension = 100;
+        dbg::DebugQuads debug_quads(main_view, scene->instance_handle());
+        debug_quads.reserveQuads(quad_dimension * quad_dimension);
+        dbg::DebugCubes debug_cubes(main_view, scene->instance_handle());
 
-    debug_draw_t debug_draw{&debug_circles,      &debug_spheres, &debug_lines,
-                            &debug_lines_screen, &debug_cubes,   &debug_quads};
+        debug_draw_t debug_draw{&debug_circles, &debug_spheres,
+                                &debug_lines,   &debug_lines_screen,
+                                &debug_cubes,   &debug_quads};
 
-    scene->update(debug_draw);
+        scene->update(debug_draw);
 
-    debug_lines.submit();
-    debug_lines_screen.submit();
-    debug_quads.submit();
-    debug_circles.submit();
-    debug_cubes.submit();
+        debug_lines.submit();
+        debug_lines_screen.submit();
+        debug_quads.submit();
+        debug_circles.submit();
+        debug_cubes.submit();
+      } break;
+    }
+
+    bgfx::touch(main_view);
+    bgfx::touch(ortho_view);
 
     ImGui::Render();
     ImGui_Implbgfx_RenderDrawLists(ImGui::GetDrawData());
@@ -131,7 +190,9 @@ int main(int argc, char** argv)
     bgfx::frame();
   }
 
-  scene->teardown();
+  if (scene) {
+    scene->teardown();
+  }
 
   ImGui_ImplSDL2_Shutdown();
   ImGui_Implbgfx_Shutdown();

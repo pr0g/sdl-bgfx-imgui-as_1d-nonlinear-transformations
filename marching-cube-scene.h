@@ -60,30 +60,27 @@ enum class Scene
 
 struct marching_cube_scene_t : public scene_t
 {
-  void setup(uint16_t width, uint16_t height) override;
+  void setup(
+    bgfx::ViewId main_view, bgfx::ViewId ortho_view, uint16_t width,
+    uint16_t height) override;
   void input(const SDL_Event& current_event) override;
   void update(debug_draw_t& debug_draw) override;
   void teardown() override;
 
-  uint16_t main_view() const override { return main_view_; }
-  uint16_t ortho_view() const override { return ortho_view_; }
-  bool quit() const override { return quit_; }
-
   bgfx::ProgramHandle simple_handle() const override
   {
     return simple_program.handle();
-  };
+  }
+
   bgfx::ProgramHandle instance_handle() const override
   {
     return instance_program.handle();
-  };
-
-  bool quit_ = false;
+  }
 
   as::vec2i screen_dimension{};
-  const bgfx::ViewId main_view_ = 0;
-  const bgfx::ViewId gizmo_view_ = 1;
-  const bgfx::ViewId ortho_view_ = 2;
+  bgfx::ViewId main_view_;
+  bgfx::ViewId ortho_view_;
+  const bgfx::ViewId gizmo_view_ = 2;
 
   as::mat4 perspective_projection;
 

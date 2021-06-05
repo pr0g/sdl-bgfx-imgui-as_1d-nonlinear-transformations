@@ -72,20 +72,14 @@ std::tuple<float, float, float> eulerAngles(const as::mat3& orientation)
   return {x, y, z};
 }
 
-void transforms_scene_t::setup(const uint16_t width, const uint16_t height)
+void transforms_scene_t::setup(
+  const bgfx::ViewId main_view, const bgfx::ViewId ortho_view,
+  const uint16_t width, const uint16_t height)
 {
   screen_dimension = as::vec2i(width, height);
 
-  // cornflower clear color
-  bgfx::setViewClear(
-    main_view_, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x6495EDFF, 1.0f, 0);
-  bgfx::setViewRect(main_view_, 0, 0, width, height);
-  bgfx::setViewClear(ortho_view_, BGFX_CLEAR_DEPTH);
-  bgfx::setViewRect(ortho_view_, 0, 0, width, height);
-  // dummy draw call to make sure main_view_ is cleared if no other draw calls
-  // are submitted
-  bgfx::touch(main_view_);
-  bgfx::touch(ortho_view_);
+  main_view_ = main_view;
+  ortho_view_ = ortho_view;
 
   simple_program.init(dbg::SimpleEmbeddedShaderArgs);
   instance_program.init(dbg::InstanceEmbeddedShaderArgs);
@@ -127,11 +121,6 @@ void transforms_scene_t::setup(const uint16_t width, const uint16_t height)
 
 void transforms_scene_t::input(const SDL_Event& current_event)
 {
-  if (current_event.type == SDL_QUIT) {
-    quit_ = true;
-    return;
-  }
-
   camera_system.handleEvents(sdlToInput(&current_event));
 
   if (current_event.type == SDL_MOUSEBUTTONDOWN) {

@@ -43,14 +43,14 @@ static const uint16_t CubeTriListCol[] = {
   1, 5, 3, 5, 7, 3, 0, 4, 1, 4, 5, 1, 2, 3, 6, 6, 3, 7,
 };
 
-void marching_cube_scene_t::setup(const uint16_t width, const uint16_t height)
+void marching_cube_scene_t::setup(
+  const bgfx::ViewId main_view, const bgfx::ViewId ortho_view,
+  const uint16_t width, const uint16_t height)
 {
   screen_dimension = as::vec2i(width, height);
 
-  // cornflower clear colour
-  bgfx::setViewClear(
-    main_view_, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x6495EDFF, 1.0f, 0);
-  bgfx::setViewRect(main_view_, 0, 0, width, height);
+  main_view_ = main_view;
+  ortho_view_ = ortho_view;
 
   // size and placement of gizmo on screen
   const float gizmo_offset_percent = 0.85f;
@@ -115,11 +115,6 @@ void marching_cube_scene_t::setup(const uint16_t width, const uint16_t height)
 
 void marching_cube_scene_t::input(const SDL_Event& current_event)
 {
-  if (current_event.type == SDL_QUIT) {
-    quit_ = true;
-    return;
-  }
-
   camera_system.handleEvents(sdlToInput(&current_event));
 }
 
@@ -318,7 +313,8 @@ void marching_cube_scene_t::update(debug_draw_t& debug_draw)
     ImGui::Checkbox("Draw Normals", &draw_normals);
     ImGui::Checkbox("Analytical Normals", &analytical_normals);
     static const char* scenes[] = {"Noise", "Sphere"};
-    ImGui::Combo("Marching Cubes Scene", scene_alias, scenes, std::size(scenes));
+    ImGui::Combo(
+      "Marching Cubes Scene", scene_alias, scenes, std::size(scenes));
   }
 
   // gizmo cube
