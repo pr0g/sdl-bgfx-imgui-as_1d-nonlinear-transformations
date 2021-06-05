@@ -325,7 +325,8 @@ void marching_cube_scene_t::update(debug_draw_t& debug_draw)
       view);
 
     const float extent_y = 10.0f;
-    const float extent_x = extent_y * (screen_dimension.x / screen_dimension.y);
+    const float extent_x =
+      extent_y * (screen_dimension.x / float(screen_dimension.y));
 
     float proj[16];
     as::mat_to_arr(
