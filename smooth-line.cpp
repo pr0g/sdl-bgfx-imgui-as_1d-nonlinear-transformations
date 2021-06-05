@@ -5,6 +5,12 @@
 namespace dbg
 {
 
+void SmoothLine::setRenderContext(
+  const bgfx::ViewId view, const bgfx::ProgramHandle program_handle)
+{
+  debug_lines_.setRenderContext(view, program_handle);
+}
+
 void SmoothLine::draw(const as::vec3& begin, const as::vec3& end)
 {
   const auto line_granularity = 100;

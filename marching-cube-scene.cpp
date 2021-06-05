@@ -278,7 +278,8 @@ void marching_cube_scene_t::update(debug_draw_t& debug_draw)
       bgfx::submit(main_view_, program_norm);
 
       if (draw_normals) {
-        auto debug_lines = dbg::DebugLines(main_view_, simple_program.handle());
+        auto debug_lines = dbg::DebugLines();
+        debug_lines.setRenderContext(main_view_, simple_program.handle());
         for (as::index i = 0; i < filtered_verts.size(); i++) {
           debug_lines.addLine(
             vertex[i].position, vertex[i].position + vertex[i].normal,

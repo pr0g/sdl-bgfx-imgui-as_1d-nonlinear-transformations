@@ -601,7 +601,8 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
   const auto smooth_line_begin =
     curve_handles.getHandle(smooth_line_begin_index);
   const auto smooth_line_end = curve_handles.getHandle(smooth_line_end_index);
-  auto smooth_line = dbg::SmoothLine(main_view_, simple_program.handle());
+  auto smooth_line = dbg::SmoothLine();
+  smooth_line.setRenderContext(main_view_, simple_program.handle());
   smooth_line.draw(smooth_line_begin, smooth_line_end);
 
   static float (*interpolations[])(float) = {

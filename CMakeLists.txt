@@ -19,7 +19,7 @@ FetchContent_Declare(
 FetchContent_Declare(
   thh-bgfx-debug
   GIT_REPOSITORY https://github.com/pr0g/thh-bgfx-debug
-  GIT_TAG b0eb4ddeb9cfe19ee18986444eb437c08fb323fe)
+  GIT_TAG 8c3da2989f11514edc5bae9daa2aabea5bd60bc3)
 FetchContent_Declare(
   hierarchy
   GIT_REPOSITORY https://github.com/pr0g/hierarchy.git
