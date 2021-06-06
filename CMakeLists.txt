@@ -39,9 +39,9 @@ target_sources(
           hierarchy-imgui.cpp
           bgfx-helpers.cpp
           marching-cubes/marching-cubes.cpp
-          marching-cube-scene.cpp
-          transforms-scene.cpp
-          hierarchy-scene.cpp
+          scenes/marching-cube-scene.cpp
+          scenes/transforms-scene.cpp
+          scenes/hierarchy-scene.cpp
           sdl-camera-input.cpp
           math-utils.cpp)
 
@@ -56,6 +56,7 @@ target_link_libraries(
           thh-bgfx-debug
           hierarchy)
 
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR})
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
 
 # required for project when using visual studio generator
