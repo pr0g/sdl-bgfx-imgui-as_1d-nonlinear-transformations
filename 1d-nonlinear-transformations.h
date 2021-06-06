@@ -95,7 +95,6 @@ inline float normalizedBezier5(
   const float s2 = s * s;
   const float s3 = s2 * s;
   const float s4 = s3 * s;
-  const float s5 = s4 * s;
 
   return (5.0f * s4 * t * b) + (10.0f * s3 * t2 * c) + (10.0f * s2 * t3 * d)
        + (5.0f * s * t4 * e) + t5;

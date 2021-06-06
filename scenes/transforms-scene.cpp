@@ -229,7 +229,7 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
 
   const float delta_time = delta / static_cast<float>(freq);
 
-  as::mat4 camera_view;
+  as::mat4 camera_view = as::mat4::identity();
   if (camera_mode == CameraMode::Control) {
     target_camera = camera_system.stepCamera(target_camera, delta_time);
     camera =

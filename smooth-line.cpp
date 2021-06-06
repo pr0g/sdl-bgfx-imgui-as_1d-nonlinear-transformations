@@ -14,7 +14,6 @@ void SmoothLine::setRenderContext(
 void SmoothLine::draw(const as::vec3& begin, const as::vec3& end)
 {
   const auto line_granularity = 100;
-  const auto line_length = as::vec_distance(begin, end);
   for (auto segment = 0; segment < line_granularity; ++segment) {
     const float scale = 1.0f;
     float segment_begin = segment / float(line_granularity);
