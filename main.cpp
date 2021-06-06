@@ -174,14 +174,13 @@ int main(int argc, char** argv)
 
         if (scene) {
           scene->input(current_event);
-        }
-
-        if (current_event.type == SDL_KEYDOWN) {
-          const auto* keyboard_event = (SDL_KeyboardEvent*)&current_event;
-          if (keyboard_event->keysym.scancode == SDL_SCANCODE_ESCAPE) {
-            scene->teardown();
-            scene.reset();
-            mode = mode_e::waiting_for_scene;
+          if (current_event.type == SDL_KEYDOWN) {
+            const auto* keyboard_event = (SDL_KeyboardEvent*)&current_event;
+            if (keyboard_event->keysym.scancode == SDL_SCANCODE_ESCAPE) {
+              scene->teardown();
+              scene.reset();
+              mode = mode_e::waiting_for_scene;
+            }
           }
         }
       }
