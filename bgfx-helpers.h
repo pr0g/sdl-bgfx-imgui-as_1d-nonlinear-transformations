@@ -2,8 +2,8 @@
 
 #include "bgfx/bgfx.h"
 
-#include <string>
 #include <optional>
+#include <string>
 
 bgfx::ShaderHandle createShader(const std::string& shader, const char* name);
 
