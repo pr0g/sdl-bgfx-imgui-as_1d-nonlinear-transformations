@@ -153,6 +153,8 @@ int main(int argc, char** argv)
 
     if (scene_index != -1) {
       begin_scene(scene_index);
+    } else {
+      scene_index = 0;
     }
 
     bgfx::setViewClear(
