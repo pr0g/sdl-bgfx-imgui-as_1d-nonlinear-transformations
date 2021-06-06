@@ -57,8 +57,10 @@ void marching_cube_scene_t::setup(
   const float gizmo_size_percent = 0.1f;
   bgfx::setViewClear(gizmo_view_, BGFX_CLEAR_DEPTH);
   bgfx::setViewRect(
-    gizmo_view_, width * gizmo_offset_percent, height * gizmo_offset_percent,
-    width * gizmo_size_percent, height * gizmo_size_percent);
+    gizmo_view_, uint16_t(float(width) * gizmo_offset_percent),
+    uint16_t(float(height) * gizmo_offset_percent),
+    uint16_t(float(width) * gizmo_size_percent),
+    uint16_t(float(height) * gizmo_size_percent));
 
   perspective_projection = as::perspective_d3d_lh(
     as::radians(35.0f), float(width) / float(height), 0.01f, 100.0f);
@@ -238,8 +240,8 @@ void marching_cube_scene_t::update(debug_draw_t& debug_draw)
 
       for (as::index i = 0; i < filtered_verts.size(); i++) {
         vertex[i].normal_ = analytical_normals
-                           ? as::vec_normalize(filtered_norms[i])
-                           : as::vec3::zero();
+                            ? as::vec_normalize(filtered_norms[i])
+                            : as::vec3::zero();
         vertex[i].position_ = filtered_verts[i];
       }
 

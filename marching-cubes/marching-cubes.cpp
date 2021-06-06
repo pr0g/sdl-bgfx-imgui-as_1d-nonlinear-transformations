@@ -5,17 +5,12 @@ namespace mc
 
 as::vec3 sin(const as::vec3& x)
 {
-  return {sinf(x.x), sinf(x.y), sinf(x.z)};
-}
-
-float fract(const float x)
-{
-  return x - floorf(x);
+  return {std::sin(x.x), std::sin(x.y), std::sin(x.z)};
 }
 
 as::vec3 fract(const as::vec3& x)
 {
-  return {fract(x.x), fract(x.y), fract(x.z)};
+  return {as::fract(x.x), as::fract(x.y), as::fract(x.z)};
 }
 
 as::vec3 hash(as::vec3 p)
@@ -41,38 +36,38 @@ as::vec3 zxy(const as::vec3& vec)
 // ref: https://www.iquilezles.org/www/articles/gradientnoise/gradientnoise.htm
 // gradient noise derivatives - 2017 by Inigo Quilez
 // returns 3D value noise (in .x)  and its derivatives (in .yzw)
-as::vec4 noised(as::vec3 x)
+as::vec4 noised(const as::vec3& x)
 {
   using as::vec3;
   using as::vec4;
 
   // grid
-  vec3 p = as::vec_floor(x);
-  vec3 w = fract(x);
+  const vec3 p = as::vec_floor(x);
+  const vec3 w = fract(x);
 
   // quintic interpolant
-  vec3 u = w * w * w * (w * (w * vec3(6.0f) - vec3(15.0)) + vec3(10.0));
-  vec3 du = vec3(30.0) * w * w * (w * (w - vec3(2.0)) + vec3(1.0));
+  const vec3 u = w * w * w * (w * (w * vec3(6.0f) - vec3(15.0)) + vec3(10.0));
+  const vec3 du = vec3(30.0) * w * w * (w * (w - vec3(2.0)) + vec3(1.0));
 
   // gradients
-  vec3 ga = hash(p + vec3(0.0, 0.0, 0.0));
-  vec3 gb = hash(p + vec3(1.0, 0.0, 0.0));
-  vec3 gc = hash(p + vec3(0.0, 1.0, 0.0));
-  vec3 gd = hash(p + vec3(1.0, 1.0, 0.0));
-  vec3 ge = hash(p + vec3(0.0, 0.0, 1.0));
-  vec3 gf = hash(p + vec3(1.0, 0.0, 1.0));
-  vec3 gg = hash(p + vec3(0.0, 1.0, 1.0));
-  vec3 gh = hash(p + vec3(1.0, 1.0, 1.0));
+  const vec3 ga = hash(p + vec3(0.0, 0.0, 0.0));
+  const vec3 gb = hash(p + vec3(1.0, 0.0, 0.0));
+  const vec3 gc = hash(p + vec3(0.0, 1.0, 0.0));
+  const vec3 gd = hash(p + vec3(1.0, 1.0, 0.0));
+  const vec3 ge = hash(p + vec3(0.0, 0.0, 1.0));
+  const vec3 gf = hash(p + vec3(1.0, 0.0, 1.0));
+  const vec3 gg = hash(p + vec3(0.0, 1.0, 1.0));
+  const vec3 gh = hash(p + vec3(1.0, 1.0, 1.0));
 
   // projections
-  float va = as::vec_dot(ga, w - vec3(0.0, 0.0, 0.0));
-  float vb = as::vec_dot(gb, w - vec3(1.0, 0.0, 0.0));
-  float vc = as::vec_dot(gc, w - vec3(0.0, 1.0, 0.0));
-  float vd = as::vec_dot(gd, w - vec3(1.0, 1.0, 0.0));
-  float ve = as::vec_dot(ge, w - vec3(0.0, 0.0, 1.0));
-  float vf = as::vec_dot(gf, w - vec3(1.0, 0.0, 1.0));
-  float vg = as::vec_dot(gg, w - vec3(0.0, 1.0, 1.0));
-  float vh = as::vec_dot(gh, w - vec3(1.0, 1.0, 1.0));
+  const float va = as::vec_dot(ga, w - vec3(0.0, 0.0, 0.0));
+  const float vb = as::vec_dot(gb, w - vec3(1.0, 0.0, 0.0));
+  const float vc = as::vec_dot(gc, w - vec3(0.0, 1.0, 0.0));
+  const float vd = as::vec_dot(gd, w - vec3(1.0, 1.0, 0.0));
+  const float ve = as::vec_dot(ge, w - vec3(0.0, 0.0, 1.0));
+  const float vf = as::vec_dot(gf, w - vec3(1.0, 0.0, 1.0));
+  const float vg = as::vec_dot(gg, w - vec3(0.0, 1.0, 1.0));
+  const float vh = as::vec_dot(gh, w - vec3(1.0, 1.0, 1.0));
 
   // interpolation
   float v = va + u.x * (vb - va) + u.y * (vc - va) + u.z * (ve - va)
@@ -81,15 +76,15 @@ as::vec4 noised(as::vec3 x)
           + u.x * u.y * u.z * (-va + vb + vc - vd + ve - vf - vg + vh);
 
   // clang-format off
-  vec3 d = ga + u.x * (gb - ga) + u.y * (gc - ga) + u.z * (ge - ga)
-           + u.x * u.y * (ga - gb - gc + gd) + u.y * u.z * (ga - gc - ge + gg)
-           + u.z * u.x * (ga - gb - ge + gf)
-           + u.x * u.y * u.z * (-ga + gb + gc - gd + ge - gf - gg + gh)
-           + du * (vec3(vb - va, vc - va, ve - va) + yzx(u)
-           * vec3(va - vb - vc + vd, va - vc - ve + vg, va - vb - ve + vf)
-           + zxy(u)
-           * vec3(va - vb - ve + vf, va - vb - vc + vd, va - vc - ve + vg)
-           + yzx(u) * zxy(u) * (-va + vb + vc - vd + ve - vf - vg + vh));
+  const vec3 d = ga + u.x * (gb - ga) + u.y * (gc - ga) + u.z * (ge - ga)
+    + u.x * u.y * (ga - gb - gc + gd) + u.y * u.z * (ga - gc - ge + gg)
+    + u.z * u.x * (ga - gb - ge + gf)
+    + u.x * u.y * u.z * (-ga + gb + gc - gd + ge - gf - gg + gh)
+    + du * (vec3(vb - va, vc - va, ve - va) + yzx(u)
+    * vec3(va - vb - vc + vd, va - vc - ve + vg, va - vb - ve + vf)
+    + zxy(u)
+    * vec3(va - vb - ve + vf, va - vb - vc + vd, va - vc - ve + vg)
+    + yzx(u) * zxy(u) * (-va + vb + vc - vd + ve - vf - vg + vh));
   // clang-format on
 
   return vec4(v, d.x, d.y, d.z);
@@ -162,7 +157,7 @@ void generatePointData(
       for (int x = 0; x < dimension; ++x) {
         const as::vec3 snap_cam = as::vec_snap(cam, tesselation);
 
-        const as::vec3 offset{(1.0f - tesselation) * dimension * 0.5f};
+        const as::vec3 offset{(1.0f - tesselation) * float(dimension) * 0.5f};
 
         const as::vec3 pos =
           (as::vec3{as::real(x), as::real(y), as::real(z)} * tesselation)
@@ -183,14 +178,15 @@ void generatePointData(
 }
 
 void generatePointData(
-  Point*** points, int dimension, float tesselation, const as::vec3& center,
-  const as::vec3& camera, const as::vec3& dir, float distance)
+  Point*** points, const int dimension, const float tesselation,
+  const as::vec3& center, const as::vec3& camera, const as::vec3& dir,
+  const float distance)
 {
   for (int z = 0; z < dimension; ++z) {
     for (int y = 0; y < dimension; ++y) {
       for (int x = 0; x < dimension; ++x) {
         const as::vec3 snap_cam = as::vec_snap(center, tesselation);
-        const as::vec3 offset{(1.0f - tesselation) * dimension * 0.5f};
+        const as::vec3 offset{(1.0f - tesselation) * float(dimension) * 0.5f};
         const as::vec3 pos =
           (as::vec3{as::real(x), as::real(y), as::real(z)} * tesselation)
           - (as::vec3{as::real(dimension)} * 0.5f) + offset + snap_cam;

@@ -37,12 +37,13 @@ void imguiInteractionDrawListHierarchy(
                     : !di.collapsed ? 0xffffffff
                                     : 0xff00ffff;
     draw_list->AddText(
-      ImVec2(p0.x + di.indent * 28, p0.y + di.level * 12), col, entry.c_str());
+      ImVec2(p0.x + float(di.indent * 28), p0.y + float(di.level * 12)), col,
+      entry.c_str());
   };
 
   const auto display_connection = [draw_list, p0](int level, int indent) {
     draw_list->AddText(
-      ImVec2(p0.x + indent * 28, p0.y + level * 12), 0xffffffff, "|");
+      ImVec2(p0.x + float(indent * 28), p0.y + float(level * 12)), 0xffffffff, "|");
   };
 
   hy::display_hierarchy(
