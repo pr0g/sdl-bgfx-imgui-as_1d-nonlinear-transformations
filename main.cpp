@@ -10,13 +10,17 @@
 #include <bgfx/bgfx.h>
 #include <bgfx/platform.h>
 #include <imgui.h>
+#include <nlohmann/json.hpp>
 #include <thh-bgfx-debug/debug-cube.hpp>
 #include <thh-bgfx-debug/debug-line.hpp>
 #include <thh-bgfx-debug/debug-quad.hpp>
 #include <thh-bgfx-debug/debug-sphere.hpp>
 
+#include <fstream>
 #include <optional>
 #include <tuple>
+
+using json = nlohmann::json;
 
 namespace asc
 {
@@ -104,6 +108,7 @@ int main(int argc, char** argv)
   dbg::DebugCubes::init();
 
   {
+    // note: must be destructed before bgfx shutdown
     dbg::DebugLines debug_lines;
     dbg::DebugLines debug_lines_screen;
     dbg::DebugCircles debug_circles;
@@ -111,6 +116,7 @@ int main(int argc, char** argv)
     dbg::DebugQuads debug_quads;
     dbg::DebugCubes debug_cubes;
 
+    // overall mode for app
     enum class mode_e
     {
       waiting_for_scene,
@@ -120,8 +126,34 @@ int main(int argc, char** argv)
     bgfx::ViewId main_view = 0;
     bgfx::ViewId ortho_view = 1;
 
-    int scene_index = 0;
+    std::ifstream settings_input("settings.json");
+    json settings;
+    settings_input >> settings;
+
+    int scene_index = [&settings]() -> int {
+      if (settings.contains("scene-index")) {
+        return settings.at("scene-index");
+      }
+      return -1;
+    }();
+
     mode_e mode = mode_e::waiting_for_scene;
+    auto begin_scene = [&](const int scene_index) {
+      scene = scene_builder(scene_index);
+      scene->setup(main_view, ortho_view, width, height);
+
+      debug_lines.setRenderContext(main_view, scene->simple_handle());
+      debug_lines_screen.setRenderContext(ortho_view, scene->simple_handle());
+      debug_circles.setRenderContext(main_view, scene->instance_handle());
+      debug_quads.setRenderContext(main_view, scene->instance_handle());
+      debug_cubes.setRenderContext(main_view, scene->instance_handle());
+
+      mode = mode_e::running_scene;
+    };
+
+    if (scene_index != -1) {
+      begin_scene(scene_index);
+    }
 
     bgfx::setViewClear(
       main_view, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x6495EDFF, 1.0f, 0);
@@ -158,21 +190,13 @@ int main(int argc, char** argv)
 
       switch (mode) {
         case mode_e::waiting_for_scene:
+          ImGui::Begin("Scene Select");
           ImGui::Combo(
             "Scene Select", &scene_index, scene_names, std::size(scene_names));
           if (ImGui::Button("Launch Scene")) {
-            scene = scene_builder(scene_index);
-            scene->setup(main_view, ortho_view, width, height);
-
-            debug_lines.setRenderContext(main_view, scene->simple_handle());
-            debug_lines_screen.setRenderContext(
-              ortho_view, scene->simple_handle());
-            debug_circles.setRenderContext(main_view, scene->instance_handle());
-            debug_quads.setRenderContext(main_view, scene->instance_handle());
-            debug_cubes.setRenderContext(main_view, scene->instance_handle());
-
-            mode = mode_e::running_scene;
+            begin_scene(scene_index);
           }
+          ImGui::End();
           break;
         case mode_e::running_scene: {
           debug_draw_t debug_draw{&debug_circles, &debug_spheres,

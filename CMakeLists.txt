@@ -24,9 +24,13 @@ FetchContent_Declare(
   hierarchy
   GIT_REPOSITORY https://github.com/pr0g/hierarchy.git
   GIT_TAG 49703301f6e922733a14666562ef8f954b9974b7)
+FetchContent_Declare(
+  nlohmann-json
+  GIT_REPOSITORY https://github.com/nlohmann/json.git
+  GIT_TAG e10a3fac8a255433146e3f06a703dc110fc3c3da)
 
 FetchContent_MakeAvailable(as-camera-input EasyIterator thh-bgfx-debug
-                           hierarchy)
+                           hierarchy nlohmann-json)
 
 add_executable(${PROJECT_NAME})
 target_sources(
@@ -54,7 +58,8 @@ target_link_libraries(
           as-camera-input
           EasyIterator
           thh-bgfx-debug
-          hierarchy)
+          hierarchy
+          nlohmann_json::nlohmann_json)
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR})
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)

@@ -294,6 +294,7 @@ void marching_cube_scene_t::update(debug_draw_t& debug_draw)
     const double to_ms = 1000.0 / freq;
     auto marching_cube_time = double(bx::getHPCounter() - marching_cube_begin);
 
+    ImGui::Begin("Marching Cubes");
     ImGui::Text("Framerate: ");
     ImGui::SameLine(100);
     ImGui::Text("%f", framerate);
@@ -316,6 +317,7 @@ void marching_cube_scene_t::update(debug_draw_t& debug_draw)
     static const char* scenes[] = {"Noise", "Sphere"};
     ImGui::Combo(
       "Marching Cubes Scene", scene_alias, scenes, std::size(scenes));
+    ImGui::End();
   }
 
   // gizmo cube
