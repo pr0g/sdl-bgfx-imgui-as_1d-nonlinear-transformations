@@ -5,7 +5,7 @@
 namespace hy_ig
 {
 
-void imgui_interaction_draw_list_hierarchy(
+void imguiInteractionDrawListHierarchy(
   const thh::container_t<hy::entity_t>& entities,
   hy::interaction_t& interaction,
   const std::vector<thh::handle_t>& root_handles)
@@ -53,7 +53,7 @@ void imgui_interaction_draw_list_hierarchy(
   ImGui::End();
 }
 
-void imgui_interaction_normal_hierarchy(
+void imguiInteractionNormalHierarchy(
   const thh::container_t<hy::entity_t>& entities,
   hy::interaction_t& interaction,
   const std::vector<thh::handle_t>& root_handles)
@@ -98,7 +98,7 @@ void imgui_interaction_normal_hierarchy(
   ImGui::End();
 }
 
-static void imgui_only_recursive_hierarchy_internal(
+static void imguiOnlyRecursiveHierarchyInternal(
   const thh::container_t<hy::entity_t>& entities,
   const std::vector<thh::handle_t>& handles)
 {
@@ -107,7 +107,7 @@ static void imgui_only_recursive_hierarchy_internal(
       const auto& children = entity.children_;
       if (!children.empty()) {
         if (ImGui::TreeNodeEx(entity.name_.c_str())) {
-          imgui_only_recursive_hierarchy_internal(entities, children);
+          imguiOnlyRecursiveHierarchyInternal(entities, children);
           ImGui::TreePop();
         }
       } else {
@@ -117,12 +117,12 @@ static void imgui_only_recursive_hierarchy_internal(
   }
 }
 
-void imgui_only_recursive_hierarchy(
+void imguiOnlyRecursiveHierarchy(
   const thh::container_t<hy::entity_t>& entities,
   const std::vector<thh::handle_t>& handles)
 {
   ImGui::Begin("Hierarchy Recursive");
-  imgui_only_recursive_hierarchy_internal(entities, handles);
+  imguiOnlyRecursiveHierarchyInternal(entities, handles);
   ImGui::End();
 }
 

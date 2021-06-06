@@ -5,17 +5,17 @@
 namespace hy_ig
 {
 
-void imgui_interaction_draw_list_hierarchy(
+void imguiInteractionDrawListHierarchy(
   const thh::container_t<hy::entity_t>& entities,
   hy::interaction_t& interaction,
   const std::vector<thh::handle_t>& root_handles);
 
-void imgui_interaction_normal_hierarchy(
+void imguiInteractionNormalHierarchy(
   const thh::container_t<hy::entity_t>& entities,
   hy::interaction_t& interaction,
   const std::vector<thh::handle_t>& root_handles);
 
-void imgui_only_recursive_hierarchy(
+void imguiOnlyRecursiveHierarchy(
   const thh::container_t<hy::entity_t>& entities,
   const std::vector<thh::handle_t>& handles);
 

@@ -19,7 +19,7 @@ static void drawTransform(
   dbg::DebugLines& debug_lines, const as::affine& affine,
   const float alpha = 1.0f)
 {
-  const uint8_t alpha_8 = static_cast<uint8_t>(255.0f * alpha);
+  const auto alpha_8 = static_cast<uint8_t>(255.0f * alpha);
   const uint32_t alpha_32 = alpha_8 << 24;
 
   const auto& translation = affine.translation;
@@ -781,25 +781,25 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
   }
 
   ImGui::Begin("Transforms");
-  static float Translation[] = {-15.0f, 5.0f, 0.0f};
-  ImGui::SliderFloat3("Translation", Translation, -50.0f, 50.0f);
-  static float Rotation[] = {0.0f, 0.0f, 0.0f};
-  ImGui::SliderFloat3("Rotation", Rotation, -360.0f, 360.0f);
+  static float translation_imgui[] = {-15.0f, 5.0f, 0.0f};
+  ImGui::SliderFloat3("Translation", translation_imgui, -50.0f, 50.0f);
+  static float rotation_imgui[] = {0.0f, 0.0f, 0.0f};
+  ImGui::SliderFloat3("Rotation", rotation_imgui, -360.0f, 360.0f);
   ImGui::End();
 
   const as::rigid rigid_transformation(
     as::quat_rotation_zxy(
-      as::radians(Rotation[0]), as::radians(Rotation[1]),
-      as::radians(Rotation[2])),
-    as::vec3_from_arr(Translation));
+      as::radians(rotation_imgui[0]), as::radians(rotation_imgui[1]),
+      as::radians(rotation_imgui[2])),
+    as::vec3_from_arr(translation_imgui));
   const as::vec3 next_position_rigid =
     as::rigid_transform_pos(rigid_transformation, as::vec3::axis_z(0.5f));
 
   const as::affine affine_transformation(
     as::mat3_rotation_zxy(
-      as::radians(Rotation[0]), as::radians(Rotation[1]),
-      as::radians(Rotation[2])),
-    as::vec3_from_arr(Translation));
+      as::radians(rotation_imgui[0]), as::radians(rotation_imgui[1]),
+      as::radians(rotation_imgui[2])),
+    as::vec3_from_arr(translation_imgui));
   const as::vec3 next_position_affine =
     as::affine_transform_pos(affine_transformation, as::vec3::axis_z(0.5f));
 

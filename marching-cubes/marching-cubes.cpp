@@ -109,7 +109,7 @@ static as::vec3 interpolate(
 
 Point*** createPointVolume(const int dimension, const float initial_value)
 {
-  Point*** points = new Point**[dimension];
+  auto*** points = new Point**[dimension];
   for (int z = 0; z < dimension; ++z) {
     points[z] = new Point*[dimension];
     for (int y = 0; y < dimension; ++y) {
@@ -126,7 +126,7 @@ Point*** createPointVolume(const int dimension, const float initial_value)
 CellValues*** createCellValues(const int dimension)
 {
   const int cell_dim = dimension - 1;
-  CellValues*** cells = new CellValues**[cell_dim];
+  auto*** cells = new CellValues**[cell_dim];
   for (int z = 0; z < cell_dim; ++z) {
     cells[z] = new CellValues*[cell_dim];
     for (int y = 0; y < cell_dim; ++y) {
@@ -140,7 +140,7 @@ CellValues*** createCellValues(const int dimension)
 CellPositions*** createCellPositions(const int dimension)
 {
   const int cell_dim = dimension - 1;
-  CellPositions*** cells = new CellPositions**[cell_dim];
+  auto*** cells = new CellPositions**[cell_dim];
   for (int z = 0; z < cell_dim; ++z) {
     cells[z] = new CellPositions*[cell_dim];
     for (int y = 0; y < cell_dim; ++y) {
@@ -151,7 +151,7 @@ CellPositions*** createCellPositions(const int dimension)
   return cells;
 }
 
-static const float g_threshold_scale = 10.0f;
+static const float ThresholdScale = 10.0f;
 
 void generatePointData(
   Point*** points, const int dimension, const float scale,
@@ -170,7 +170,7 @@ void generatePointData(
 
         const as::vec4 noise = noised((pos + snap_cam) / scale);
 
-        as::real v = ((noise.x + 1.0f) * 0.5f) * g_threshold_scale;
+        as::real v = ((noise.x + 1.0f) * 0.5f) * ThresholdScale;
 
         points[z][y][x].val_ = v;
         points[z][y][x].normal_ = as::vec3{noise.y, noise.z, noise.w};
@@ -207,7 +207,7 @@ void generatePointData(
 }
 
 void generateCellData(
-  CellPositions*** cellPositions, CellValues*** cellValues, Point*** points,
+  CellPositions*** cell_positions, CellValues*** cell_values, Point*** points,
   const int dimension)
 {
   const int cell_dim = dimension - 1;
@@ -215,32 +215,32 @@ void generateCellData(
     for (int y = 0; y < cell_dim; ++y) {
       for (int x = 0; x < cell_dim; ++x) {
         // clang-format off
-        cellPositions[z][y][x].points_[0] = points[z + 1][y    ][x    ].position_; // fbl
-        cellPositions[z][y][x].points_[1] = points[z + 1][y    ][x + 1].position_; // fbr
-        cellPositions[z][y][x].points_[2] = points[z    ][y    ][x + 1].position_; // nbr
-        cellPositions[z][y][x].points_[3] = points[z    ][y    ][x    ].position_; // nbl
-        cellPositions[z][y][x].points_[4] = points[z + 1][y + 1][x    ].position_; // ftl
-        cellPositions[z][y][x].points_[5] = points[z + 1][y + 1][x + 1].position_; // ftr
-        cellPositions[z][y][x].points_[6] = points[z    ][y + 1][x + 1].position_; // ntr
-        cellPositions[z][y][x].points_[7] = points[z    ][y + 1][x    ].position_; // ntl
+        cell_positions[z][y][x].points_[0] = points[z + 1][y    ][x    ].position_; // fbl
+        cell_positions[z][y][x].points_[1] = points[z + 1][y    ][x + 1].position_; // fbr
+        cell_positions[z][y][x].points_[2] = points[z    ][y    ][x + 1].position_; // nbr
+        cell_positions[z][y][x].points_[3] = points[z    ][y    ][x    ].position_; // nbl
+        cell_positions[z][y][x].points_[4] = points[z + 1][y + 1][x    ].position_; // ftl
+        cell_positions[z][y][x].points_[5] = points[z + 1][y + 1][x + 1].position_; // ftr
+        cell_positions[z][y][x].points_[6] = points[z    ][y + 1][x + 1].position_; // ntr
+        cell_positions[z][y][x].points_[7] = points[z    ][y + 1][x    ].position_; // ntl
 
-        cellPositions[z][y][x].normals_[0] = points[z + 1][y    ][x    ].normal_; // fbl
-        cellPositions[z][y][x].normals_[1] = points[z + 1][y    ][x + 1].normal_; // fbr
-        cellPositions[z][y][x].normals_[2] = points[z    ][y    ][x + 1].normal_; // nbr
-        cellPositions[z][y][x].normals_[3] = points[z    ][y    ][x    ].normal_; // nbl
-        cellPositions[z][y][x].normals_[4] = points[z + 1][y + 1][x    ].normal_; // ftl
-        cellPositions[z][y][x].normals_[5] = points[z + 1][y + 1][x + 1].normal_; // ftr
-        cellPositions[z][y][x].normals_[6] = points[z    ][y + 1][x + 1].normal_; // ntr
-        cellPositions[z][y][x].normals_[7] = points[z    ][y + 1][x    ].normal_; // ntl
+        cell_positions[z][y][x].normals_[0] = points[z + 1][y    ][x    ].normal_; // fbl
+        cell_positions[z][y][x].normals_[1] = points[z + 1][y    ][x + 1].normal_; // fbr
+        cell_positions[z][y][x].normals_[2] = points[z    ][y    ][x + 1].normal_; // nbr
+        cell_positions[z][y][x].normals_[3] = points[z    ][y    ][x    ].normal_; // nbl
+        cell_positions[z][y][x].normals_[4] = points[z + 1][y + 1][x    ].normal_; // ftl
+        cell_positions[z][y][x].normals_[5] = points[z + 1][y + 1][x + 1].normal_; // ftr
+        cell_positions[z][y][x].normals_[6] = points[z    ][y + 1][x + 1].normal_; // ntr
+        cell_positions[z][y][x].normals_[7] = points[z    ][y + 1][x    ].normal_; // ntl
 
-        cellValues[z][y][x].values_[0] = points[z + 1][y    ][x    ].val_; // fbl
-        cellValues[z][y][x].values_[1] = points[z + 1][y    ][x + 1].val_; // fbr
-        cellValues[z][y][x].values_[2] = points[z    ][y    ][x + 1].val_; // nbr
-        cellValues[z][y][x].values_[3] = points[z    ][y    ][x    ].val_; // nbl
-        cellValues[z][y][x].values_[4] = points[z + 1][y + 1][x    ].val_; // ftl
-        cellValues[z][y][x].values_[5] = points[z + 1][y + 1][x + 1].val_; // ftr
-        cellValues[z][y][x].values_[6] = points[z    ][y + 1][x + 1].val_; // ntr
-        cellValues[z][y][x].values_[7] = points[z    ][y + 1][x    ].val_; // ntl
+        cell_values[z][y][x].values_[0] = points[z + 1][y    ][x    ].val_; // fbl
+        cell_values[z][y][x].values_[1] = points[z + 1][y    ][x + 1].val_; // fbr
+        cell_values[z][y][x].values_[2] = points[z    ][y    ][x + 1].val_; // nbr
+        cell_values[z][y][x].values_[3] = points[z    ][y    ][x    ].val_; // nbl
+        cell_values[z][y][x].values_[4] = points[z + 1][y + 1][x    ].val_; // ftl
+        cell_values[z][y][x].values_[5] = points[z + 1][y + 1][x + 1].val_; // ftr
+        cell_values[z][y][x].values_[6] = points[z    ][y + 1][x + 1].val_; // ntr
+        cell_values[z][y][x].values_[7] = points[z    ][y + 1][x    ].val_; // ntl
         // clang-format on
       }
     }
@@ -312,17 +312,17 @@ std::vector<Triangle> march(
 
         const CellPositions& cell_position = cell_positions[z][y][x];
 
-        as::vec3 vertList[12];
-        as::vec3 normList[12];
+        as::vec3 vert_list[12];
+        as::vec3 norm_list[12];
         const int edges = g_edge_table[cube_index];
         for (int64_t i = 0; i < 12; i++) {
           if ((edges & (1 << i)) != 0) {
             int p1 = point_table[i][0];
             int p2 = point_table[i][1];
-            vertList[i] = interpolate(
+            vert_list[i] = interpolate(
               threshold, cell_position.points_[p1], cell_position.points_[p2],
               cell.values_[p1], cell.values_[p2]);
-            normList[i] = interpolate(
+            norm_list[i] = interpolate(
               threshold, cell_position.normals_[p1], cell_position.normals_[p2],
               cell.values_[p1], cell.values_[p2]);
           }
@@ -334,8 +334,8 @@ std::vector<Triangle> march(
           const int v3 = g_tri_table[cube_index][i + 2];
 
           triangles.emplace_back(
-            vertList[v1], vertList[v2], vertList[v3], normList[v1],
-            normList[v2], normList[v3]);
+            vert_list[v1], vert_list[v2], vert_list[v3], norm_list[v1],
+            norm_list[v2], norm_list[v3]);
         }
       }
     }

@@ -17,14 +17,14 @@
 
 struct PosColorVertex
 {
-  as::vec3 position;
-  uint32_t abgr;
+  as::vec3 position_;
+  uint32_t abgr_;
 };
 
 struct PosNormalVertex
 {
-  as::vec3 position;
-  as::vec3 normal;
+  as::vec3 position_;
+  as::vec3 normal_;
 };
 
 static const PosColorVertex CubeVerticesCol[] = {
@@ -233,14 +233,14 @@ void marching_cube_scene_t::update(debug_draw_t& debug_draw)
       bgfx::TransientIndexBuffer tib;
       bgfx::allocTransientIndexBuffer(&tib, max_vertices);
 
-      PosNormalVertex* vertex = (PosNormalVertex*)mc_triangle_tvb.data;
-      int16_t* index_data = (int16_t*)tib.data;
+      auto* vertex = (PosNormalVertex*)mc_triangle_tvb.data;
+      auto* index_data = (int16_t*)tib.data;
 
       for (as::index i = 0; i < filtered_verts.size(); i++) {
-        vertex[i].normal = analytical_normals
+        vertex[i].normal_ = analytical_normals
                            ? as::vec_normalize(filtered_norms[i])
                            : as::vec3::zero();
-        vertex[i].position = filtered_verts[i];
+        vertex[i].position_ = filtered_verts[i];
       }
 
       for (as::index indice = 0; indice < indices.size(); indice++) {
@@ -255,13 +255,13 @@ void marching_cube_scene_t::update(debug_draw_t& debug_draw)
                             - filtered_verts[indices[indice + 1]];
           const as::vec3 normal = as::vec3_cross(e1, e2);
 
-          vertex[indices[indice]].normal += normal;
-          vertex[indices[indice + 1]].normal += normal;
-          vertex[indices[indice + 2]].normal += normal;
+          vertex[indices[indice]].normal_ += normal;
+          vertex[indices[indice + 1]].normal_ += normal;
+          vertex[indices[indice + 2]].normal_ += normal;
         }
 
         for (as::index i = 0; i < filtered_verts.size(); i++) {
-          vertex[i].normal = as::vec_normalize(vertex[i].normal);
+          vertex[i].normal_ = as::vec_normalize(vertex[i].normal_);
         }
       }
 
@@ -282,7 +282,7 @@ void marching_cube_scene_t::update(debug_draw_t& debug_draw)
         debug_lines.setRenderContext(main_view_, simple_program.handle());
         for (as::index i = 0; i < filtered_verts.size(); i++) {
           debug_lines.addLine(
-            vertex[i].position, vertex[i].position + vertex[i].normal,
+            vertex[i].position_, vertex[i].position_ + vertex[i].normal_,
             0xff000000);
         }
         debug_lines.submit();

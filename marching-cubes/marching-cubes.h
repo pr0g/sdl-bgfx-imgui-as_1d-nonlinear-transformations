@@ -52,7 +52,7 @@ void generatePointData(
   const as::vec3& cam, const as::vec3& dir, float distance);
 
 void generateCellData(
-  CellPositions*** cellPositions, CellValues*** cellValues, Point*** points,
+  CellPositions*** cell_positions, CellValues*** cell_values, Point*** points,
   int dimension);
 
 void destroyPointVolume(Point*** points, int dimension);
@@ -61,7 +61,7 @@ void destroyCellValues(CellValues*** cells, int dimension);
 void destroyCellPositions(CellPositions*** cells, int dimension);
 
 std::vector<Triangle> march(
-  CellPositions*** cellPositions, CellValues*** cellValues, int dimension,
+  CellPositions*** cell_positions, CellValues*** cell_values, int dimension,
   float threshold);
 
 } // namespace mc

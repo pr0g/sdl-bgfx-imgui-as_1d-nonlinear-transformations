@@ -23,11 +23,11 @@ void imgui_hierarchy_scene_t::input(const SDL_Event& current_event)
 void imgui_hierarchy_scene_t::update(debug_draw_t& debug_draw)
 {
   // imgui hierarchy experiments
-  hy_ig::imgui_interaction_draw_list_hierarchy(
+  hy_ig::imguiInteractionDrawListHierarchy(
     entities, interaction, root_handles);
-  hy_ig::imgui_interaction_normal_hierarchy(
+  hy_ig::imguiInteractionNormalHierarchy(
     entities, interaction, root_handles);
-  hy_ig::imgui_only_recursive_hierarchy(entities, root_handles);
+  hy_ig::imguiOnlyRecursiveHierarchy(entities, root_handles);
 
   bgfx::touch(main_view_);
 }
