@@ -11,9 +11,6 @@ void imgui_hierarchy_scene_t::setup(
 
   root_handles = demo::create_sample_entities(entities);
   interaction.select(root_handles.front(), entities, root_handles);
-
-  simple_program.init(dbg::SimpleEmbeddedShaderArgs);
-  instance_program.init(dbg::InstanceEmbeddedShaderArgs);
 }
 
 void imgui_hierarchy_scene_t::input(const SDL_Event& current_event)
@@ -34,6 +31,4 @@ void imgui_hierarchy_scene_t::update(debug_draw_t& debug_draw)
 
 void imgui_hierarchy_scene_t::teardown()
 {
-  simple_program.deinit();
-  instance_program.deinit();
 }

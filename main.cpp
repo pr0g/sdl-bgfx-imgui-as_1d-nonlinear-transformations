@@ -123,6 +123,11 @@ int main(int argc, char** argv)
       running_scene
     };
 
+    dbg::EmbeddedShaderProgram simple_program;
+    simple_program.init(dbg::SimpleEmbeddedShaderArgs);
+    dbg::EmbeddedShaderProgram instance_program;
+    instance_program.init(dbg::InstanceEmbeddedShaderArgs);
+
     bgfx::ViewId main_view = 0;
     bgfx::ViewId ortho_view = 1;
 
@@ -142,11 +147,11 @@ int main(int argc, char** argv)
       scene = scene_builder(scene_index);
       scene->setup(main_view, ortho_view, width, height);
 
-      debug_lines.setRenderContext(main_view, scene->simple_handle());
-      debug_lines_screen.setRenderContext(ortho_view, scene->simple_handle());
-      debug_circles.setRenderContext(main_view, scene->instance_handle());
-      debug_quads.setRenderContext(main_view, scene->instance_handle());
-      debug_cubes.setRenderContext(main_view, scene->instance_handle());
+      debug_lines.setRenderContext(main_view, simple_program.handle());
+      debug_lines_screen.setRenderContext(ortho_view, simple_program.handle());
+      debug_circles.setRenderContext(main_view, instance_program.handle());
+      debug_quads.setRenderContext(main_view, instance_program.handle());
+      debug_cubes.setRenderContext(main_view, instance_program.handle());
 
       mode = mode_e::running_scene;
     };
@@ -226,6 +231,9 @@ int main(int argc, char** argv)
     if (scene) {
       scene->teardown();
     }
+
+    simple_program.deinit();
+    instance_program.deinit();
   }
 
   ImGui_ImplSDL2_Shutdown();

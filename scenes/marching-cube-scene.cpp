@@ -65,9 +65,6 @@ void marching_cube_scene_t::setup(
   perspective_projection = as::perspective_d3d_lh(
     as::radians(35.0f), float(width) / float(height), 0.01f, 100.0f);
 
-  simple_program.init(dbg::SimpleEmbeddedShaderArgs);
-  instance_program.init(dbg::InstanceEmbeddedShaderArgs);
-
   pos_col_vert_layout.begin()
     .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
     .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
@@ -280,14 +277,11 @@ void marching_cube_scene_t::update(debug_draw_t& debug_draw)
       bgfx::submit(main_view_, program_norm);
 
       if (draw_normals) {
-        auto debug_lines = dbg::DebugLines();
-        debug_lines.setRenderContext(main_view_, simple_program.handle());
         for (as::index i = 0; i < filtered_verts.size(); i++) {
-          debug_lines.addLine(
+          debug_draw.debug_lines->addLine(
             vertex[i].position_, vertex[i].position_ + vertex[i].normal_,
             0xff000000);
         }
-        debug_lines.submit();
       }
     }
 
@@ -363,9 +357,6 @@ void marching_cube_scene_t::teardown()
   mc::destroyCellValues(cell_values, dimension);
   mc::destroyCellPositions(cell_positions, dimension);
   mc::destroyPointVolume(points, dimension);
-
-  simple_program.deinit();
-  instance_program.deinit();
 
   bgfx::destroy(u_camera_pos);
   bgfx::destroy(u_light_dir);

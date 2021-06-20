@@ -81,9 +81,6 @@ void transforms_scene_t::setup(
   main_view_ = main_view;
   ortho_view_ = ortho_view;
 
-  simple_program.init(dbg::SimpleEmbeddedShaderArgs);
-  instance_program.init(dbg::InstanceEmbeddedShaderArgs);
-
   // initial camera position and orientation
   camera.look_at = as::vec3(24.3f, 1.74f, -33.0f);
   target_camera = camera;
@@ -601,8 +598,8 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
   const auto smooth_line_begin =
     curve_handles.getHandle(smooth_line_begin_index);
   const auto smooth_line_end = curve_handles.getHandle(smooth_line_end_index);
-  auto smooth_line = dbg::SmoothLine();
-  smooth_line.setRenderContext(main_view_, simple_program.handle());
+
+  auto smooth_line = dbg::SmoothLine(debug_draw.debug_lines);
   smooth_line.draw(smooth_line_begin, smooth_line_end);
 
   static float (*interpolations[])(float) = {
@@ -843,6 +840,4 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
 
 void transforms_scene_t::teardown()
 {
-  simple_program.deinit();
-  instance_program.deinit();
 }

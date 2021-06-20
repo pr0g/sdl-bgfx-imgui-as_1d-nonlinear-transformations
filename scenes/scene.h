@@ -35,15 +35,12 @@ struct debug_draw_t
 
 struct scene_t
 {
+  virtual ~scene_t() = default;
+
   virtual void setup(
     bgfx::ViewId main_view, bgfx::ViewId ortho_view, uint16_t width,
     uint16_t height) = 0;
   virtual void input(const SDL_Event& current_event) = 0;
   virtual void update(debug_draw_t& debug_draw) = 0;
   virtual void teardown() = 0;
-
-  virtual bgfx::ProgramHandle simple_handle() const = 0;
-  virtual bgfx::ProgramHandle instance_handle() const = 0;
-
-  virtual ~scene_t() = default;
 };

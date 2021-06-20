@@ -7,10 +7,10 @@ namespace dbg
 
 struct SmoothLine
 {
-  DebugLines debug_lines_;
+  DebugLines* debug_lines_ = nullptr;
 
 public:
-  void setRenderContext(bgfx::ViewId view, bgfx::ProgramHandle program_handle);
+  explicit SmoothLine(DebugLines* debug_lines) : debug_lines_(debug_lines) {}
   void draw(const as::vec3& begin, const as::vec3& end);
 };
 

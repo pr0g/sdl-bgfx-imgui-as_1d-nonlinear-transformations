@@ -15,21 +15,8 @@ struct imgui_hierarchy_scene_t : public scene_t
   void update(debug_draw_t& debug_draw) override;
   void teardown() override;
 
-  bgfx::ProgramHandle simple_handle() const override
-  {
-    return simple_program.handle();
-  }
-
-  bgfx::ProgramHandle instance_handle() const override
-  {
-    return instance_program.handle();
-  }
-
   bgfx::ViewId main_view_;
   bgfx::ViewId ortho_view_;
-
-  dbg::EmbeddedShaderProgram simple_program;
-  dbg::EmbeddedShaderProgram instance_program;
 
   thh::container_t<hy::entity_t> entities;
   std::vector<thh::handle_t> root_handles;
