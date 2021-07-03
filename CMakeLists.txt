@@ -19,7 +19,7 @@ FetchContent_Declare(
 FetchContent_Declare(
   thh-bgfx-debug
   GIT_REPOSITORY https://github.com/pr0g/thh-bgfx-debug
-  GIT_TAG 8c3da2989f11514edc5bae9daa2aabea5bd60bc3)
+  GIT_TAG 2427504fb9ce2895c2d8eac7559fd67402783d20)
 FetchContent_Declare(
   hierarchy
   GIT_REPOSITORY https://github.com/pr0g/hierarchy.git
@@ -54,6 +54,7 @@ target_link_libraries(
   PRIVATE SDL2::SDL2
           SDL2::SDL2main
           bgfx::bgfx
+          bgfx::bx
           imgui::imgui
           as-camera-input
           EasyIterator
