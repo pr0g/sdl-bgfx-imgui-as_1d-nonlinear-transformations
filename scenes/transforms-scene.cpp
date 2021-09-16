@@ -99,17 +99,13 @@ void transforms_scene_t::setup(
   smooth_line_begin_index = curve_handles.addHandle(as::vec3::axis_x(22.0f));
   smooth_line_end_index = curve_handles.addHandle(as::vec3(25.0f, 4.0f, 0.0f));
 
-  orbit_camera.orbit_cameras_.addCamera(&orbit_rotate_camera);
-  orbit_camera.orbit_cameras_.addCamera(&orbit_translate_camera);
-  orbit_camera.orbit_cameras_.addCamera(&orbit_dolly_wheel_camera);
-  orbit_camera.orbit_cameras_.addCamera(&orbit_dolly_move_camera);
-  orbit_camera.orbit_cameras_.addCamera(&orbit_pan_camera);
-
-  cameras.addCamera(&first_person_rotate_camera);
+  cameras.addCamera(&pivot_camera);
   cameras.addCamera(&first_person_pan_camera);
   cameras.addCamera(&first_person_translate_camera);
   cameras.addCamera(&first_person_wheel_camera);
-  cameras.addCamera(&orbit_camera);
+
+  smooth_props.look_smoothness_ = 10.0f;
+  smooth_props.move_smoothness_ = 10.0f;
 
   camera_system.cameras_ = cameras;
 
@@ -336,6 +332,9 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
   // draw alignment transform
   drawTransform(
     *debug_draw.debug_lines, as::affine_from_rigid(camera_transform_end));
+
+  drawTransform(
+    *debug_draw.debug_lines, as::affine_from_vec3(pivot_camera.pivot_));
 
   // grid
   const auto grid_scale = 10.0f;
@@ -778,11 +777,13 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
   }
 
   ImGui::Begin("Transforms");
-  static float translation_imgui[] = {-15.0f, 5.0f, 0.0f};
+  static float translation_imgui[] = {0.0f, 0.0f, 0.0f};
   ImGui::SliderFloat3("Translation", translation_imgui, -50.0f, 50.0f);
   static float rotation_imgui[] = {0.0f, 0.0f, 0.0f};
   ImGui::SliderFloat3("Rotation", rotation_imgui, -360.0f, 360.0f);
   ImGui::End();
+
+  pivot_camera.pivot_ = as::vec3_from_arr(translation_imgui);
 
   const as::rigid rigid_transformation(
     as::quat_rotation_zxy(

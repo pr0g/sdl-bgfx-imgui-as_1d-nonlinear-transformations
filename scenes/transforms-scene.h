@@ -80,6 +80,7 @@ struct transforms_scene_t : public scene_t
 
   int64_t prev;
 
+  asci::PivotCameraInput pivot_camera{asci::MouseButton::Left};
   asci::RotateCameraInput first_person_rotate_camera{asci::MouseButton::Right};
   asci::PanCameraInput first_person_pan_camera{asci::lookPan};
   asci::TranslateCameraInput first_person_translate_camera{
