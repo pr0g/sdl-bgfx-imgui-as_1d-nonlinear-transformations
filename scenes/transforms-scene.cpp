@@ -41,37 +41,6 @@ static float intersectPlane(
        / as::vec_dot(direction, as::vec3_from_vec4(plane));
 }
 
-// https://www.geometrictools.com/Documentation/EulerAngles.pdf
-std::tuple<float, float, float> eulerAngles(const as::mat3& orientation)
-{
-  float x;
-  float y;
-  float z;
-
-  // 2.4 Factor as RyRzRx
-  if (orientation[as::mat3_rc(1, 0)] < 1.0f) {
-    if (orientation[as::mat3_rc(1, 0)] > -1.0f) {
-      x = std::atan2(
-        -orientation[as::mat3_rc(1, 2)], orientation[as::mat3_rc(1, 1)]);
-      y = std::atan2(
-        -orientation[as::mat3_rc(2, 0)], orientation[as::mat3_rc(0, 0)]);
-      z = std::asin(orientation[as::mat3_rc(1, 0)]);
-    } else {
-      x = 0.0f;
-      y = -std::atan2(
-        orientation[as::mat3_rc(2, 1)], orientation[as::mat3_rc(2, 2)]);
-      z = -as::k_pi * 0.5f;
-    }
-  } else {
-    x = 0.0f;
-    y = std::atan2(
-      orientation[as::mat3_rc(2, 1)], orientation[as::mat3_rc(2, 2)]);
-    z = as::k_pi * 0.5f;
-  }
-
-  return {x, y, z};
-}
-
 void transforms_scene_t::setup(
   const bgfx::ViewId main_view, const bgfx::ViewId ortho_view,
   const uint16_t width, const uint16_t height)
@@ -240,10 +209,10 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
     camera_view =
       as::mat4_from_rigid(as::rigid_inverse(camera_transform_current));
 
-    auto angles =
-      eulerAngles(as::mat3_from_quat(camera_transform_current.rotation));
-    camera.pitch = std::get<0>(angles);
-    camera.yaw = std::get<1>(angles);
+    const auto angles =
+      asci::eulerAngles(as::mat3_from_quat(camera_transform_current.rotation));
+    camera.pitch = angles.x;
+    camera.yaw = angles.y;
     camera.look_at = camera_transform_current.translation;
     target_camera = camera;
 
