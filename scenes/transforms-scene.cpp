@@ -69,9 +69,9 @@ void transforms_scene_t::setup(
   smooth_line_end_index = curve_handles.addHandle(as::vec3(25.0f, 4.0f, 0.0f));
 
   cameras.addCamera(&pivot_camera);
+  cameras.addCamera(&pivot_dolly_camera);
   cameras.addCamera(&first_person_pan_camera);
   cameras.addCamera(&first_person_translate_camera);
-  cameras.addCamera(&first_person_wheel_camera);
 
   smooth_props.look_smoothness_ = 10.0f;
   smooth_props.move_smoothness_ = 10.0f;
@@ -753,6 +753,7 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
   ImGui::End();
 
   pivot_camera.pivot_ = as::vec3_from_arr(translation_imgui);
+  pivot_dolly_camera.pivot_ = pivot_camera.pivot_;
 
   const as::rigid rigid_transformation(
     as::quat_rotation_zxy(
