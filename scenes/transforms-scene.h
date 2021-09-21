@@ -95,7 +95,7 @@ struct transforms_scene_t : public scene_t
   asci::PivotDollyMotionCameraInput pivot_dolly_move_camera{
     asci::MouseButton::Right};
   asci::PanCameraInput orbit_pan_camera{
-    asci::MouseButton::Middle, asci::orbitPan, asci::translateOffset};
+    asci::MouseButton::Middle, asci::lookPan, asci::translateOffset};
 
   asci::Cameras cameras;
   asci::CameraSystem camera_system;
@@ -111,4 +111,6 @@ struct transforms_scene_t : public scene_t
   float hit_distance = -1.0f;
   as::vec3 ray_origin;
   as::vec3 ray_direction;
+
+  as::vec3 pivot = as::vec3::zero();
 };

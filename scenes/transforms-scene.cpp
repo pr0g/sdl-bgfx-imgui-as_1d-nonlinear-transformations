@@ -75,6 +75,7 @@ void transforms_scene_t::setup(
   cameras.addCamera(&first_person_translate_camera);
 
   cameras.addCamera(&orbit_camera);
+  orbit_camera.pivotFn_ = [this] { return pivot; };
   orbit_camera.orbit_cameras_.addCamera(&pivot_dolly_camera);
   orbit_camera.orbit_cameras_.addCamera(&pivot_dolly_move_camera);
   orbit_camera.orbit_cameras_.addCamera(&orbit_rotate_camera);
@@ -305,8 +306,7 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
   drawTransform(
     *debug_draw.debug_lines, as::affine_from_rigid(camera_transform_end));
 
-  drawTransform(
-    *debug_draw.debug_lines, as::affine_from_vec3(camera.pivot));
+  drawTransform(*debug_draw.debug_lines, as::affine_from_vec3(camera.pivot));
 
   // grid
   const auto grid_scale = 10.0f;
@@ -755,11 +755,11 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
   ImGui::SliderFloat3("Rotation", rotation_imgui, -360.0f, 360.0f);
   ImGui::End();
 
-  as::vec3 next_pivot = as::vec3_from_arr(translation_imgui);
+  pivot = as::vec3_from_arr(translation_imgui);
 
-  // if (!as::vec_near(next_pivot, camera.pivot)) {
-    // camera.set_pivot(next_pivot);
-    // target_camera.set_pivot(next_pivot);
+  // if (!as::vec_near(pivot, camera.pivot)) {
+    // camera.set_pivot(pivot);
+    // target_camera.set_pivot(pivot);
     // target_camera.pivot = pivot_camera.pivot_;
   // }
 
