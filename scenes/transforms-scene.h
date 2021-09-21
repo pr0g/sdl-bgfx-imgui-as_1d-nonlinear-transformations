@@ -81,17 +81,21 @@ struct transforms_scene_t : public scene_t
   int64_t prev;
 
   asci::PivotDollyScrollCameraInput pivot_dolly_camera;
-  asci::RotateCameraInput first_person_rotate_camera{asci::MouseButton::Left};
-  asci::PanCameraInput first_person_pan_camera{asci::MouseButton::Middle, asci::lookPan};
+  asci::RotateCameraInput first_person_rotate_camera{asci::MouseButton::Right};
+  asci::PanCameraInput first_person_pan_camera{
+    asci::MouseButton::Middle, asci::lookPan, asci::translatePivot};
   asci::TranslateCameraInput first_person_translate_camera{
-    asci::lookTranslation};
-  asci::ScrollTranslationCameraInput first_person_wheel_camera{};
+    asci::lookTranslation, asci::translatePivot};
+  asci::ScrollTranslationCameraInput first_person_scroll_camera{};
 
   asci::OrbitCameraInput orbit_camera{};
   asci::RotateCameraInput orbit_rotate_camera{asci::MouseButton::Left};
-  asci::TranslateCameraInput orbit_translate_camera{asci::orbitTranslation};
-  asci::PivotDollyMotionCameraInput pivot_dolly_move_camera{asci::MouseButton::Right};
-  asci::PanCameraInput orbit_pan_camera{asci::MouseButton::Middle, asci::orbitPan};
+  asci::TranslateCameraInput orbit_translate_camera{
+    asci::orbitTranslation, asci::translateOffset};
+  asci::PivotDollyMotionCameraInput pivot_dolly_move_camera{
+    asci::MouseButton::Right};
+  asci::PanCameraInput orbit_pan_camera{
+    asci::MouseButton::Middle, asci::orbitPan, asci::translateOffset};
 
   asci::Cameras cameras;
   asci::CameraSystem camera_system;

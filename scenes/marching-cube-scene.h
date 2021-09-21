@@ -87,9 +87,10 @@ struct marching_cube_scene_t : public scene_t
   asc::Camera camera;
   asc::Camera target_camera;
   asci::RotateCameraInput first_person_rotate_camera{asci::MouseButton::Right};
-  asci::PanCameraInput first_person_pan_camera{asci::MouseButton::Middle, asci::lookPan};
+  asci::PanCameraInput first_person_pan_camera{
+    asci::MouseButton::Middle, asci::lookPan, asci::translatePivot};
   asci::TranslateCameraInput first_person_translate_camera{
-    asci::lookTranslation};
+    asci::lookTranslation, asci::translatePivot};
   asci::ScrollTranslationCameraInput first_person_wheel_camera;
   asci::Cameras cameras;
   asci::CameraSystem camera_system;

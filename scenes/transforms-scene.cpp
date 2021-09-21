@@ -51,7 +51,8 @@ void transforms_scene_t::setup(
   ortho_view_ = ortho_view;
 
   // initial camera position and orientation
-  camera.look_at = as::vec3(24.3f, 1.74f, -33.0f);
+  camera.pivot = as::vec3(24.3f, 1.74f, -33.0f);
+  camera.look_at = as::vec3::zero();
   target_camera = camera;
 
   const float fov = as::radians(60.0f);
@@ -69,10 +70,16 @@ void transforms_scene_t::setup(
   smooth_line_end_index = curve_handles.addHandle(as::vec3(25.0f, 4.0f, 0.0f));
 
   cameras.addCamera(&first_person_rotate_camera);
-  cameras.addCamera(&pivot_dolly_camera);
-  cameras.addCamera(&pivot_dolly_move_camera);
+  cameras.addCamera(&first_person_scroll_camera);
   cameras.addCamera(&first_person_pan_camera);
   cameras.addCamera(&first_person_translate_camera);
+
+  cameras.addCamera(&orbit_camera);
+  orbit_camera.orbit_cameras_.addCamera(&pivot_dolly_camera);
+  orbit_camera.orbit_cameras_.addCamera(&pivot_dolly_move_camera);
+  orbit_camera.orbit_cameras_.addCamera(&orbit_rotate_camera);
+  orbit_camera.orbit_cameras_.addCamera(&orbit_translate_camera);
+  orbit_camera.orbit_cameras_.addCamera(&orbit_pan_camera);
 
   camera_system.cameras_ = cameras;
 
@@ -750,11 +757,11 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
 
   as::vec3 next_pivot = as::vec3_from_arr(translation_imgui);
 
-  if (!as::vec_near(next_pivot, camera.pivot)) {
-    camera.set_pivot(next_pivot);
-    target_camera.set_pivot(next_pivot);
+  // if (!as::vec_near(next_pivot, camera.pivot)) {
+    // camera.set_pivot(next_pivot);
+    // target_camera.set_pivot(next_pivot);
     // target_camera.pivot = pivot_camera.pivot_;
-  }
+  // }
 
   const as::rigid rigid_transformation(
     as::quat_rotation_zxy(
