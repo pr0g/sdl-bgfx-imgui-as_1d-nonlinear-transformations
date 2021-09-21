@@ -80,9 +80,8 @@ struct transforms_scene_t : public scene_t
 
   int64_t prev;
 
-  asci::PivotCameraInput pivot_camera{asci::MouseButton::Left};
   asci::PivotDollyScrollCameraInput pivot_dolly_camera;
-  asci::RotateCameraInput first_person_rotate_camera{asci::MouseButton::Right};
+  asci::RotateCameraInput first_person_rotate_camera{asci::MouseButton::Left};
   asci::PanCameraInput first_person_pan_camera{asci::MouseButton::Middle, asci::lookPan};
   asci::TranslateCameraInput first_person_translate_camera{
     asci::lookTranslation};
@@ -91,8 +90,7 @@ struct transforms_scene_t : public scene_t
   asci::OrbitCameraInput orbit_camera{};
   asci::RotateCameraInput orbit_rotate_camera{asci::MouseButton::Left};
   asci::TranslateCameraInput orbit_translate_camera{asci::orbitTranslation};
-  asci::OrbitDollyScrollCameraInput orbit_dolly_wheel_camera{};
-  asci::OrbitDollyCursorMoveCameraInput orbit_dolly_move_camera{asci::MouseButton::Right};
+  asci::PivotDollyMotionCameraInput pivot_dolly_move_camera{asci::MouseButton::Right};
   asci::PanCameraInput orbit_pan_camera{asci::MouseButton::Middle, asci::orbitPan};
 
   asci::Cameras cameras;

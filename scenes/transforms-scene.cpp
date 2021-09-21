@@ -68,13 +68,11 @@ void transforms_scene_t::setup(
   smooth_line_begin_index = curve_handles.addHandle(as::vec3::axis_x(22.0f));
   smooth_line_end_index = curve_handles.addHandle(as::vec3(25.0f, 4.0f, 0.0f));
 
-  cameras.addCamera(&pivot_camera);
+  cameras.addCamera(&first_person_rotate_camera);
   cameras.addCamera(&pivot_dolly_camera);
+  cameras.addCamera(&pivot_dolly_move_camera);
   cameras.addCamera(&first_person_pan_camera);
   cameras.addCamera(&first_person_translate_camera);
-
-  smooth_props.look_smoothness_ = 10.0f;
-  smooth_props.move_smoothness_ = 10.0f;
 
   camera_system.cameras_ = cameras;
 
@@ -167,9 +165,7 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
     "Max Orbit Distance", &orbit_camera.props_.max_orbit_distance_);
   ImGui::InputFloat("Orbit Speed", &orbit_rotate_camera.props_.rotate_speed_);
   ImGui::InputFloat(
-    "Dolly Mouse Speed", &orbit_dolly_move_camera.props_.dolly_speed_);
-  ImGui::InputFloat(
-    "Dolly Wheel Speed", &orbit_dolly_wheel_camera.props_.dolly_speed_);
+    "Dolly Mouse Speed", &pivot_dolly_move_camera.props_.dolly_speed_);
   ImGui::PopItemWidth();
   ImGui::Checkbox(
     "Pan Invert X", &first_person_pan_camera.props_.pan_invert_x_);
@@ -303,7 +299,7 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
     *debug_draw.debug_lines, as::affine_from_rigid(camera_transform_end));
 
   drawTransform(
-    *debug_draw.debug_lines, as::affine_from_vec3(pivot_camera.pivot_));
+    *debug_draw.debug_lines, as::affine_from_vec3(camera.pivot));
 
   // grid
   const auto grid_scale = 10.0f;
@@ -325,14 +321,14 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
   }
 
   // draw camera look at
-  if (!as::real_near(camera.look_dist, 0.0f, 0.01f)) {
-    float alpha = as::max(camera.look_dist, -5.0f) / -5.0f;
-    drawTransform(
-      *debug_draw.debug_lines, as::affine_from_vec3(camera.look_at), alpha);
-    debug_draw.debug_spheres->addSphere(
-      as::mat4_from_mat3_vec3(as::mat3::identity(), camera.look_at),
-      as::vec4(as::vec3::zero(), alpha));
-  }
+  // if (!as::real_near(camera.look_dist, 0.0f, 0.01f)) {
+  //   float alpha = as::max(camera.look_dist, -5.0f) / -5.0f;
+  //   drawTransform(
+  //     *debug_draw.debug_lines, as::affine_from_vec3(camera.look_at), alpha);
+  //   debug_draw.debug_spheres->addSphere(
+  //     as::mat4_from_mat3_vec3(as::mat3::identity(), camera.look_at),
+  //     as::vec4(as::vec3::zero(), alpha));
+  // }
 
   const auto p0 = curve_handles.getHandle(p0_index);
   const auto p1 = curve_handles.getHandle(p1_index);
@@ -746,14 +742,19 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
   }
 
   ImGui::Begin("Transforms");
-  static float translation_imgui[] = {0.0f, 0.0f, 0.0f};
+  static float translation_imgui[] = {31.0f, 5.0f, -17.0f};
   ImGui::SliderFloat3("Translation", translation_imgui, -50.0f, 50.0f);
   static float rotation_imgui[] = {0.0f, 0.0f, 0.0f};
   ImGui::SliderFloat3("Rotation", rotation_imgui, -360.0f, 360.0f);
   ImGui::End();
 
-  pivot_camera.pivot_ = as::vec3_from_arr(translation_imgui);
-  pivot_dolly_camera.pivot_ = pivot_camera.pivot_;
+  as::vec3 next_pivot = as::vec3_from_arr(translation_imgui);
+
+  if (!as::vec_near(next_pivot, camera.pivot)) {
+    camera.set_pivot(next_pivot);
+    target_camera.set_pivot(next_pivot);
+    // target_camera.pivot = pivot_camera.pivot_;
+  }
 
   const as::rigid rigid_transformation(
     as::quat_rotation_zxy(
