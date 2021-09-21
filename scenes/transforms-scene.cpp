@@ -52,7 +52,7 @@ void transforms_scene_t::setup(
 
   // initial camera position and orientation
   camera.pivot = as::vec3(24.3f, 1.74f, -33.0f);
-  camera.look_at = as::vec3::zero();
+  camera.offset = as::vec3::zero();
   target_camera = camera;
 
   const float fov = as::radians(60.0f);
@@ -217,7 +217,7 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
       asci::eulerAngles(as::mat3_from_quat(camera_transform_current.rotation));
     camera.pitch = angles.x;
     camera.yaw = angles.y;
-    camera.look_at = camera_transform_current.translation;
+    camera.offset = camera_transform_current.translation;
     target_camera = camera;
 
     if (camera_animation_t >= 1.0f) {
@@ -310,7 +310,7 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
 
   // grid
   const auto grid_scale = 10.0f;
-  const auto grid_camera_offset = as::vec_snap(camera.look_at, grid_scale);
+  const auto grid_camera_offset = as::vec_snap(camera.offset, grid_scale);
   const auto grid_dimension = 20;
   const auto grid_size = static_cast<float>(grid_dimension) * grid_scale;
   const auto grid_offset = grid_size * 0.5f;
@@ -331,9 +331,9 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
   // if (!as::real_near(camera.look_dist, 0.0f, 0.01f)) {
   //   float alpha = as::max(camera.look_dist, -5.0f) / -5.0f;
   //   drawTransform(
-  //     *debug_draw.debug_lines, as::affine_from_vec3(camera.look_at), alpha);
+  //     *debug_draw.debug_lines, as::affine_from_vec3(camera.offset), alpha);
   //   debug_draw.debug_spheres->addSphere(
-  //     as::mat4_from_mat3_vec3(as::mat3::identity(), camera.look_at),
+  //     as::mat4_from_mat3_vec3(as::mat3::identity(), camera.offset),
   //     as::vec4(as::vec3::zero(), alpha));
   // }
 

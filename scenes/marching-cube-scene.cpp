@@ -93,7 +93,7 @@ void marching_cube_scene_t::setup(
   u_camera_pos = bgfx::createUniform("u_cameraPos", bgfx::UniformType::Vec4, 1);
 
   // initial camera position and orientation
-  camera.look_at = as::vec3::zero();
+  camera.offset = as::vec3::zero();
   target_camera = camera;
 
   cameras.addCamera(&first_person_rotate_camera);
@@ -154,7 +154,7 @@ void marching_cube_scene_t::update(debug_draw_t& debug_draw)
     static float camera_adjust_noise = (float(dimension) * 0.5f) + 1.0f;
     static float camera_adjust_sphere = 50.0f;
 
-    const as::vec3 lookat = camera.look_at;
+    const as::vec3 lookat = camera.offset;
 
     static float tesselation = 1.0f;
     static float scale = 14.0f;
@@ -175,7 +175,7 @@ void marching_cube_scene_t::update(debug_draw_t& debug_draw)
         const auto world_position = as::screen_to_world(
           as::vec2i(x, y), perspective_projection, camera.view(),
           screen_dimension);
-        const auto ray_origin = camera.look_at;
+        const auto ray_origin = camera.offset;
         const auto ray_direction =
           as::vec_normalize(world_position - ray_origin);
         const as::vec3 offset =
@@ -269,7 +269,7 @@ void marching_cube_scene_t::update(debug_draw_t& debug_draw)
       bgfx::setTransform(model);
 
       bgfx::setUniform(u_light_dir, (void*)&light_dir, 1);
-      bgfx::setUniform(u_camera_pos, (void*)&camera.look_at, 1);
+      bgfx::setUniform(u_camera_pos, (void*)&camera.offset, 1);
 
       bgfx::setIndexBuffer(&tib, 0, indices.size());
       bgfx::setVertexBuffer(0, &mc_triangle_tvb, 0, filtered_verts.size());
