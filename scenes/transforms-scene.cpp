@@ -219,8 +219,6 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
     camera.yaw = angles.y;
     camera.offset = as::vec3::zero();
     camera.pivot = camera_transform_current.translation;
-    // camera.offset = -as::affine_inv_transform_pos(
-    //   as::affine_from_rigid(camera_transform_end), camera.pivot);
     target_camera = camera;
 
     if (camera_animation_t >= 1.0f) {
