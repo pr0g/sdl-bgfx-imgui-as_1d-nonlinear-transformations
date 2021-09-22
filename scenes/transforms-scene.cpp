@@ -217,7 +217,10 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
       asci::eulerAngles(as::mat3_from_quat(camera_transform_current.rotation));
     camera.pitch = angles.x;
     camera.yaw = angles.y;
-    camera.offset = camera_transform_current.translation;
+    camera.offset = as::vec3::zero();
+    camera.pivot = camera_transform_current.translation;
+    // camera.offset = -as::affine_inv_transform_pos(
+    //   as::affine_from_rigid(camera_transform_end), camera.pivot);
     target_camera = camera;
 
     if (camera_animation_t >= 1.0f) {
@@ -310,7 +313,7 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
 
   // grid
   const auto grid_scale = 10.0f;
-  const auto grid_camera_offset = as::vec_snap(camera.offset, grid_scale);
+  const auto grid_camera_offset = as::vec_snap(camera.pivot, grid_scale);
   const auto grid_dimension = 20;
   const auto grid_size = static_cast<float>(grid_dimension) * grid_scale;
   const auto grid_offset = grid_size * 0.5f;
@@ -758,9 +761,9 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
   pivot = as::vec3_from_arr(translation_imgui);
 
   // if (!as::vec_near(pivot, camera.pivot)) {
-    // camera.set_pivot(pivot);
-    // target_camera.set_pivot(pivot);
-    // target_camera.pivot = pivot_camera.pivot_;
+  // camera.set_pivot(pivot);
+  // target_camera.set_pivot(pivot);
+  // target_camera.pivot = pivot_camera.pivot_;
   // }
 
   const as::rigid rigid_transformation(
