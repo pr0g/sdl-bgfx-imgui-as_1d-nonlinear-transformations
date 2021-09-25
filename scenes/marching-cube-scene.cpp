@@ -92,11 +92,6 @@ void marching_cube_scene_t::setup(
   u_light_dir = bgfx::createUniform("u_lightDir", bgfx::UniformType::Vec4, 1);
   u_camera_pos = bgfx::createUniform("u_cameraPos", bgfx::UniformType::Vec4, 1);
 
-  // initial camera position and orientation
-  camera.pivot = as::vec3::zero();
-  camera.offset = as::vec3::zero();
-  target_camera = camera;
-
   cameras.addCamera(&first_person_rotate_camera);
   cameras.addCamera(&first_person_pan_camera);
   cameras.addCamera(&first_person_translate_camera);

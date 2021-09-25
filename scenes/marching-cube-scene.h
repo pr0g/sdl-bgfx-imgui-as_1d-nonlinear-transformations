@@ -84,8 +84,10 @@ struct marching_cube_scene_t : public scene_t
   bgfx::UniformHandle u_camera_pos;
   as::vec3 light_dir{0.0f, 1.0f, -1.0f};
 
+  // cameras default to origin looking down positive z
   asc::Camera camera;
   asc::Camera target_camera;
+
   asci::RotateCameraInput first_person_rotate_camera{asci::MouseButton::Right};
   asci::PanCameraInput first_person_pan_camera{
     asci::MouseButton::Middle, asci::lookPan, asci::translatePivot};

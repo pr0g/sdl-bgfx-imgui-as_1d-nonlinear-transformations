@@ -52,7 +52,6 @@ void transforms_scene_t::setup(
 
   // initial camera position and orientation
   camera.pivot = as::vec3(24.3f, 1.74f, -33.0f);
-  camera.offset = as::vec3::zero();
   target_camera = camera;
 
   const float fov = as::radians(60.0f);
@@ -167,10 +166,6 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
   ImGui::InputFloat(
     "Boost Multiplier",
     &first_person_translate_camera.props_.boost_multiplier_);
-  ImGui::InputFloat(
-    "Default Orbit Distance", &orbit_camera.props_.default_orbit_distance_);
-  ImGui::InputFloat(
-    "Max Orbit Distance", &orbit_camera.props_.max_orbit_distance_);
   ImGui::InputFloat("Orbit Speed", &orbit_rotate_camera.props_.rotate_speed_);
   ImGui::InputFloat(
     "Dolly Mouse Speed", &pivot_dolly_move_camera.props_.dolly_speed_);
@@ -327,16 +322,6 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
       as::vec3(start, 0.0f, -grid_offset) + flattened_offset,
       as::vec3(start, 0.0f, grid_offset) + flattened_offset, 0xff000000);
   }
-
-  // draw camera look at
-  // if (!as::real_near(camera.look_dist, 0.0f, 0.01f)) {
-  //   float alpha = as::max(camera.look_dist, -5.0f) / -5.0f;
-  //   drawTransform(
-  //     *debug_draw.debug_lines, as::affine_from_vec3(camera.offset), alpha);
-  //   debug_draw.debug_spheres->addSphere(
-  //     as::mat4_from_mat3_vec3(as::mat3::identity(), camera.offset),
-  //     as::vec4(as::vec3::zero(), alpha));
-  // }
 
   const auto p0 = curve_handles.getHandle(p0_index);
   const auto p1 = curve_handles.getHandle(p1_index);
@@ -757,12 +742,6 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
   ImGui::End();
 
   pivot = as::vec3_from_arr(translation_imgui);
-
-  // if (!as::vec_near(pivot, camera.pivot)) {
-  // camera.set_pivot(pivot);
-  // target_camera.set_pivot(pivot);
-  // target_camera.pivot = pivot_camera.pivot_;
-  // }
 
   const as::rigid rigid_transformation(
     as::quat_rotation_zxy(
