@@ -73,13 +73,13 @@ void transforms_scene_t::setup(
   cameras.addCamera(&first_person_pan_camera);
   cameras.addCamera(&first_person_translate_camera);
 
-  cameras.addCamera(&orbit_camera);
-  orbit_camera.pivotFn_ = [this] { return pivot; };
-  orbit_camera.orbit_cameras_.addCamera(&pivot_dolly_camera);
-  orbit_camera.orbit_cameras_.addCamera(&pivot_dolly_move_camera);
-  orbit_camera.orbit_cameras_.addCamera(&orbit_rotate_camera);
-  orbit_camera.orbit_cameras_.addCamera(&orbit_translate_camera);
-  orbit_camera.orbit_cameras_.addCamera(&orbit_pan_camera);
+  cameras.addCamera(&pivot_camera);
+  pivot_camera.pivotFn_ = [this] { return pivot; };
+  pivot_camera.pivot_cameras_.addCamera(&pivot_dolly_camera);
+  pivot_camera.pivot_cameras_.addCamera(&pivot_dolly_motion_camera);
+  pivot_camera.pivot_cameras_.addCamera(&pivot_rotate_camera);
+  pivot_camera.pivot_cameras_.addCamera(&pivot_translate_camera);
+  pivot_camera.pivot_cameras_.addCamera(&pivot_pan_camera);
 
   camera_system.cameras_ = cameras;
 
@@ -166,9 +166,9 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
   ImGui::InputFloat(
     "Boost Multiplier",
     &first_person_translate_camera.props_.boost_multiplier_);
-  ImGui::InputFloat("Orbit Speed", &orbit_rotate_camera.props_.rotate_speed_);
+  ImGui::InputFloat("Pivot Speed", &pivot_rotate_camera.props_.rotate_speed_);
   ImGui::InputFloat(
-    "Dolly Mouse Speed", &pivot_dolly_move_camera.props_.dolly_speed_);
+    "Dolly Mouse Speed", &pivot_dolly_motion_camera.props_.dolly_speed_);
   ImGui::PopItemWidth();
   ImGui::Checkbox(
     "Pan Invert X", &first_person_pan_camera.props_.pan_invert_x_);
