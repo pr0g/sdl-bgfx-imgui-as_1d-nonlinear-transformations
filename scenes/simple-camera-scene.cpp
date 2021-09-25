@@ -49,18 +49,18 @@ void simple_camera_scene_t::update(debug_draw_t& debug_draw)
       camera_.rotation() * as::vec3::axis_z() * delta_time * speed;
   }
   ImGui::SameLine();
-  ImGui::Button("pivot-backward");
+  ImGui::Button("pivot-back");
   if (ImGui::IsItemActive()) {
     camera_.pivot -=
       camera_.rotation() * as::vec3::axis_z() * delta_time * speed;
   }
   ImGui::SameLine();
-  ImGui::Button("pivot-upward");
+  ImGui::Button("pivot-up");
   if (ImGui::IsItemActive()) {
     camera_.pivot += as::vec3::axis_y() * delta_time * speed;
   }
   ImGui::SameLine();
-  ImGui::Button("pivot-downward");
+  ImGui::Button("pivot-down");
   if (ImGui::IsItemActive()) {
     camera_.pivot -= as::vec3::axis_y() * delta_time * speed;
   }
@@ -82,18 +82,18 @@ void simple_camera_scene_t::update(debug_draw_t& debug_draw)
     camera_.offset += as::vec3::axis_z() * delta_time * speed;
   }
   ImGui::SameLine();
-  ImGui::Button("offset-backward");
+  ImGui::Button("offset-back");
   if (ImGui::IsItemActive()) {
     camera_.offset -= as::vec3::axis_z() * delta_time * speed;
   }
   ImGui::SameLine();
-  ImGui::Button("offset-upward");
+  ImGui::Button("offset-up");
   if (ImGui::IsItemActive()) {
     camera_.offset += as::mat_transpose(camera_.rotation()) * as::vec3::axis_y()
                     * delta_time * speed;
   }
   ImGui::SameLine();
-  ImGui::Button("offset-downward");
+  ImGui::Button("offset-down");
   if (ImGui::IsItemActive()) {
     camera_.offset -= as::mat_transpose(camera_.rotation()) * as::vec3::axis_y()
                     * delta_time * speed;
@@ -112,7 +112,9 @@ void simple_camera_scene_t::update(debug_draw_t& debug_draw)
   ImGui::End();
 
   drawGrid(*debug_draw.debug_lines, camera_.translation());
-  debug_draw.debug_spheres->addSphere(as::mat4_from_vec3(camera_.pivot), as::vec4::one());
+
+  const float alpha = as::min(as::vec_distance(camera_.pivot, camera_.translation()), 2.0f) / 2.0f;
+  debug_draw.debug_spheres->addSphere(as::mat4_from_vec3(camera_.pivot), as::vec4(as::vec3::one(), alpha));
 
   float view[16];
   as::mat_to_arr(as::mat4_from_affine(camera_.view()), view);
