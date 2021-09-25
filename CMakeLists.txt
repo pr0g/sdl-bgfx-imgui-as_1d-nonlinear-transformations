@@ -11,7 +11,7 @@ include(FetchContent)
 FetchContent_Declare(
   as-camera-input
   GIT_REPOSITORY https://github.com/pr0g/as-camera-input.git
-  GIT_TAG c364d8e9e2b605679ceb48760b5b996cc216b421)
+  GIT_TAG 9b221965463e734b89b258ab08dfef2cc8c89b37)
 FetchContent_Declare(
   EasyIterator
   GIT_REPOSITORY https://github.com/TheLartians/EasyIterator.git
@@ -42,10 +42,12 @@ target_sources(
           fps.cpp
           hierarchy-imgui.cpp
           bgfx-helpers.cpp
+          debug.cpp
           marching-cubes/marching-cubes.cpp
           scenes/marching-cube-scene.cpp
           scenes/transforms-scene.cpp
           scenes/hierarchy-scene.cpp
+          scenes/simple-camera-scene.cpp
           sdl-camera-input.cpp
           math-utils.cpp)
 

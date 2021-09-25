@@ -1,12 +1,12 @@
 #pragma once
 
-#include "hierarchy-imgui.h"
 #include "scene.h"
 
 #include <bgfx/bgfx.h>
 #include <thh-bgfx-debug/debug-shader.hpp>
+#include <as-camera/as-camera.hpp>
 
-struct imgui_hierarchy_scene_t : public scene_t
+struct simple_camera_scene_t : public scene_t
 {
   void setup(
     bgfx::ViewId main_view, bgfx::ViewId ortho_view, uint16_t width,
@@ -17,7 +17,8 @@ struct imgui_hierarchy_scene_t : public scene_t
 
   bgfx::ViewId main_view_;
 
-  thh::container_t<hy::entity_t> entities;
-  std::vector<thh::handle_t> root_handles;
-  hy::interaction_t interaction;
+  as::mat4 perspective_projection_;
+  asc::Camera camera_;
+
+  int64_t prev_;
 };

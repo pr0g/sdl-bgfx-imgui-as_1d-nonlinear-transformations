@@ -3,11 +3,10 @@
 #include <SDL.h>
 
 void imgui_hierarchy_scene_t::setup(
-  const bgfx::ViewId main_view, const bgfx::ViewId ortho_view,
+  const bgfx::ViewId main_view, [[maybe_unused]] const bgfx::ViewId ortho_view,
   const uint16_t width, const uint16_t height)
 {
   main_view_ = main_view;
-  ortho_view_ = ortho_view;
 
   root_handles = demo::create_sample_entities(entities);
   interaction.select(root_handles.front(), entities, root_handles);
@@ -20,10 +19,8 @@ void imgui_hierarchy_scene_t::input(const SDL_Event& current_event)
 void imgui_hierarchy_scene_t::update(debug_draw_t& debug_draw)
 {
   // imgui hierarchy experiments
-  hy_ig::imguiInteractionDrawListHierarchy(
-    entities, interaction, root_handles);
-  hy_ig::imguiInteractionNormalHierarchy(
-    entities, interaction, root_handles);
+  hy_ig::imguiInteractionDrawListHierarchy(entities, interaction, root_handles);
+  hy_ig::imguiInteractionNormalHierarchy(entities, interaction, root_handles);
   hy_ig::imguiOnlyRecursiveHierarchy(entities, root_handles);
 
   bgfx::touch(main_view_);

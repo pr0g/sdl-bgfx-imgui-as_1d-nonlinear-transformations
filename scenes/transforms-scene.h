@@ -62,9 +62,6 @@ struct transforms_scene_t : public scene_t
   bgfx::ViewId ortho_view_;
 
   as::mat4 perspective_projection;
-  asci::SmoothProps smooth_props{};
-  asc::Camera camera{};
-  asc::Camera target_camera{};
 
   debug_settings_t debug;
 
@@ -79,6 +76,11 @@ struct transforms_scene_t : public scene_t
   as::index smooth_line_end_index;
 
   int64_t prev;
+
+  asci::SmoothProps smooth_props;
+
+  asc::Camera camera;
+  asc::Camera target_camera;
 
   asci::RotateCameraInput first_person_rotate_camera{asci::MouseButton::Right};
   asci::PanCameraInput first_person_pan_camera{
