@@ -11,7 +11,7 @@ include(FetchContent)
 FetchContent_Declare(
   as-camera-input
   GIT_REPOSITORY https://github.com/pr0g/as-camera-input.git
-  GIT_TAG 9b221965463e734b89b258ab08dfef2cc8c89b37)
+  GIT_TAG e7d1811f39b34d5780e0fbfbc4318fd63ebd0c1a)
 FetchContent_Declare(
   EasyIterator
   GIT_REPOSITORY https://github.com/TheLartians/EasyIterator.git
