@@ -29,81 +29,112 @@ void simple_camera_scene_t::update(debug_draw_t& debug_draw)
   const float delta_time = delta / static_cast<float>(freq);
 
   ImGui::Begin("Simple Camera");
+
+  static float speed = 10.0f;
+
   static float pitch = 0.0f;
-  ImGui::SliderFloat("pitch", &pitch, -7.0f, 7.0f);
+  ImGui::SliderFloat("pitch", &pitch, -as::k_pi / 2.0f, as::k_pi / 2.0f);
   camera_.pitch = pitch;
 
   static float yaw = 0.0f;
-  ImGui::SliderFloat("yaw", &yaw, -7.0f, 7.0f);
+  ImGui::SliderFloat("yaw", &yaw, -as::k_tau, as::k_tau);
   camera_.yaw = yaw;
 
-  const float speed = 4.0f;
+  static bool detached_pivot = false;
+  ImGui::Checkbox("detached pivot", &detached_pivot);
 
-  ImGui::Button("pivot-forward");
-  if (ImGui::IsItemActive()) {
-    camera_.pivot +=
-      camera_.rotation() * as::vec3::axis_z() * delta_time * speed;
-  }
-  ImGui::SameLine();
-  ImGui::Button("pivot-back");
-  if (ImGui::IsItemActive()) {
-    camera_.pivot -=
-      camera_.rotation() * as::vec3::axis_z() * delta_time * speed;
-  }
-  ImGui::SameLine();
-  ImGui::Button("pivot-up");
-  if (ImGui::IsItemActive()) {
-    camera_.pivot += as::vec3::axis_y() * delta_time * speed;
-  }
-  ImGui::SameLine();
-  ImGui::Button("pivot-down");
-  if (ImGui::IsItemActive()) {
-    camera_.pivot -= as::vec3::axis_y() * delta_time * speed;
-  }
-  ImGui::SameLine();
-  ImGui::Button("pivot-left");
-  if (ImGui::IsItemActive()) {
-    camera_.pivot -=
-      camera_.rotation() * as::vec3::axis_x() * delta_time * speed;
-  }
-  ImGui::SameLine();
-  ImGui::Button("pivot-right");
-  if (ImGui::IsItemActive()) {
-    camera_.pivot +=
-      camera_.rotation() * as::vec3::axis_x() * delta_time * speed;
-  }
+  std::function<void(const as::vec3& pivot)> detached_move =
+    [this](const as::vec3& pivot_delta) mutable {
+      asc::move_pivot_detached(camera_, camera_.pivot + pivot_delta);
+    };
 
-  ImGui::Button("offset-forward");
+  std::function<void(const as::vec3& pivot)> attached_move =
+    [this](const as::vec3& pivot_delta) mutable {
+      camera_.pivot += pivot_delta;
+    };
+
+  std::function<void(const as::vec3& pivot)> pivot_set_fn =
+    detached_pivot ? detached_move : attached_move;
+
+  ImGui::PushID("pivot");
+  ImGui::Button("forward");
+  if (ImGui::IsItemActive()) {
+    pivot_set_fn(camera_.rotation() * as::vec3::axis_z() * delta_time * speed);
+  }
+  ImGui::SameLine();
+  ImGui::Button("back");
+  if (ImGui::IsItemActive()) {
+    pivot_set_fn(camera_.rotation() * -as::vec3::axis_z() * delta_time * speed);
+  }
+  ImGui::SameLine();
+  ImGui::Button("up");
+  if (ImGui::IsItemActive()) {
+    pivot_set_fn(as::vec3::axis_y() * delta_time * speed);
+  }
+  ImGui::SameLine();
+  ImGui::Button("down");
+  if (ImGui::IsItemActive()) {
+    pivot_set_fn(-as::vec3::axis_y() * delta_time * speed);
+  }
+  ImGui::SameLine();
+  ImGui::Button("left");
+  if (ImGui::IsItemActive()) {
+    pivot_set_fn(camera_.rotation() * -as::vec3::axis_x() * delta_time * speed);
+  }
+  ImGui::SameLine();
+  ImGui::Button("right");
+  if (ImGui::IsItemActive()) {
+    pivot_set_fn(camera_.rotation() * as::vec3::axis_x() * delta_time * speed);
+  }
+  ImGui::PopID();
+
+  ImGui::SameLine();
+  ImGui::Text(
+    "pivot (%.2f, %.2f, %.2f)", camera_.pivot.x, camera_.pivot.y,
+    camera_.pivot.z);
+
+  ImGui::PushID("offset");
+  ImGui::Button("forward");
   if (ImGui::IsItemActive()) {
     camera_.offset += as::vec3::axis_z() * delta_time * speed;
   }
   ImGui::SameLine();
-  ImGui::Button("offset-back");
+  ImGui::Button("back");
   if (ImGui::IsItemActive()) {
     camera_.offset -= as::vec3::axis_z() * delta_time * speed;
   }
   ImGui::SameLine();
-  ImGui::Button("offset-up");
+  ImGui::Button("up");
   if (ImGui::IsItemActive()) {
     camera_.offset += as::mat_transpose(camera_.rotation()) * as::vec3::axis_y()
                     * delta_time * speed;
   }
   ImGui::SameLine();
-  ImGui::Button("offset-down");
+  ImGui::Button("down");
   if (ImGui::IsItemActive()) {
     camera_.offset -= as::mat_transpose(camera_.rotation()) * as::vec3::axis_y()
                     * delta_time * speed;
   }
   ImGui::SameLine();
-  ImGui::Button("offset-left");
+  ImGui::Button("left");
   if (ImGui::IsItemActive()) {
     camera_.offset -= as::vec3::axis_x() * delta_time * speed;
   }
   ImGui::SameLine();
-  ImGui::Button("offset-right");
+  ImGui::Button("right");
   if (ImGui::IsItemActive()) {
     camera_.offset += as::vec3::axis_x() * delta_time * speed;
   }
+  ImGui::PopID();
+
+  ImGui::SameLine();
+  ImGui::Text(
+    "offset (%.2f, %.2f, %.2f)", camera_.offset.x, camera_.offset.y,
+    camera_.offset.z);
+
+  ImGui::Text(
+    "translation (%.2f, %.2f, %.2f)", camera_.translation().x,
+    camera_.translation().y, camera_.translation().z);
 
   ImGui::End();
 
@@ -114,6 +145,8 @@ void simple_camera_scene_t::update(debug_draw_t& debug_draw)
     / 2.0f;
   debug_draw.debug_spheres->addSphere(
     as::mat4_from_vec3(camera_.pivot), as::vec4(as::vec3::one(), alpha));
+  drawTransform(
+    *debug_draw.debug_lines, as::affine_from_vec3(camera_.pivot), alpha);
 
   float view[16];
   as::mat_to_arr(as::mat4_from_affine(camera_.view()), view);
