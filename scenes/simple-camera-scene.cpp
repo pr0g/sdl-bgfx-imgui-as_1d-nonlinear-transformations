@@ -19,10 +19,6 @@ void simple_camera_scene_t::setup(
     as::perspective_d3d_lh(fov, float(width) / float(height), 0.01f, 1000.0f);
 }
 
-void simple_camera_scene_t::input(const SDL_Event& current_event)
-{
-}
-
 void simple_camera_scene_t::update(debug_draw_t& debug_draw)
 {
   const auto freq = double(bx::getHPFrequency());
@@ -113,8 +109,11 @@ void simple_camera_scene_t::update(debug_draw_t& debug_draw)
 
   drawGrid(*debug_draw.debug_lines, camera_.translation());
 
-  const float alpha = as::min(as::vec_distance(camera_.pivot, camera_.translation()), 2.0f) / 2.0f;
-  debug_draw.debug_spheres->addSphere(as::mat4_from_vec3(camera_.pivot), as::vec4(as::vec3::one(), alpha));
+  const float alpha =
+    as::min(as::vec_distance(camera_.pivot, camera_.translation()), 2.0f)
+    / 2.0f;
+  debug_draw.debug_spheres->addSphere(
+    as::mat4_from_vec3(camera_.pivot), as::vec4(as::vec3::one(), alpha));
 
   float view[16];
   as::mat_to_arr(as::mat4_from_affine(camera_.view()), view);
@@ -124,8 +123,4 @@ void simple_camera_scene_t::update(debug_draw_t& debug_draw)
   bgfx::setViewTransform(main_view_, view, proj);
 
   bgfx::touch(main_view_);
-}
-
-void simple_camera_scene_t::teardown()
-{
 }
