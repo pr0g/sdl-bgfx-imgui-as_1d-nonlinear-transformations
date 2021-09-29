@@ -8,6 +8,8 @@
 #include <imgui.h>
 #include <thh-bgfx-debug/debug-sphere.hpp>
 
+#include <functional>
+
 void simple_camera_scene_t::setup(
   const bgfx::ViewId main_view, const bgfx::ViewId ortho_view,
   const uint16_t width, const uint16_t height)
