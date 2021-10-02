@@ -57,7 +57,7 @@ void transforms_scene_t::setup(
 
   cameras.addCamera(&pivot_camera);
   pivot_camera.pivotFn_ = [this] { return pivot; };
-  pivot_camera.pivot_cameras_.addCamera(&pivot_dolly_camera);
+  pivot_camera.pivot_cameras_.addCamera(&pivot_dolly_scroll_camera);
   pivot_camera.pivot_cameras_.addCamera(&pivot_dolly_motion_camera);
   pivot_camera.pivot_cameras_.addCamera(&pivot_rotate_camera);
   pivot_camera.pivot_cameras_.addCamera(&pivot_translate_camera);

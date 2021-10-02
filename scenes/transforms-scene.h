@@ -90,7 +90,7 @@ struct transforms_scene_t : public scene_t
   asci::ScrollTranslationCameraInput first_person_scroll_camera{};
 
   asci::PivotCameraInput pivot_camera{};
-  asci::PivotDollyScrollCameraInput pivot_dolly_camera;
+  asci::PivotDollyScrollCameraInput pivot_dolly_scroll_camera;
   asci::RotateCameraInput pivot_rotate_camera{asci::MouseButton::Left};
   asci::TranslateCameraInput pivot_translate_camera{
     asci::pivotTranslation, asci::translateOffset};
