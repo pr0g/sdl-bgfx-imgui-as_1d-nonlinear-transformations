@@ -88,7 +88,8 @@ struct transforms_scene_t : public scene_t
   asci::TranslateCameraInput first_person_translate_camera{
     asci::lookTranslation, asci::translatePivot};
   asci::ScrollTranslationCameraInput first_person_scroll_camera{};
-  asci::CustomCameraInput first_person_focus_custom_camera;
+  asci::FocusCameraInput first_person_focus_camera{
+    asci::KeyboardButton::F, asci::focusLook};
 
   asci::PivotCameraInput pivot_camera{};
   asci::PivotDollyScrollCameraInput pivot_dolly_scroll_camera;
@@ -99,7 +100,8 @@ struct transforms_scene_t : public scene_t
     asci::MouseButton::Right};
   asci::PanCameraInput pivot_pan_camera{
     asci::MouseButton::Middle, asci::lookPan, asci::translateOffset};
-  asci::CustomCameraInput pivot_focus_custom_camera;
+  asci::FocusCameraInput pivot_focus_camera{
+    asci::KeyboardButton::F, asci::focusPivot};
 
   asci::Cameras cameras;
   asci::CameraSystem camera_system;

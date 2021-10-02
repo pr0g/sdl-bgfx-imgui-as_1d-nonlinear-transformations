@@ -50,86 +50,24 @@ void transforms_scene_t::setup(
   smooth_line_begin_index = curve_handles.addHandle(as::vec3::axis_x(22.0f));
   smooth_line_end_index = curve_handles.addHandle(as::vec3(25.0f, 4.0f, 0.0f));
 
-  auto begin_focus_fn =
-    [](asci::CameraInput& camera_input, const asci::InputEvent& event) {
-      if (
-        const auto& keyboard_button =
-          std::get_if<asci::KeyboardButtonEvent>(&event)) {
-        if (
-          keyboard_button->button_ == asci::KeyboardButton::F
-          && keyboard_button->action_ == asci::ButtonAction::Down) {
-          camera_input.beginActivation();
-        }
-      }
-    };
-
-  first_person_focus_custom_camera.m_handleEventsFn = begin_focus_fn;
-  first_person_focus_custom_camera.m_stepCameraFn =
-    [this, next_camera = asc::Camera()](
-      asci::CameraInput& camera_input, const asc::Camera& target_camera,
-      const as::vec2i& cursor_delta, const int32_t scroll_delta,
-      const as::real delta_time) mutable {
-      if (camera_input.beginning()) {
-        auto [forward, len] = as::vec_normalize_and_length(
-          pivot - target_camera.translation());
-        as::vec3 right, up;
-        as::vec3_right_and_up_lh(forward, right, up);
-        auto angles = asci::eulerAngles(as::mat3(right, up, forward));
-        next_camera.pitch = angles.x;
-        next_camera.yaw = angles.y;
-        next_camera.pivot = target_camera.pivot;
-      }
-
-      if (
-        as::real_near(target_camera.pitch, next_camera.pitch)
-        && as::real_near(target_camera.yaw, next_camera.yaw)) {
-        camera_input.endActivation();
-      }
-
-      return next_camera;
-    };
-
-  pivot_focus_custom_camera.m_handleEventsFn = begin_focus_fn;
-  pivot_focus_custom_camera.m_stepCameraFn =
-    [this, next_camera = asc::Camera()](
-      asci::CameraInput& camera_input, const asc::Camera& target_camera,
-      const as::vec2i& cursor_delta, const int32_t scroll_delta,
-      const as::real delta_time) mutable {
-      if (camera_input.beginning()) {
-        auto [forward, len] = as::vec_normalize_and_length(
-          target_camera.pivot - target_camera.translation());
-        next_camera.offset = as::vec3(0.0f, 0.0f, -len);
-        as::vec3 right, up;
-        as::vec3_right_and_up_lh(forward, right, up);
-        auto angles = asci::eulerAngles(as::mat3(right, up, forward));
-        next_camera.pitch = angles.x;
-        next_camera.yaw = angles.y;
-        next_camera.pivot = target_camera.pivot;
-      }
-
-      if (
-        as::real_near(target_camera.pitch, next_camera.pitch)
-        && as::real_near(target_camera.yaw, next_camera.yaw)) {
-        camera_input.endActivation();
-      }
-
-      return next_camera;
-    };
+  auto pivotFn = [this] { return pivot; };
+  first_person_focus_camera.pivotFn_ = pivotFn;
+  pivot_focus_camera.pivotFn_ = pivotFn;
 
   cameras.addCamera(&first_person_rotate_camera);
   cameras.addCamera(&first_person_scroll_camera);
   cameras.addCamera(&first_person_pan_camera);
   cameras.addCamera(&first_person_translate_camera);
-  cameras.addCamera(&first_person_focus_custom_camera);
+  cameras.addCamera(&first_person_focus_camera);
 
   cameras.addCamera(&pivot_camera);
-  pivot_camera.pivotFn_ = [this] { return pivot; };
+  pivot_camera.pivotFn_ = pivotFn;
   pivot_camera.pivot_cameras_.addCamera(&pivot_dolly_scroll_camera);
   pivot_camera.pivot_cameras_.addCamera(&pivot_dolly_motion_camera);
   pivot_camera.pivot_cameras_.addCamera(&pivot_rotate_camera);
   pivot_camera.pivot_cameras_.addCamera(&pivot_translate_camera);
   pivot_camera.pivot_cameras_.addCamera(&pivot_pan_camera);
-  pivot_camera.pivot_cameras_.addCamera(&pivot_focus_custom_camera);
+  pivot_camera.pivot_cameras_.addCamera(&pivot_focus_camera);
 
   camera_system.cameras_ = cameras;
 
