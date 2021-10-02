@@ -88,6 +88,7 @@ struct transforms_scene_t : public scene_t
   asci::TranslateCameraInput first_person_translate_camera{
     asci::lookTranslation, asci::translatePivot};
   asci::ScrollTranslationCameraInput first_person_scroll_camera{};
+  asci::CustomCameraInput first_person_focus_custom_camera;
 
   asci::PivotCameraInput pivot_camera{};
   asci::PivotDollyScrollCameraInput pivot_dolly_scroll_camera;
@@ -98,6 +99,7 @@ struct transforms_scene_t : public scene_t
     asci::MouseButton::Right};
   asci::PanCameraInput pivot_pan_camera{
     asci::MouseButton::Middle, asci::lookPan, asci::translateOffset};
+  asci::CustomCameraInput pivot_focus_custom_camera;
 
   asci::Cameras cameras;
   asci::CameraSystem camera_system;
@@ -114,5 +116,5 @@ struct transforms_scene_t : public scene_t
   as::vec3 ray_origin;
   as::vec3 ray_direction;
 
-  as::vec3 pivot = as::vec3::zero();
+  as::vec3 pivot = as::vec3(31.0f, 5.0f, -17.0f);
 };

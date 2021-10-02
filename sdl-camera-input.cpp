@@ -76,6 +76,8 @@ asci::KeyboardButton keyboardFromSdl(const int key)
       return asci::KeyboardButton::LShift;
     case SDL_SCANCODE_LCTRL:
       return asci::KeyboardButton::Ctrl;
+    case SDL_SCANCODE_F:
+      return asci::KeyboardButton::F;
     default:
       return asci::KeyboardButton::Nil;
   }
