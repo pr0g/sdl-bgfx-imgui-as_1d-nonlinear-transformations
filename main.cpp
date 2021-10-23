@@ -2,8 +2,9 @@
 
 #include "scenes/hierarchy-scene.h"
 #include "scenes/marching-cube-scene.h"
-#include "scenes/transforms-scene.h"
 #include "scenes/simple-camera-scene.h"
+#include "scenes/transforms-scene.h"
+#include "scenes/voronoi-scene.h"
 
 #include "sdl-imgui/imgui_impl_sdl.h"
 
@@ -79,7 +80,8 @@ int main(int argc, char** argv)
   bgfx::init(bgfx_init);
 
   const char* scene_names[] = {
-    "Non-Linear Transformations", "Marching Cubes", "Hierarchy", "Simple Camera"};
+    "Non-Linear Transformations", "Marching Cubes", "Hierarchy",
+    "Simple Camera", "Voronoi"};
 
   std::unique_ptr<scene_t> scene = nullptr;
   auto scene_builder = [](const int scene_id) -> std::unique_ptr<scene_t> {
@@ -90,8 +92,10 @@ int main(int argc, char** argv)
         return std::make_unique<marching_cube_scene_t>();
       case 2:
         return std::make_unique<imgui_hierarchy_scene_t>();
-        case 3:
+      case 3:
         return std::make_unique<simple_camera_scene_t>();
+      case 4:
+        return std::make_unique<voronoi_scene_t>();
       default:
         return nullptr;
     }

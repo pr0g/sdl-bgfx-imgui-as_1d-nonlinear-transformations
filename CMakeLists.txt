@@ -48,6 +48,7 @@ target_sources(
           scenes/transforms-scene.cpp
           scenes/hierarchy-scene.cpp
           scenes/simple-camera-scene.cpp
+          scenes/voronoi-scene.cpp
           sdl-camera-input.cpp
           math-utils.cpp)
 
