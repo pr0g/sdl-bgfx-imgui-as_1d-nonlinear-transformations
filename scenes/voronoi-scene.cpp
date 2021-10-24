@@ -72,11 +72,18 @@ void voronoi_scene_t::update(debug_draw_t& debug_draw)
 
   // vertex = directrix + (directrix - focus.y)
   auto vertex_delta = (focus_.y - directrix_) * 0.5f;
-
   auto vertex = as::vec3(focus_.x, directrix_ + vertex_delta, 0.0f);
+
+  auto vertex_delta2 = (focus2_.y - directrix_) * 0.5f;
+  auto vertex2 = as::vec3(focus2_.x, directrix_ + vertex_delta2, 0.0f);
+
   // vertex
   debug_draw.debug_circles->addCircle(
     as::mat4_from_mat3_vec3(as::mat3_scale(0.1f), vertex),
+    as::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+
+  debug_draw.debug_circles->addCircle(
+    as::mat4_from_mat3_vec3(as::mat3_scale(0.1f), vertex2),
     as::vec4(0.0f, 0.0f, 0.0f, 1.0f));
 
   // standard form
@@ -87,10 +94,45 @@ void voronoi_scene_t::update(debug_draw_t& debug_draw)
   auto h = vertex.x;
   auto k = vertex.y;
 
+  auto p2 = vertex_delta2;
+  auto h2 = vertex2.x;
+  auto k2 = vertex2.y;
+
   auto y_fn_std = [=](float x) {
     return ((1.0f / (4.0f * p)) * (x * x)) - (((2.0f * h) / (4.0f * p)) * x)
          + (((h * h) / (4.0f * p)) + k);
   };
+
+  struct coefs_t
+  {
+    float a, b, c;
+  };
+
+  auto calculate_coefs_fn = [](float h, float p, float k) {
+    return coefs_t{
+      (1.0f / (4.0f * p)), -(2.0f * h) / (4.0f * p), ((h * h) / (4.0f * p)) + k};
+  };
+
+  auto coefs = calculate_coefs_fn(h, p, k);
+  auto coefs2 = calculate_coefs_fn(h2, p2, k2);
+
+  auto a = coefs.a - coefs2.a;
+  auto b = coefs.b - coefs2.b;
+  auto c = coefs.c - coefs2.c;
+
+  auto x1 = (-b + std::sqrt((b * b) - (4.0f * a * c))) / (2.0f * a);
+  auto x2 = (-b - std::sqrt((b * b) - (4.0f * a * c))) / (2.0f * a);
+
+  auto y1 = (coefs.a * (x1 * x1)) + (coefs.b * x1) + coefs.c;
+  auto y2 = (coefs2.a * (x2 * x2)) + (coefs2.b * x2) + coefs2.c;
+
+  debug_draw.debug_circles->addCircle(
+    as::mat4_from_mat3_vec3(as::mat3_scale(0.1f), as::vec3(x1, y1, 0.0f)),
+    as::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+
+  debug_draw.debug_circles->addCircle(
+    as::mat4_from_mat3_vec3(as::mat3_scale(0.1f), as::vec3(x2, y2, 0.0f)),
+    as::vec4(0.0f, 0.0f, 0.0f, 1.0f));
 
   const float delta_step = 20.0f / 100.0f;
   float x = -10.0f;
@@ -109,6 +151,8 @@ void voronoi_scene_t::update(debug_draw_t& debug_draw)
     }
     x += delta_step;
   }
+
+  // x = (-b +/- sqrt(b*b - 4.0f * a * c)) / (2.0 * a)
 
   // repeated
   x = -10.0f;
