@@ -57,22 +57,65 @@ void voronoi_scene_t::update(debug_draw_t& debug_draw)
   ImGui::SliderFloat("directrix", &directrix_, -10.0f, 20.0f);
   ImGui::SliderFloat("focus", &focus_.y, -10.0f, 20.0f);
 
+  static bool standard = false;
+  ImGui::Checkbox("standard", &standard);
+
   ImGui::End();
 
-  auto y_fn = [=](float x) {
+  auto y_fn = [=](float x, as::vec2 focus) {
     // equation of parabola from focus and directrix
     // y = 1 / 2(b-k) * (x-a)^2 + 0.5(b+k)
-    return ((1.0f / (2.0f * (focus_.y - directrix_)))
-            * ((x - focus_.x) * (x - focus_.x)))
-         + (0.5f * (focus_.y + directrix_));
+    return ((1.0f / (2.0f * (focus.y - directrix_)))
+            * ((x - focus.x) * (x - focus.x)))
+         + (0.5f * (focus.y + directrix_));
+  };
+
+  // vertex = directrix + (directrix - focus.y)
+  auto vertex_delta = (focus_.y - directrix_) * 0.5f;
+
+  auto vertex = as::vec3(focus_.x, directrix_ + vertex_delta, 0.0f);
+  // vertex
+  debug_draw.debug_circles->addCircle(
+    as::mat4_from_mat3_vec3(as::mat3_scale(0.1f), vertex),
+    as::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+
+  // standard form
+  // (1 / 4p)x^2 - (2h/4p)x + (h^2)/4p + k
+
+  // p = vertex_delta
+  auto p = vertex_delta;
+  auto h = vertex.x;
+  auto k = vertex.y;
+
+  auto y_fn_std = [=](float x) {
+    return ((1.0f / (4.0f * p)) * (x * x)) - (((2.0f * h) / (4.0f * p)) * x)
+         + (((h * h) / (4.0f * p)) + k);
   };
 
   const float delta_step = 20.0f / 100.0f;
   float x = -10.0f;
   for (int i = 0; i < 100; ++i) {
-    float y = y_fn(x);
+    float y = y_fn(x, focus_);
+    float ys = y_fn_std(x);
     float x_next = x + delta_step;
-    float y_next = y_fn(x + delta_step);
+    float y_next = y_fn(x + delta_step, focus_);
+    float ys_next = y_fn_std(x + delta_step);
+    if (!standard) {
+      debug_draw.debug_lines->addLine(
+        as::vec3(x, y, 0.0f), as::vec3(x_next, y_next, 0.0f), 0xff000000);
+    } else {
+      debug_draw.debug_lines->addLine(
+        as::vec3(x, ys, 0.0f), as::vec3(x_next, ys_next, 0.0f), 0xff0000ff);
+    }
+    x += delta_step;
+  }
+
+  // repeated
+  x = -10.0f;
+  for (int i = 0; i < 100; ++i) {
+    float y = y_fn(x, focus2_);
+    float x_next = x + delta_step;
+    float y_next = y_fn(x + delta_step, focus2_);
     debug_draw.debug_lines->addLine(
       as::vec3(x, y, 0.0f), as::vec3(x_next, y_next, 0.0f), 0xff000000);
     x += delta_step;
@@ -81,6 +124,10 @@ void voronoi_scene_t::update(debug_draw_t& debug_draw)
   // focus
   debug_draw.debug_circles->addCircle(
     as::mat4_from_mat3_vec3(as::mat3_scale(0.1f), as::vec3(focus_)),
+    as::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+
+  debug_draw.debug_circles->addCircle(
+    as::mat4_from_mat3_vec3(as::mat3_scale(0.1f), as::vec3(focus2_)),
     as::vec4(0.0f, 0.0f, 0.0f, 1.0f));
 
   // directrix

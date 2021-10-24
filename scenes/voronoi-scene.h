@@ -29,6 +29,8 @@ struct voronoi_scene_t : public scene_t
   asci::CameraSystem camera_system_;
 
   as::vec2 focus_ = as::vec2(0.0f, 5.0f);
+  as::vec2 focus2_ = as::vec2(2.0f, 6.0f);
+
   float directrix_ = 4.5f;
 
   int64_t prev_;
