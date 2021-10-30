@@ -1,6 +1,7 @@
 #pragma once
 
 #include "scene.h"
+#include "voronoi/voronoi.h"
 
 #include <as-camera-input/as-camera-input.hpp>
 #include <as-camera/as-camera.hpp>
@@ -35,4 +36,6 @@ struct voronoi_scene_t : public scene_t
   float directrix_ = 4.5f;
 
   int64_t prev_;
+
+  vor::voronoi_t voronoi;
 };

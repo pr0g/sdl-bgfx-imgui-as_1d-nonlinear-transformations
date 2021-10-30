@@ -44,6 +44,7 @@ target_sources(
           bgfx-helpers.cpp
           debug.cpp
           marching-cubes/marching-cubes.cpp
+          voronoi/voronoi.cpp
           scenes/marching-cube-scene.cpp
           scenes/transforms-scene.cpp
           scenes/hierarchy-scene.cpp
