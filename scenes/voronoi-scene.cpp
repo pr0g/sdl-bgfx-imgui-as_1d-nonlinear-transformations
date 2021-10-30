@@ -110,7 +110,8 @@ void voronoi_scene_t::update(debug_draw_t& debug_draw)
 
   auto calculate_coefs_fn = [](float h, float p, float k) {
     return coefs_t{
-      (1.0f / (4.0f * p)), -(2.0f * h) / (4.0f * p), ((h * h) / (4.0f * p)) + k};
+      (1.0f / (4.0f * p)), -(2.0f * h) / (4.0f * p),
+      ((h * h) / (4.0f * p)) + k};
   };
 
   auto coefs = calculate_coefs_fn(h, p, k);
@@ -136,33 +137,52 @@ void voronoi_scene_t::update(debug_draw_t& debug_draw)
 
   const float delta_step = 20.0f / 100.0f;
   float x = -10.0f;
-  for (int i = 0; i < 100; ++i) {
-    float y = y_fn(x, focus_);
-    float ys = y_fn_std(x);
-    float x_next = x + delta_step;
-    float y_next = y_fn(x + delta_step, focus_);
-    float ys_next = y_fn_std(x + delta_step);
-    if (!standard) {
-      debug_draw.debug_lines->addLine(
-        as::vec3(x, y, 0.0f), as::vec3(x_next, y_next, 0.0f), 0xff000000);
-    } else {
-      debug_draw.debug_lines->addLine(
-        as::vec3(x, ys, 0.0f), as::vec3(x_next, ys_next, 0.0f), 0xff0000ff);
+  if (focus_.y > directrix_) {
+    for (int i = 0; i < 100; ++i) {
+      float y = y_fn(x, focus_);
+      float ys = y_fn_std(x);
+      float x_next = x + delta_step;
+      float y_next = y_fn(x + delta_step, focus_);
+      float ys_next = y_fn_std(x + delta_step);
+      if (!standard) {
+        debug_draw.debug_lines->addLine(
+          as::vec3(x, y, 0.0f), as::vec3(x_next, y_next, 0.0f), 0xff000000);
+      } else {
+        debug_draw.debug_lines->addLine(
+          as::vec3(x, ys, 0.0f), as::vec3(x_next, ys_next, 0.0f), 0xff0000ff);
+      }
+      x += delta_step;
     }
-    x += delta_step;
   }
 
   // x = (-b +/- sqrt(b*b - 4.0f * a * c)) / (2.0 * a)
 
+  // add rendering of bounding box (use min/max extent for rendering)
+  // to render combine all parabolas and do min of points to render beach head
+
   // repeated
   x = -10.0f;
-  for (int i = 0; i < 100; ++i) {
-    float y = y_fn(x, focus2_);
-    float x_next = x + delta_step;
-    float y_next = y_fn(x + delta_step, focus2_);
-    debug_draw.debug_lines->addLine(
-      as::vec3(x, y, 0.0f), as::vec3(x_next, y_next, 0.0f), 0xff000000);
-    x += delta_step;
+  if (focus2_.y > directrix_) {
+    for (int i = 0; i < 100; ++i) {
+      float y = y_fn(x, focus2_);
+      float x_next = x + delta_step;
+      float y_next = y_fn(x + delta_step, focus2_);
+      debug_draw.debug_lines->addLine(
+        as::vec3(x, y, 0.0f), as::vec3(x_next, y_next, 0.0f), 0xff000000);
+      x += delta_step;
+    }
+  }
+
+  x = -10.0f;
+  if (focus3_.y > directrix_) {
+    for (int i = 0; i < 100; ++i) {
+      float y = y_fn(x, focus3_);
+      float x_next = x + delta_step;
+      float y_next = y_fn(x + delta_step, focus3_);
+      debug_draw.debug_lines->addLine(
+        as::vec3(x, y, 0.0f), as::vec3(x_next, y_next, 0.0f), 0xff000000);
+      x += delta_step;
+    }
   }
 
   // focus
@@ -172,6 +192,10 @@ void voronoi_scene_t::update(debug_draw_t& debug_draw)
 
   debug_draw.debug_circles->addCircle(
     as::mat4_from_mat3_vec3(as::mat3_scale(0.1f), as::vec3(focus2_)),
+    as::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+
+  debug_draw.debug_circles->addCircle(
+    as::mat4_from_mat3_vec3(as::mat3_scale(0.1f), as::vec3(focus3_)),
     as::vec4(0.0f, 0.0f, 0.0f, 1.0f));
 
   // directrix

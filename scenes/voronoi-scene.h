@@ -30,6 +30,7 @@ struct voronoi_scene_t : public scene_t
 
   as::vec2 focus_ = as::vec2(0.0f, 5.0f);
   as::vec2 focus2_ = as::vec2(2.0f, 6.0f);
+  as::vec2 focus3_ = as::vec2(-2.0f, 5.5f);
 
   float directrix_ = 4.5f;
 
