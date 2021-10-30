@@ -37,6 +37,60 @@ void voronoi_scene_t::input(const SDL_Event& current_event)
   camera_system_.handleEvents(sdlToInput(&current_event));
 }
 
+static as::vec3 circle(as::vec2 p1, as::vec2 p2, as::vec2 p3)
+{
+  float x1 = p1.x;
+  float x2 = p2.x;
+  float x3 = p3.x;
+  float y1 = p1.y;
+  float y2 = p2.y;
+  float y3 = p3.y;
+
+  float mr = (y2 - y1) / (x2 - x1);
+  float mt = (y3 - y2) / (x3 - x2);
+
+  if (mr == mt) {
+    return as::vec3::zero();
+  }
+
+  float x12 = x1 - x2;
+  float x13 = x1 - x3;
+
+  float y12 = y1 - y2;
+  float y13 = y1 - y3;
+
+  float y31 = y3 - y1;
+  float y21 = y2 - y1;
+
+  float x31 = x3 - x1;
+  float x21 = x2 - x1;
+
+  // x1^2 - x3^2
+  float sx13 = (x1 * x1) - (x3 * x3);
+
+  // y1^2 - y3^2
+  float sy13 = (y1 * y1) - (y3 * y3);
+
+  float sx21 = (x2 * x2) - (x1 * x1);
+
+  float sy21 = (y2 * y2) - (y1 * y1);
+
+  float f = ((sx13) * (x12) + (sy13) * (x12) + (sx21) * (x13) + (sy21) * (x13))
+          / (2.0f * ((y31) * (x12) - (y21) * (x13)));
+  float g = ((sx13) * (y12) + (sy13) * (y12) + (sx21) * (y13) + (sy21) * (y13))
+          / (2.0f * ((x31) * (y12) - (x21) * (y13)));
+
+  float c = -(x1 * x1) - (y1 * y1) - 2.0f * g * x1 - 2.0f * f * y1;
+
+  float h = -g;
+  float k = -f;
+  float sqr_of_r = h * h + k * k - c;
+
+  float r = sqrt(sqr_of_r);
+
+  return as::vec3(h, k, r);
+}
+
 void voronoi_scene_t::update(debug_draw_t& debug_draw)
 {
   const auto freq = double(bx::getHPFrequency());
@@ -88,6 +142,18 @@ void voronoi_scene_t::update(debug_draw_t& debug_draw)
 
   // standard form
   // (1 / 4p)x^2 - (2h/4p)x + (h^2)/4p + k
+
+  auto center = circle(focus_, focus2_, focus3_);
+
+  debug_draw.debug_circles->addCircle(
+    as::mat4_from_mat3_vec3(
+      as::mat3_scale(0.1f), as::vec3(as::vec2_from_vec3(center), 0.0f)),
+    as::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+
+  debug_draw.debug_circles->addCircle(
+    as::mat4_from_mat3_vec3(
+      as::mat3_scale(center.z), as::vec3(as::vec2_from_vec3(center), 0.0f)),
+    as::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 
   // p = vertex_delta
   auto p = vertex_delta;
