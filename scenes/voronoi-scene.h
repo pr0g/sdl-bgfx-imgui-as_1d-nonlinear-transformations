@@ -37,5 +37,5 @@ struct voronoi_scene_t : public scene_t
 
   int64_t prev_;
 
-  vor::voronoi_t voronoi;
+  vor::voronoi_t voronoi_;
 };

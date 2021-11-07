@@ -5,6 +5,7 @@ project(sdl-bgfx-imgui-as_1d-nonlinear-transformations LANGUAGES CXX)
 find_package(SDL2 REQUIRED CONFIG)
 find_package(bgfx REQUIRED CONFIG)
 find_package(imgui REQUIRED CONFIG)
+find_package(OpenMesh REQUIRED CONFIG)
 
 include(FetchContent)
 
@@ -60,6 +61,7 @@ target_link_libraries(
           bgfx::bgfx
           bgfx::bx
           imgui::imgui
+          OpenMeshCore
           as-camera-input
           EasyIterator
           thh-bgfx-debug

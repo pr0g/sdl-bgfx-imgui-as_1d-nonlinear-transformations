@@ -44,3 +44,16 @@ ExternalProject_Add(
     CMAKE_ARGS ${build_type_arg}
                -D CMAKE_INSTALL_PREFIX=<INSTALL_DIR>
                -D IMGUI_DISABLE_OBSOLETE_FUNCTIONS=ON)
+
+ExternalProject_Add(
+    OpenMesh
+    GIT_REPOSITORY https://gitlab.vci.rwth-aachen.de:9000/OpenMesh/OpenMesh.git
+    GIT_TAG        OpenMesh-8.1
+    BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/open-mesh/build/${build_type_dir}
+    INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}
+    CMAKE_ARGS ${build_type_arg}
+               -D CMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+               "$<$<CONFIG:Debug>:-DCMAKE_DEBUG_POSTFIX=d>"
+               -D BUILD_APPS=OFF
+               -D OPENMESH_DOCS=OFF
+               -D OPENMESH_BUILD_UNIT_TESTS=OFF)
