@@ -98,6 +98,15 @@ void transforms_scene_t::input(const SDL_Event& current_event)
       camera_mode = CameraMode::Animation;
       camera_transform_start = as::rigid_from_affine(camera.transform());
     }
+    if (key == SDL_SCANCODE_C) {
+      stored_camera_transform_ =
+        as::affine_mul(camera.transform(), stored_camera_transform_);
+      camera.offset = as::vec3::zero();
+      camera.pivot = as::vec3::zero();
+      camera.pitch = 0.0f;
+      camera.yaw = 0.0f;
+      target_camera = camera;
+    }
   }
 }
 
@@ -183,7 +192,11 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
     target_camera = camera_system.stepCamera(target_camera, delta_time);
     camera =
       asci::smoothCamera(camera, target_camera, smooth_props, delta_time);
-    camera_view = as::mat4_from_affine(camera.view());
+
+    auto combined_view =
+       as::affine_mul(camera.transform(), stored_camera_transform_);
+
+    camera_view = as::mat4_from_affine(as::affine_inverse(combined_view));
   } else if (camera_mode == CameraMode::Animation) {
     auto camera_transform_current = as::rigid(
       as::quat_slerp(
@@ -290,7 +303,12 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
   drawTransform(
     *debug_draw.debug_lines, as::affine_from_rigid(camera_transform_end));
 
-  drawTransform(*debug_draw.debug_lines, as::affine_from_vec3(camera.pivot));
+  drawTransform(
+    *debug_draw.debug_lines,
+    as::affine_mul(
+      stored_camera_transform_, as::affine_from_vec3(camera.pivot)));
+
+  drawTransform(*debug_draw.debug_lines, stored_camera_transform_);
 
   drawGrid(*debug_draw.debug_lines, camera.pivot);
 
@@ -730,6 +748,8 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
     as::vec3_from_arr(translation_imgui));
   const as::vec3 next_position_affine =
     as::affine_transform_pos(affine_transformation, as::vec3::axis_z(0.5f));
+
+  // stored_camera_transform_ = as::affine_from_mat3(affine_transformation.rotation);
 
   const as::rigid next_rigid =
     as::rigid_mul(as::rigid(as::quat::identity()), rigid_transformation);
