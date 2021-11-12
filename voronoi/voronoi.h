@@ -1,13 +1,48 @@
 #pragma once
 
-#include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
-#include <OpenMesh/Core/Utils/vector_traits.hh>
 #include <as/as-math-ops.hpp>
 
 #include <deque>
+#include <map>
 #include <queue>
 #include <variant>
 #include <vector>
+
+namespace OpenMesh
+{
+
+// Overload methods need to be declared before including OpenMesh so their
+// definitions are found
+
+inline as::vec3 normalize(const as::vec3& v)
+{
+  return as::vec_normalize(v);
+}
+
+inline float dot(const as::vec3& v1, const as::vec3& v2)
+{
+  return as::vec_dot(v1, v2);
+}
+
+inline float norm(const as::vec3& v)
+{
+  return as::vec_length(v);
+}
+
+inline as::vec3 cross(const as::vec3& v1, const as::vec3& v2)
+{
+  return as::vec3_cross(v1, v2);
+}
+
+inline as::vec3 vectorize(as::vec3& v, float s)
+{
+  return as::vec3(s);
+}
+
+} // namespace OpenMesh
+
+#include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
+#include <OpenMesh/Core/Utils/vector_traits.hh>
 
 namespace OpenMesh
 {
@@ -172,7 +207,9 @@ struct voronoi_t
 
   std::deque<site_t> site_triple_;
   std::vector<as::vec3> circles_;
-  std::vector<as::vec2> beachline_; // sorted
+  // std::vector<as::vec2> beachline_; // sorted
+
+  std::map<float, as::vec2> beachline_;
 
   Mesh mesh_;
 };

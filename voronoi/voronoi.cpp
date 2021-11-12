@@ -74,7 +74,8 @@ void voronoi_t::calculate()
 
   sweep_line_ = sites_queue.top().position_.y - 0.1f;
 
-  beachline_.push_back(sites_queue.top().position_);
+  beachline_.insert(
+    {sites_queue.top().position_.x, sites_queue.top().position_});
 
   // while (!sites_queue.empty()) {
   // }
@@ -99,9 +100,9 @@ void voronoi_t::display(dbg::DebugLines* lines, dbg::DebugCircles* circles)
       (bounds_.max_.x - bounds_.min_.x) / (float)tessellation;
     float x = bounds_.min_.x;
     for (int i = 0; i < tessellation; ++i) {
-      float y = plot_parabola(x, site, sweep_line_);
+      float y = plot_parabola(x, site.second, sweep_line_);
       float x_next = x + delta_step;
-      float y_next = plot_parabola(x + delta_step, site, sweep_line_);
+      float y_next = plot_parabola(x + delta_step, site.second, sweep_line_);
       lines->addLine(
         as::vec3(x, y, 0.0f), as::vec3(x_next, y_next, 0.0f), 0xff000000);
       x += delta_step;
