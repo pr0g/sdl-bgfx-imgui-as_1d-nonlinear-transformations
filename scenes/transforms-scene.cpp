@@ -99,10 +99,7 @@ void transforms_scene_t::input(const SDL_Event& current_event)
       camera_transform_start = as::rigid_from_affine(camera.transform());
     }
     if (key == SDL_SCANCODE_C) {
-      stored_camera_transform_ =
-        as::affine_mul(camera.transform(), stored_camera_transform_);
-      camera.offset = as::vec3::zero();
-      camera.pivot = as::vec3::zero();
+      stored_camera_transform_ = next_stored_camera_transform_;
       camera.pitch = 0.0f;
       camera.yaw = 0.0f;
       target_camera = camera;
@@ -193,8 +190,9 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
     camera =
       asci::smoothCamera(camera, target_camera, smooth_props, delta_time);
 
+    // only store the rotation, perform it first, then apply the camera transform
     auto combined_view =
-       as::affine_mul(camera.transform(), stored_camera_transform_);
+       as::affine_mul(stored_camera_transform_, camera.transform());
 
     camera_view = as::mat4_from_affine(as::affine_inverse(combined_view));
   } else if (camera_mode == CameraMode::Animation) {
@@ -749,7 +747,7 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
   const as::vec3 next_position_affine =
     as::affine_transform_pos(affine_transformation, as::vec3::axis_z(0.5f));
 
-  // stored_camera_transform_ = as::affine_from_mat3(affine_transformation.rotation);
+  next_stored_camera_transform_ = as::affine_from_mat3(affine_transformation.rotation);
 
   const as::rigid next_rigid =
     as::rigid_mul(as::rigid(as::quat::identity()), rigid_transformation);
