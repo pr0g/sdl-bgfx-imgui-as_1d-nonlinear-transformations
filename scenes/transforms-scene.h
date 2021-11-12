@@ -122,4 +122,5 @@ struct transforms_scene_t : public scene_t
 
   as::affine stored_camera_transform_ = as::affine::identity();
   as::affine next_stored_camera_transform_ = as::affine::identity();
+  float roll;
 };
