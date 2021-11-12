@@ -315,7 +315,7 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
     as::affine_mul(
       stored_camera_transform_, as::affine_from_vec3(camera.pivot)));
 
-  drawTransform(*debug_draw.debug_lines, stored_camera_transform_);
+  drawTransform(*debug_draw.debug_lines, next_stored_camera_transform_);
 
   drawGrid(*debug_draw.debug_lines, camera.pivot);
 
