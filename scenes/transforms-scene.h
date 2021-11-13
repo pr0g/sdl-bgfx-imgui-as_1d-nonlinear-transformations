@@ -120,7 +120,6 @@ struct transforms_scene_t : public scene_t
 
   as::vec3 pivot = as::vec3(31.0f, 5.0f, -17.0f);
 
-  as::affine stored_camera_transform_ = as::affine::identity();
+  as::mat3 stored_camera_orientation_ = as::mat3::identity();
   as::affine next_stored_camera_transform_ = as::affine::identity();
-  float roll;
 };

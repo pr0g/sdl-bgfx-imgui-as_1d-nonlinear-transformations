@@ -74,38 +74,6 @@ void transforms_scene_t::setup(
   prev = bx::getHPCounter();
 }
 
-as::vec3 eulerAngles2(const as::mat3& orientation)
-{
-  using as::operator""_r;
-
-  as::real x;
-  as::real y;
-  as::real z;
-
-  // 2.3 Factor as RyRxRz
-  if (orientation[as::mat3_rc(1, 2)] < 1.0_r) {
-    if (orientation[as::mat3_rc(1, 2)] > -1.0_r) {
-      x = std::asin(-orientation[as::mat3_rc(1, 2)]);
-      y = std::atan2(
-        orientation[as::mat3_rc(0, 2)], orientation[as::mat3_rc(2, 2)]);
-      z = std::atan2(
-        orientation[as::mat3_rc(1, 0)], orientation[as::mat3_rc(1, 1)]);
-    } else {
-      x = as::k_pi * 0.5_r;
-      y = -std::atan2(
-        -orientation[as::mat3_rc(0, 1)], orientation[as::mat3_rc(0, 0)]);
-      z = 0.0_r;
-    }
-  } else {
-    x = -as::k_pi * 0.5_r;
-    y = std::atan2(
-      -orientation[as::mat3_rc(0, 1)], orientation[as::mat3_rc(0, 0)]);
-    z = 0.0_r;
-  }
-
-  return as::vec3(x, y, z);
-}
-
 void transforms_scene_t::input(const SDL_Event& current_event)
 {
   camera_system.handleEvents(sdlToInput(&current_event));
@@ -132,12 +100,9 @@ void transforms_scene_t::input(const SDL_Event& current_event)
     }
     if (key == SDL_SCANCODE_C) {
       const auto angles =
-        eulerAngles2(next_stored_camera_transform_.rotation);
+        asci::eulerAngles(next_stored_camera_transform_.rotation);
 
-      roll = angles.z;
-      stored_camera_transform_ = as::affine_from_mat3(
-        as::mat3_rotation_z(angles.z)); // next_stored_camera_transform_;
-      // stored_camera_transform_.translation = as::vec3::zero();
+      stored_camera_orientation_ = as::mat3_rotation_z(angles.z);
 
       camera.pitch = angles.x;
       camera.yaw = angles.y;
@@ -232,23 +197,8 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
     camera =
       asci::smoothCamera(camera, target_camera, smooth_props, delta_time);
 
-    // only store the z (roll) rotation, perform it first, then apply the camera
-    // transform
-
-    as::mat3 m = as::mat_mul(
-      as::mat3_rotation_z(roll),
-      as::mat_mul(
-        as::mat3_rotation_x(camera.pitch), as::mat3_rotation_y(camera.yaw)));
-
-    // as::affine_from_mat3(
-    //  as::mat3_rotation_zxy(camera.pitch, camera.yaw, roll))
-
     auto combined_transform = as::affine_mul(
-      as::affine_from_mat3(m), as::affine_from_vec3(camera.pivot));
-
-    // auto combined_view = as::affine_mul(
-    //   as::affine_from_mat3(stored_camera_transform_.rotation),
-    //   camera.transform());
+      as::affine_from_mat3(stored_camera_orientation_), camera.transform());
 
     camera_view = as::mat4_from_affine(as::affine_inverse(combined_transform));
   } else if (camera_mode == CameraMode::Animation) {
@@ -264,7 +214,7 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
       as::mat4_from_rigid(as::rigid_inverse(camera_transform_current));
 
     const auto angles =
-      eulerAngles2(as::mat3_from_quat(camera_transform_current.rotation));
+      asci::eulerAngles(as::mat3_from_quat(camera_transform_current.rotation));
     camera.pitch = angles.x;
     camera.yaw = angles.y;
     camera.offset = as::vec3::zero();
@@ -357,11 +307,7 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
   drawTransform(
     *debug_draw.debug_lines, as::affine_from_rigid(camera_transform_end));
 
-  drawTransform(
-    *debug_draw.debug_lines,
-    as::affine_mul(
-      stored_camera_transform_, as::affine_from_vec3(camera.pivot)));
-
+  drawTransform(*debug_draw.debug_lines, as::affine_from_vec3(camera.pivot));
   drawTransform(*debug_draw.debug_lines, next_stored_camera_transform_);
 
   drawGrid(*debug_draw.debug_lines, camera.pivot);
