@@ -50,9 +50,13 @@ void transforms_scene_t::setup(
   smooth_line_begin_index = curve_handles.addHandle(as::vec3::axis_x(22.0f));
   smooth_line_end_index = curve_handles.addHandle(as::vec3(25.0f, 4.0f, 0.0f));
 
-  auto pivotFn = [this] { return pivot; };
+  auto pivotFn = [this] { return pivot_translation_; };
   first_person_focus_camera.pivotFn_ = pivotFn;
   pivot_focus_camera.pivotFn_ = pivotFn;
+
+  auto constrain_pitch = [this]() { return !tracking_; };
+  first_person_rotate_camera.constrain_pitch_ = constrain_pitch;
+  pivot_rotate_camera.constrain_pitch_ = constrain_pitch;
 
   cameras.addCamera(&first_person_rotate_camera);
   cameras.addCamera(&first_person_scroll_camera);
@@ -99,17 +103,12 @@ void transforms_scene_t::input(const SDL_Event& current_event)
       camera_transform_start = as::rigid_from_affine(camera.transform());
     }
     if (key == SDL_SCANCODE_C) {
-      const auto angles =
-        asci::eulerAngles(next_stored_camera_transform_.rotation);
-
-      stored_camera_orientation_ = as::mat3_rotation_z(angles.z);
-
-      camera.pitch = angles.x;
-      camera.yaw = angles.y;
-      camera.offset = as::vec3::zero();
-      camera.pivot = next_stored_camera_transform_.translation;
-
-      target_camera = camera;
+      tracking_ = !tracking_;
+      if (tracking_) {
+        on_camera_transform_changed(next_stored_camera_transform_, false);
+      } else {
+        target_roll_ = 0.0f;
+      }
     }
   }
 }
@@ -191,14 +190,71 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
 
   const float delta_time = delta / static_cast<float>(freq);
 
+  ImGui::Begin("Transforms");
+  float translation_imgui[3];
+  as::vec_to_arr(pivot_translation_, translation_imgui);
+  ImGui::SliderFloat3("Translation", translation_imgui, -50.0f, 50.0f);
+  float rotation_imgui[] = {0.0f, 0.0f, 0.0f};
+  auto pivot_rotation_deg_before = as::vec3(
+    as::degrees(pivot_rotation_.x), as::degrees(pivot_rotation_.y),
+    as::degrees(pivot_rotation_.z));
+  as::vec_to_arr(pivot_rotation_deg_before, rotation_imgui);
+  ImGui::SliderFloat3("Rotation", rotation_imgui, -360.0f, 360.0f);
+  ImGui::End();
+
+  auto pivot_translation_before = pivot_translation_;
+  auto pivot_rotation_before = pivot_rotation_;
+
+  pivot_translation_ = as::vec3_from_arr(translation_imgui);
+  auto pivot_rotation_deg_after = as::vec3_from_arr(rotation_imgui);
+  pivot_rotation_ = as::vec3(
+    as::radians(pivot_rotation_deg_after.x),
+    as::radians(pivot_rotation_deg_after.y),
+    as::radians(pivot_rotation_deg_after.z));
+
+  if (
+    (!as::vec_near(pivot_translation_before, pivot_translation_)
+     || !as::vec_near(pivot_rotation_deg_before, pivot_rotation_deg_after))
+    && tracking_) {
+    on_camera_transform_changed(
+      as::affine_from_mat3_vec3(
+        as::mat3_rotation_zxy(
+          pivot_rotation_.x, pivot_rotation_.y, pivot_rotation_.z),
+        pivot_translation_),
+      false);
+  }
+
   as::mat4 camera_view = as::mat4::identity();
   if (camera_mode == CameraMode::Control) {
+    auto target_combined_transform_before = as::affine_mul(
+      as::affine_from_mat3(as::mat3_rotation_z(target_roll_)),
+      target_camera.transform());
+
     target_camera = camera_system.stepCamera(target_camera, delta_time);
+
+    if (tracking_) {
+      auto target_combined_transform = as::affine_mul(
+        as::affine_from_mat3(as::mat3_rotation_z(target_roll_)),
+        target_camera.transform());
+
+      if (
+        target_combined_transform_before.rotation
+          != target_combined_transform.rotation
+        || target_combined_transform_before.translation
+             != target_combined_transform.translation) {
+        on_camera_transform_changed(target_combined_transform, true);
+      }
+    }
+
     camera =
       asci::smoothCamera(camera, target_camera, smooth_props, delta_time);
 
+    const as::real look_rate = exp2(smooth_props.look_smoothness_);
+    const as::real look_t = exp2(-look_rate * delta_time);
+    roll_ = as::mix(target_roll_, roll_, look_t);
+
     auto combined_transform = as::affine_mul(
-      as::affine_from_mat3(stored_camera_orientation_), camera.transform());
+      as::affine_from_mat3(as::mat3_rotation_z(roll_)), camera.transform());
 
     camera_view = as::mat4_from_affine(as::affine_inverse(combined_transform));
   } else if (camera_mode == CameraMode::Animation) {
@@ -723,16 +779,6 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
     }
   }
 
-  ImGui::Begin("Transforms");
-  float translation_imgui[3];
-  as::vec_to_arr(pivot, translation_imgui);
-  ImGui::SliderFloat3("Translation", translation_imgui, -50.0f, 50.0f);
-  static float rotation_imgui[] = {0.0f, 0.0f, 0.0f};
-  ImGui::SliderFloat3("Rotation", rotation_imgui, -360.0f, 360.0f);
-  ImGui::End();
-
-  pivot = as::vec3_from_arr(translation_imgui);
-
   const as::rigid rigid_transformation(
     as::quat_rotation_zxy(
       as::radians(rotation_imgui[0]), as::radians(rotation_imgui[1]),
@@ -789,6 +835,19 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
   bgfx::touch(ortho_view_);
 }
 
-void transforms_scene_t::teardown()
+void transforms_scene_t::on_camera_transform_changed(
+  const as::affine& camera_transform, bool internal)
 {
+  const auto angles = asci::eulerAngles(camera_transform.rotation);
+
+  if (internal) {
+    pivot_translation_ = camera_transform.translation;
+    pivot_rotation_ = angles;
+  } else {
+    target_camera.pitch = angles.x;
+    target_camera.yaw = angles.y;
+    target_camera.offset = as::vec3::zero();
+    target_camera.pivot = camera_transform.translation;
+    target_roll_ = angles.z;
+  }
 }

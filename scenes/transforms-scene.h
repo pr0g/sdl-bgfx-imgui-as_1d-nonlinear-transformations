@@ -55,7 +55,9 @@ struct transforms_scene_t : public scene_t
     uint16_t height) override;
   void input(const SDL_Event& current_event) override;
   void update(debug_draw_t& debug_draw) override;
-  void teardown() override;
+  void teardown() override {}
+
+  void on_camera_transform_changed(const as::affine& camera_transform, bool internal);
 
   as::vec2i screen_dimension{};
   bgfx::ViewId main_view_;
@@ -118,8 +120,11 @@ struct transforms_scene_t : public scene_t
   as::vec3 ray_origin;
   as::vec3 ray_direction;
 
-  as::vec3 pivot = as::vec3(31.0f, 5.0f, -17.0f);
+  as::vec3 pivot_translation_ = as::vec3(31.0f, 5.0f, -17.0f);
+  as::vec3 pivot_rotation_ = as::vec3::zero();
+  float roll_ = 0.0f;
+  float target_roll_ = 0.0f;
 
-  as::mat3 stored_camera_orientation_ = as::mat3::identity();
   as::affine next_stored_camera_transform_ = as::affine::identity();
+  bool tracking_ = false;
 };
