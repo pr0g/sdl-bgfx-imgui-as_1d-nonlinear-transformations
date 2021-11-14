@@ -195,9 +195,7 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
   as::vec_to_arr(pivot_translation_, translation_imgui);
   ImGui::SliderFloat3("Translation", translation_imgui, -50.0f, 50.0f);
   float rotation_imgui[] = {0.0f, 0.0f, 0.0f};
-  auto pivot_rotation_deg_before = as::vec3(
-    as::degrees(pivot_rotation_.x), as::degrees(pivot_rotation_.y),
-    as::degrees(pivot_rotation_.z));
+  auto pivot_rotation_deg_before = as::vec_degrees(pivot_rotation_);
   as::vec_to_arr(pivot_rotation_deg_before, rotation_imgui);
   ImGui::SliderFloat3("Rotation", rotation_imgui, -360.0f, 360.0f);
   ImGui::End();
@@ -207,10 +205,7 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
 
   pivot_translation_ = as::vec3_from_arr(translation_imgui);
   auto pivot_rotation_deg_after = as::vec3_from_arr(rotation_imgui);
-  pivot_rotation_ = as::vec3(
-    as::radians(pivot_rotation_deg_after.x),
-    as::radians(pivot_rotation_deg_after.y),
-    as::radians(pivot_rotation_deg_after.z));
+  pivot_rotation_ = as::vec_radians(pivot_rotation_deg_after);
 
   if (
     (!as::vec_near(pivot_translation_before, pivot_translation_)
@@ -780,17 +775,13 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
   }
 
   const as::rigid rigid_transformation(
-    as::quat_rotation_zxy(
-      as::radians(rotation_imgui[0]), as::radians(rotation_imgui[1]),
-      as::radians(rotation_imgui[2])),
+    as::quat_rotation_zxy(as::vec_radians(as::vec_from_arr(rotation_imgui))),
     as::vec3_from_arr(translation_imgui));
   const as::vec3 next_position_rigid =
     as::rigid_transform_pos(rigid_transformation, as::vec3::axis_z(0.5f));
 
   const as::affine affine_transformation(
-    as::mat3_rotation_zxy(
-      as::radians(rotation_imgui[0]), as::radians(rotation_imgui[1]),
-      as::radians(rotation_imgui[2])),
+    as::mat3_rotation_zxy(as::vec_radians(as::vec_from_arr(rotation_imgui))),
     as::vec3_from_arr(translation_imgui));
   const as::vec3 next_position_affine =
     as::affine_transform_pos(affine_transformation, as::vec3::axis_z(0.5f));
