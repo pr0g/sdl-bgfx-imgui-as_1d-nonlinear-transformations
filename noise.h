@@ -1,5 +1,7 @@
 #pragma once
 
+#include "1d-nonlinear-transformations.h"
+
 #include <as/as-view.hpp>
 
 #include <cstdint>
