@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.22)
 
 project(third-party)
 
@@ -15,8 +15,8 @@ endif()
 
 ExternalProject_Add(
     SDL2
-    URL https://www.libsdl.org/tmp/SDL-2.0.13-14202.tar.gz
-    URL_HASH MD5=f10328dc1724470433e3ca05a662d146
+    URL https://www.libsdl.org/release/SDL2-2.0.18.tar.gz
+    URL_HASH MD5=c1dd33299db5b7091f37d989c68d5212
     BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/SDL2/build/${build_type_dir}
     INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}
     CMAKE_ARGS ${build_type_arg}
