@@ -15,8 +15,8 @@ endif()
 
 ExternalProject_Add(
     SDL2
-    URL https://www.libsdl.org/release/SDL2-2.0.18.tar.gz
-    URL_HASH MD5=c1dd33299db5b7091f37d989c68d5212
+    URL https://www.libsdl.org/release/SDL2-2.0.20.tar.gz
+    URL_HASH MD5=a53acc02e1cca98c4123229069b67c9e
     BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/SDL2/build/${build_type_dir}
     INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}
     CMAKE_ARGS ${build_type_arg}
@@ -25,7 +25,7 @@ ExternalProject_Add(
 ExternalProject_Add(
     bgfx
     GIT_REPOSITORY https://github.com/bkaradzic/bgfx.cmake.git
-    GIT_TAG        86b4b5a610e8bde42eb259cddc75046bc865929b
+    GIT_TAG        7e7a6795a1ce50f41249efd136385a8266831360
     BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/bgfx/build/${build_type_dir}
     INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}
     CMAKE_ARGS ${build_type_arg}
