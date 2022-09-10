@@ -2,13 +2,9 @@ cmake_minimum_required(VERSION 3.15)
 
 project(sdl-bgfx-imgui-as_1d-nonlinear-transformations LANGUAGES CXX)
 
-if(APPLE)
-  set(CMAKE_OSX_ARCHITECTURES "x86_64")
-endif()
-
 find_package(SDL2 REQUIRED CONFIG)
 find_package(bgfx REQUIRED CONFIG)
-find_package(imgui REQUIRED CONFIG)
+find_package(imgui.cmake REQUIRED CONFIG)
 
 include(FetchContent)
 
@@ -61,7 +57,7 @@ target_link_libraries(
           SDL2::SDL2main
           bgfx::bgfx
           bgfx::bx
-          imgui::imgui
+          imgui.cmake::imgui.cmake
           as-camera-input
           EasyIterator
           thh-bgfx-debug
