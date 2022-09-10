@@ -5,42 +5,41 @@ project(third-party)
 include(ExternalProject)
 
 get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
-if (NOT isMultiConfig)
-    if(NOT CMAKE_BUILD_TYPE)
-        set(CMAKE_BUILD_TYPE Debug CACHE STRING "" FORCE)
-    endif()
-    set(build_type_dir ${CMAKE_BUILD_TYPE})
-    set(build_type_arg -DCMAKE_BUILD_TYPE=$<CONFIG>)
+if(NOT isMultiConfig)
+  if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE
+        Debug
+        CACHE STRING "" FORCE)
+  endif()
+  set(build_type_dir ${CMAKE_BUILD_TYPE})
+  set(build_type_arg -DCMAKE_BUILD_TYPE=$<CONFIG>)
 endif()
 
 ExternalProject_Add(
-    SDL2
-    URL https://www.libsdl.org/release/SDL2-2.0.20.tar.gz
-    URL_HASH MD5=a53acc02e1cca98c4123229069b67c9e
-    BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/SDL2/build/${build_type_dir}
-    INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}
-    CMAKE_ARGS ${build_type_arg}
-               -D CMAKE_INSTALL_PREFIX=<INSTALL_DIR>)
+  SDL2
+  URL https://www.libsdl.org/release/SDL2-2.0.20.tar.gz
+  URL_HASH MD5=a53acc02e1cca98c4123229069b67c9e
+  BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/SDL2/build/${build_type_dir}
+  INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}
+  CMAKE_ARGS ${build_type_arg} -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>)
 
 ExternalProject_Add(
-    bgfx
-    GIT_REPOSITORY https://github.com/bkaradzic/bgfx.cmake.git
-    GIT_TAG        7e7a6795a1ce50f41249efd136385a8266831360
-    BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/bgfx/build/${build_type_dir}
-    INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}
-    CMAKE_ARGS ${build_type_arg}
-               -D CMAKE_INSTALL_PREFIX=<INSTALL_DIR>
-               "$<$<CONFIG:Debug>:-DCMAKE_DEBUG_POSTFIX=d>"
-               -D BGFX_BUILD_EXAMPLES=OFF)
+  bgfx
+  GIT_REPOSITORY https://github.com/bkaradzic/bgfx.cmake.git
+  GIT_TAG 7e7a6795a1ce50f41249efd136385a8266831360
+  BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/bgfx/build/${build_type_dir}
+  INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}
+  CMAKE_ARGS ${build_type_arg} -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+             "$<$<CONFIG:Debug>:-DCMAKE_DEBUG_POSTFIX=d>"
+             -DBGFX_BUILD_EXAMPLES=OFF)
 
 ExternalProject_Add(
-    cmakefied
-    GIT_REPOSITORY https://github.com/pr0g/cmakefied.git
-    GIT_TAG        5b201e9be3fa85fdd987110c4a9a2f91f28c0af1
-    UPDATE_COMMAND bash <SOURCE_DIR>/git-clone.sh imgui
-    SOURCE_SUBDIR ../imgui
-    BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/imgui/build/${build_type_dir}
-    INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}
-    CMAKE_ARGS ${build_type_arg}
-               -D CMAKE_INSTALL_PREFIX=<INSTALL_DIR>
-               -D IMGUI_DISABLE_OBSOLETE_FUNCTIONS=ON)
+  imgui.cmake
+  GIT_REPOSITORY https://github.com/pr0g/imgui.cmake.git
+  GIT_TAG 668eab7759d005190afa7dae85a25269fd926246
+  BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/imgui/build/${build_type_dir}
+  INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}
+  CMAKE_COMMAND ${THIRD_PARTY_CMAKE_COMMAND}
+  CMAKE_ARGS ${build_type_arg} -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+             "$<$<CONFIG:Debug>:-DCMAKE_DEBUG_POSTFIX=d>"
+             -DIMGUI_DISABLE_OBSOLETE_FUNCTIONS=ON)
