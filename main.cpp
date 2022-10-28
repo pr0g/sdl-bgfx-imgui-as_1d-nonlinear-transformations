@@ -195,7 +195,7 @@ int main(int argc, char** argv)
       }
 
       ImGui_Implbgfx_NewFrame();
-      ImGui_ImplSDL2_NewFrame(window);
+      ImGui_ImplSDL2_NewFrame();
       ImGui::NewFrame();
 
       switch (mode) {
