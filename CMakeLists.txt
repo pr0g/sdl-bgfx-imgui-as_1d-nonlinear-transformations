@@ -9,9 +9,9 @@ find_package(imgui.cmake REQUIRED CONFIG)
 include(FetchContent)
 
 FetchContent_Declare(
-  as-camera-input
-  GIT_REPOSITORY https://github.com/pr0g/as-camera-input.git
-  GIT_TAG 41748f58dc6fdce3cd06fcb7cb12762ab368be97)
+  as-camera-input-sdl
+  GIT_REPOSITORY https://github.com/pr0g/as-camera-input-sdl.git
+  GIT_TAG a2c53f7ef12cea081b632d559477f1549055a080)
 FetchContent_Declare(
   EasyIterator
   GIT_REPOSITORY https://github.com/TheLartians/EasyIterator.git
@@ -29,7 +29,7 @@ FetchContent_Declare(
   GIT_REPOSITORY https://github.com/nlohmann/json.git
   GIT_TAG e10a3fac8a255433146e3f06a703dc110fc3c3da)
 
-FetchContent_MakeAvailable(as-camera-input EasyIterator thh-bgfx-debug
+FetchContent_MakeAvailable(as-camera-input-sdl EasyIterator thh-bgfx-debug
                            hierarchy nlohmann-json)
 
 add_executable(${PROJECT_NAME})
@@ -48,7 +48,6 @@ target_sources(
           scenes/transforms-scene.cpp
           scenes/hierarchy-scene.cpp
           scenes/simple-camera-scene.cpp
-          sdl-camera-input.cpp
           math-utils.cpp)
 
 target_link_libraries(
@@ -58,7 +57,7 @@ target_link_libraries(
           bgfx::bgfx
           bgfx::bx
           imgui.cmake::imgui.cmake
-          as-camera-input
+          as-camera-input-sdl
           EasyIterator
           thh-bgfx-debug
           hierarchy

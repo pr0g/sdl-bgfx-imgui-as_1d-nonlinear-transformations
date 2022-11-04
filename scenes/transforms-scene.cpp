@@ -3,10 +3,10 @@
 #include "1d-nonlinear-transformations.h"
 #include "debug.h"
 #include "noise.h"
-#include "sdl-camera-input.h"
 #include "smooth-line.h"
 
 #include <SDL.h>
+#include <as-camera-input-sdl/as-camera-input-sdl.hpp>
 #include <as/as-view.hpp>
 #include <bx/timer.h>
 #include <easy_iterator.h>
@@ -80,7 +80,7 @@ void transforms_scene_t::setup(
 
 void transforms_scene_t::input(const SDL_Event& current_event)
 {
-  camera_system.handleEvents(sdlToInput(&current_event));
+  camera_system.handleEvents(asci_sdl::sdlToInput(&current_event));
 
   if (current_event.type == SDL_MOUSEBUTTONDOWN) {
     if (hit_distance >= 0.0f) {

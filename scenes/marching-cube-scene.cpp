@@ -3,9 +3,9 @@
 #include "bgfx-helpers.h"
 #include "file-ops.h"
 #include "marching-cubes/marching-cubes.h"
-#include "sdl-camera-input.h"
 
 #include <SDL.h>
+#include <as-camera-input-sdl/as-camera-input-sdl.hpp>
 #include <as/as-math-ops.hpp>
 #include <as/as-view.hpp>
 #include <bx/timer.h>
@@ -110,7 +110,7 @@ void marching_cube_scene_t::setup(
 
 void marching_cube_scene_t::input(const SDL_Event& current_event)
 {
-  camera_system.handleEvents(sdlToInput(&current_event));
+  camera_system.handleEvents(asci_sdl::sdlToInput(&current_event));
 }
 
 void marching_cube_scene_t::update(debug_draw_t& debug_draw)
