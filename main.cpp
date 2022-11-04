@@ -9,6 +9,7 @@
 
 #include <SDL.h>
 #include <SDL_syswm.h>
+#include <as-camera-input-sdl/as-camera-input-sdl.hpp>
 #include <bgfx/bgfx.h>
 #include <bgfx/platform.h>
 #include <imgui.h>
@@ -173,9 +174,20 @@ int main(int argc, char** argv)
     bgfx::setViewClear(ortho_view, BGFX_CLEAR_DEPTH);
     bgfx::setViewRect(ortho_view, 0, 0, width, height);
 
+    static bool process_cached_input = true;
     for (bool quit = false; !quit;) {
-      SDL_Event current_event;
-      while (SDL_PollEvent(&current_event) != 0) {
+      if (scene) {
+        auto transforms_scene = static_cast<transforms_scene_t*>(scene.get());
+        if (process_cached_input) {
+          for (const auto& cached_camera_event :
+               transforms_scene->cached_camera_events_) {
+            transforms_scene->camera_system.handleEvents(cached_camera_event);
+          }
+        }
+        transforms_scene->cached_camera_events_.clear();
+      }
+
+      for (SDL_Event current_event; SDL_PollEvent(&current_event) != 0;) {
         ImGui_ImplSDL2_ProcessEvent(&current_event);
         if (current_event.type == SDL_QUIT) {
           quit = true;
@@ -210,6 +222,10 @@ int main(int argc, char** argv)
           ImGui::End();
           break;
         case mode_e::running_scene: {
+          ImGui::Begin("Input");
+          ImGui::Checkbox("Process Cached Input", &process_cached_input);
+          ImGui::End();
+
           debug_draw_t debug_draw{&debug_circles, &debug_spheres,
                                   &debug_lines,   &debug_lines_screen,
                                   &debug_cubes,   &debug_quads};
@@ -226,6 +242,14 @@ int main(int argc, char** argv)
 
       bgfx::touch(main_view);
       bgfx::touch(ortho_view);
+
+      if (process_cached_input) {
+        auto transforms_scene = static_cast<transforms_scene_t*>(scene.get());
+        for (SDL_Event current_event; SDL_PollEvent(&current_event) != 0;) {
+          transforms_scene->cached_camera_events_.push_back(
+            asci_sdl::sdlToInput(&current_event));
+        }
+      }
 
       ImGui::Render();
       ImGui_Implbgfx_RenderDrawLists(ImGui::GetDrawData());

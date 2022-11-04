@@ -153,6 +153,8 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
     curve_handles.updateDrag(next_hit);
   }
 
+  static bool smoothing = false;
+
   ImGui::Begin("Camera");
   ImGui::PushItemWidth(70);
   ImGui::InputFloat(
@@ -161,6 +163,7 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
     "Free Look Pan Speed", &first_person_pan_camera.props_.pan_speed_);
   ImGui::InputFloat(
     "Translate Speed", &first_person_translate_camera.props_.translate_speed_);
+  ImGui::Checkbox("Smoothing", &smoothing);
   ImGui::InputFloat("Look Smoothness", &smooth_props.look_smoothness_);
   ImGui::InputFloat("Move Smoothness", &smooth_props.move_smoothness_);
   ImGui::InputFloat(
@@ -241,8 +244,12 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
       }
     }
 
-    camera =
-      asci::smoothCamera(camera, target_camera, smooth_props, delta_time);
+    if (smoothing) {
+      camera =
+        asci::smoothCamera(camera, target_camera, smooth_props, delta_time);
+    } else {
+      camera = target_camera;
+    }
 
     const as::real look_rate = exp2(smooth_props.look_smoothness_);
     const as::real look_t = exp2(-look_rate * delta_time);
