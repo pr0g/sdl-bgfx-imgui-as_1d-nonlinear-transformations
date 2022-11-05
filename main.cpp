@@ -12,6 +12,7 @@
 #include <as-camera-input-sdl/as-camera-input-sdl.hpp>
 #include <bgfx/bgfx.h>
 #include <bgfx/platform.h>
+#include <bx/timer.h>
 #include <imgui.h>
 #include <nlohmann/json.hpp>
 #include <thh-bgfx-debug/debug-cube.hpp>
@@ -174,24 +175,15 @@ int main(int argc, char** argv)
     bgfx::setViewClear(ortho_view, BGFX_CLEAR_DEPTH);
     bgfx::setViewRect(ortho_view, 0, 0, width, height);
 
+    int last_cached_input_count = 0;
+    int64_t prev = bx::getHPCounter();
     static bool process_cached_input = true;
     for (bool quit = false; !quit;) {
-      if (scene) {
-        auto transforms_scene = static_cast<transforms_scene_t*>(scene.get());
-        if (process_cached_input) {
-          for (const auto& cached_camera_event :
-               transforms_scene->cached_camera_events_) {
-            transforms_scene->camera_system.handleEvents(cached_camera_event);
-          }
-        }
-        transforms_scene->cached_camera_events_.clear();
-      }
-
-      for (SDL_Event current_event; SDL_PollEvent(&current_event) != 0;) {
+      auto handle_event_fn = [&](const SDL_Event& current_event) {
         ImGui_ImplSDL2_ProcessEvent(&current_event);
         if (current_event.type == SDL_QUIT) {
           quit = true;
-          break;
+          return;
         }
 
         if (scene) {
@@ -205,7 +197,52 @@ int main(int argc, char** argv)
             }
           }
         }
+      };
+
+      if (scene) {
+        auto transforms_scene = static_cast<transforms_scene_t*>(scene.get());
+        if (process_cached_input) {
+          for (const auto& cached_event : transforms_scene->cached_events_) {
+            handle_event_fn(cached_event);
+          }
+        }
+        transforms_scene->cached_events_.clear();
       }
+
+      for (SDL_Event current_event; SDL_PollEvent(&current_event) != 0;) {
+        handle_event_fn(current_event);
+      }
+
+      static int fps = 20;
+      auto seconds_per_frame = [] { return 1.0f / (float)fps; };
+      auto seconds_elapsed = [](int64_t previous, int64_t current) {
+        return (double)(current - previous) / double(bx::getHPFrequency());
+      };
+
+      const double seconds = seconds_elapsed(prev, bx::getHPCounter());
+      if (seconds < seconds_per_frame()) {
+        // wait for one ms less than delay (due to precision issues)
+        const double remainder_s = (double)seconds_per_frame() - seconds;
+        // wait 4ms less than actual remainder due to resolution of SDL_Delay
+        // (we don't want to delay/sleep too long and get behind)
+        const double remainder_pad_s = remainder_s - 0.004;
+        const double remainder_pad_ms = remainder_pad_s * 1000.0;
+        const double remainder_pad_ms_clamped = fmax(remainder_pad_ms, 0.0);
+        const uint32_t delay = (uint32_t)remainder_pad_ms_clamped;
+        SDL_Delay(delay);
+        const double seconds_left = seconds_elapsed(prev, bx::getHPCounter());
+        // check we didn't wait too long and get behind
+        assert(seconds_left < seconds_per_frame());
+        // busy wait for the remaining time
+        while (seconds_elapsed(prev, bx::getHPCounter())
+               < seconds_per_frame()) {
+          ;
+        }
+      }
+
+      const int64_t current_counter = bx::getHPCounter();
+      const auto delta_time = seconds_elapsed(prev, current_counter);
+      prev = current_counter;
 
       ImGui_Implbgfx_NewFrame();
       ImGui_ImplSDL2_NewFrame();
@@ -224,6 +261,8 @@ int main(int argc, char** argv)
         case mode_e::running_scene: {
           ImGui::Begin("Input");
           ImGui::Checkbox("Process Cached Input", &process_cached_input);
+          ImGui::InputInt("Target Framerate", &fps);
+          ImGui::LabelText("Cached Input Count", "%d", last_cached_input_count);
           ImGui::End();
 
           debug_draw_t debug_draw{&debug_circles, &debug_spheres,
@@ -246,9 +285,11 @@ int main(int argc, char** argv)
       if (process_cached_input) {
         auto transforms_scene = static_cast<transforms_scene_t*>(scene.get());
         for (SDL_Event current_event; SDL_PollEvent(&current_event) != 0;) {
-          transforms_scene->cached_camera_events_.push_back(
-            asci_sdl::sdlToInput(&current_event));
+          transforms_scene->cached_events_.push_back(current_event);
         }
+        last_cached_input_count = transforms_scene->cached_events_.size();
+      } else {
+        last_cached_input_count = 0;
       }
 
       ImGui::Render();

@@ -128,5 +128,5 @@ struct transforms_scene_t : public scene_t
   as::affine next_stored_camera_transform_ = as::affine::identity();
   bool tracking_ = false;
 
-  std::vector<asci::InputEvent> cached_camera_events_;
+  std::vector<SDL_Event> cached_events_;
 };
