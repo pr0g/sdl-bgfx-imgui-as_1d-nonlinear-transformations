@@ -820,10 +820,6 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
     as::mat4_from_affine(another_affine)
       * as::mat4_from_mat3(as::mat3_scale(0.2f)),
     as::vec4::axis_w());
-
-  // include this in case nothing was submitted to draw
-  bgfx::touch(main_view_);
-  bgfx::touch(ortho_view_);
 }
 
 void transforms_scene_t::on_camera_transform_changed(
