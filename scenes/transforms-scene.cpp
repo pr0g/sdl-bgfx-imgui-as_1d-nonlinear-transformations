@@ -182,11 +182,11 @@ void transforms_scene_t::update(
   ImGui::Text("%f", as::degrees(camera.yaw));
   ImGui::End();
 
-  const auto freq = double(bx::getHPFrequency());
-  int64_t time_window = fps::calculateWindow(fps, bx::getHPCounter());
-  const double framerate = time_window > -1 ? (double)(fps.MaxSamples - 1)
-                                                / (double(time_window) / freq)
-                                            : 0.0;
+  const int64_t time_window = fps::calculateWindow(fps, bx::getHPCounter());
+  const double framerate =
+    time_window > -1 ? (double)(fps.MaxSamples - 1)
+                         / (double(time_window) / double(bx::getHPFrequency()))
+                     : 0.0;
 
   ImGui::Begin("Transforms");
   float translation_imgui[3];
