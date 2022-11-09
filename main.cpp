@@ -36,6 +36,40 @@ Handedness handedness()
 
 } // namespace asc
 
+static int g_target_frames_per_second = 20;
+
+const auto seconds_per_frame = [] {
+  return 1.0f / (float)g_target_frames_per_second;
+};
+
+const auto seconds_elapsed = [](const int64_t previous, const int64_t current) {
+  return (double)(current - previous) / double(bx::getHPFrequency());
+};
+
+void wait_for_update(const int64_t previous)
+{
+  const double seconds = seconds_elapsed(previous, bx::getHPCounter());
+  if (seconds < seconds_per_frame()) {
+    // wait for one ms less than delay (due to precision issues)
+    const double remainder_s = (double)seconds_per_frame() - seconds;
+    // wait 4ms less than actual remainder due to resolution of SDL_Delay
+    // (we don't want to delay/sleep too long and get behind)
+    const double remainder_pad_s = remainder_s - 0.004;
+    const double remainder_pad_ms = remainder_pad_s * 1000.0;
+    const double remainder_pad_ms_clamped = fmax(remainder_pad_ms, 0.0);
+    const uint32_t delay = (uint32_t)remainder_pad_ms_clamped;
+    SDL_Delay(delay);
+    const double seconds_left = seconds_elapsed(previous, bx::getHPCounter());
+    // check we didn't wait too long and get behind
+    assert(seconds_left < seconds_per_frame());
+    // busy wait for the remaining time
+    while (seconds_elapsed(previous, bx::getHPCounter())
+           < seconds_per_frame()) {
+      ;
+    }
+  }
+}
+
 int main(int argc, char** argv)
 {
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -76,7 +110,7 @@ int main(int argc, char** argv)
   bgfx_init.type = bgfx::RendererType::Count; // auto choose renderer
   bgfx_init.resolution.width = width;
   bgfx_init.resolution.height = height;
-  bgfx_init.resolution.reset = BGFX_RESET_VSYNC;
+  bgfx_init.resolution.reset = BGFX_RESET_NONE;
   bgfx_init.platformData = pd;
   bgfx::init(bgfx_init);
 
@@ -179,7 +213,7 @@ int main(int argc, char** argv)
     int peep_events_early = 0;
     int peep_events_late = 0;
     int last_cached_input_count = 0;
-    int64_t prev = bx::getHPCounter();
+    int64_t previous_counter = bx::getHPCounter();
     static bool process_cached_input = true;
     for (bool quit = false; !quit;) {
       auto handle_event_fn = [&](const SDL_Event& current_event) {
@@ -188,7 +222,6 @@ int main(int argc, char** argv)
           quit = true;
           return;
         }
-
         if (scene) {
           scene->input(current_event);
           if (current_event.type == SDL_KEYDOWN) {
@@ -201,6 +234,11 @@ int main(int argc, char** argv)
           }
         }
       };
+
+      const int64_t current_counter = bx::getHPCounter();
+      const auto delta_time =
+        std::min(seconds_elapsed(previous_counter, current_counter), 0.25);
+      previous_counter = current_counter;
 
       if (scene) {
         auto transforms_scene = static_cast<transforms_scene_t*>(scene.get());
@@ -219,37 +257,6 @@ int main(int argc, char** argv)
       for (SDL_Event current_event; SDL_PollEvent(&current_event) != 0;) {
         handle_event_fn(current_event);
       }
-
-      static int fps = 20;
-      auto seconds_per_frame = [] { return 1.0f / (float)fps; };
-      auto seconds_elapsed = [](int64_t previous, int64_t current) {
-        return (double)(current - previous) / double(bx::getHPFrequency());
-      };
-
-      const double seconds = seconds_elapsed(prev, bx::getHPCounter());
-      if (seconds < seconds_per_frame()) {
-        // wait for one ms less than delay (due to precision issues)
-        const double remainder_s = (double)seconds_per_frame() - seconds;
-        // wait 4ms less than actual remainder due to resolution of SDL_Delay
-        // (we don't want to delay/sleep too long and get behind)
-        const double remainder_pad_s = remainder_s - 0.004;
-        const double remainder_pad_ms = remainder_pad_s * 1000.0;
-        const double remainder_pad_ms_clamped = fmax(remainder_pad_ms, 0.0);
-        const uint32_t delay = (uint32_t)remainder_pad_ms_clamped;
-        SDL_Delay(delay);
-        const double seconds_left = seconds_elapsed(prev, bx::getHPCounter());
-        // check we didn't wait too long and get behind
-        assert(seconds_left < seconds_per_frame());
-        // busy wait for the remaining time
-        while (seconds_elapsed(prev, bx::getHPCounter())
-               < seconds_per_frame()) {
-          ;
-        }
-      }
-
-      const int64_t current_counter = bx::getHPCounter();
-      const auto delta_time = seconds_elapsed(prev, current_counter);
-      prev = current_counter;
 
       ImGui_Implbgfx_NewFrame();
       ImGui_ImplSDL2_NewFrame();
@@ -270,7 +277,7 @@ int main(int argc, char** argv)
                                   &debug_lines,   &debug_lines_screen,
                                   &debug_cubes,   &debug_quads};
 
-          scene->update(debug_draw);
+          scene->update(debug_draw, delta_time);
 
           debug_lines.submit();
           debug_lines_screen.submit();
@@ -280,21 +287,17 @@ int main(int argc, char** argv)
         } break;
       }
 
-      bgfx::touch(main_view);
-      bgfx::touch(ortho_view);
-
       SDL_PumpEvents();
       peep_events_late = SDL_PeepEvents(
         nullptr, 0, SDL_PEEKEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT);
 
       ImGui::Begin("Input");
       ImGui::Checkbox("Process Cached Input", &process_cached_input);
-      ImGui::InputInt("Target Framerate", &fps);
+      ImGui::InputInt("Target Framerate", &g_target_frames_per_second);
       ImGui::LabelText("Cached Input Count", "%d", last_cached_input_count);
       ImGui::LabelText("Peep Events Early", "%d", peep_events_early);
       ImGui::LabelText("Peep Events Late", "%d", peep_events_late);
       ImGui::LabelText("Frame", "%d", frame - 1);
-
       ImGui::End();
 
       if (process_cached_input) {
@@ -307,10 +310,15 @@ int main(int argc, char** argv)
         last_cached_input_count = 0;
       }
 
+      bgfx::touch(main_view);
+      bgfx::touch(ortho_view);
+
       ImGui::Render();
       ImGui_Implbgfx_RenderDrawLists(ImGui::GetDrawData());
 
       frame = bgfx::frame();
+
+      wait_for_update(previous_counter);
     }
 
     if (scene) {

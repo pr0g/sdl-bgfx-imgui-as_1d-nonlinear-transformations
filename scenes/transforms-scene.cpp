@@ -11,6 +11,7 @@
 #include <bx/timer.h>
 #include <easy_iterator.h>
 #include <imgui.h>
+#include <thh-bgfx-debug/debug-color.hpp>
 #include <thh-bgfx-debug/debug-cube.hpp>
 #include <thh-bgfx-debug/debug-line.hpp>
 #include <thh-bgfx-debug/debug-quad.hpp>
@@ -74,8 +75,6 @@ void transforms_scene_t::setup(
   pivot_camera.pivot_cameras_.addCamera(&pivot_focus_camera);
 
   camera_system.cameras_ = cameras;
-
-  prev = bx::getHPCounter();
 }
 
 void transforms_scene_t::input(const SDL_Event& current_event)
@@ -113,7 +112,8 @@ void transforms_scene_t::input(const SDL_Event& current_event)
   }
 }
 
-void transforms_scene_t::update(debug_draw_t& debug_draw)
+void transforms_scene_t::update(
+  debug_draw_t& debug_draw, const float delta_time)
 {
   int global_x;
   int global_y;
@@ -187,11 +187,6 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
   const double framerate = time_window > -1 ? (double)(fps.MaxSamples - 1)
                                                 / (double(time_window) / freq)
                                             : 0.0;
-  const auto now = bx::getHPCounter();
-  const auto delta = now - prev;
-  prev = now;
-
-  const float delta_time = delta / static_cast<float>(freq);
 
   ImGui::Begin("Transforms");
   float translation_imgui[3];
@@ -402,8 +397,8 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
     const auto scale =
       as::mat4_from_mat3(as::mat3_scale(dbg::CurveHandles::HandleRadius));
 
-    debug_draw.debug_circles->addCircle(
-      as::mat_mul(scale, translation), as::vec4(as::vec3::zero(), 1.0f));
+    debug_draw.debug_circles->addWireCircle(
+      as::mat_mul(scale, translation), 0xff000000);
   }
 
   const auto line_granularity = 50;
@@ -594,8 +589,8 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
     const auto scale =
       as::mat4_from_mat3(as::mat3_scale(dbg::CurveHandles::HandleRadius));
 
-    debug_draw.debug_circles->addCircle(
-      as::mat_mul(scale, translation), as::vec4(as::vec3::zero(), 1.0f));
+    debug_draw.debug_circles->addWireCircle(
+      as::mat_mul(scale, translation), 0xff000000);
   }
 
   // draw smooth line
@@ -629,8 +624,8 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
   const auto scale =
     as::mat4_from_mat3(as::mat3_scale(dbg::CurveHandles::HandleRadius));
 
-  debug_draw.debug_circles->addCircle(
-    as::mat_mul(scale, translation), as::vec4(as::vec3::zero(), 1.0f));
+  debug_draw.debug_circles->addWireCircle(
+    as::mat_mul(scale, translation), 0xff000000);
 
   const auto curve_position = [p0, p1, c0, c1, c2, c3] {
     if (order == 0) {
@@ -651,11 +646,11 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
     return as::vec3::zero();
   }();
 
-  debug_draw.debug_circles->addCircle(
+  debug_draw.debug_circles->addWireCircle(
     as::mat_mul(
       as::mat4_from_mat3(as::mat3_scale(dbg::CurveHandles::HandleRadius)),
       as::mat4_from_mat3_vec3(as::mat3::identity(), curve_position)),
-    as::vec4(as::vec3::zero(), 1.0f));
+    0xff000000);
   // animation end
 
   // screen space drawing
@@ -758,10 +753,11 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
   for (size_t r = 0; r < 100; ++r) {
     for (size_t c = 0; c < 100; ++c) {
       const as::vec2 p = as::vec2(float(c) * 0.1f, float(r) * 0.1f);
-      const float grey =
+      const float grey = as::clamp(
         ns::perlinNoise2d((p + noise_position) * noise2d_freq, noise2d_offset)
-          * noise2d_amp
-        + 0.5f;
+            * noise2d_amp
+          + 0.5f,
+        0.0f, 1.0f);
 
       if (draw_gradients && c % 10 == 0 && r % 10 == 0) {
         const as::vec2 p0 = as::vec_floor(p);
@@ -777,7 +773,8 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
       const auto scale = as::mat4_from_mat3(as::mat3_scale(0.1f));
 
       debug_draw.debug_quads->addQuad(
-        as::mat_mul(scale, translation), as::vec4(as::vec3(grey), 1.0f));
+        as::mat_mul(scale, translation),
+        dbg::encodeColorAbgr(dbg::NormalizedRgba(grey, 1.0f)));
     }
   }
 
@@ -805,28 +802,27 @@ void transforms_scene_t::update(debug_draw_t& debug_draw)
   as::affine another_affine =
     as::affine_mul(as::affine(as::vec3::axis_z(-0.5f)), next_affine);
 
+  debug_draw.debug_cubes->addCube(as::mat4_from_rigid(next_rigid), 0xffffffff);
   debug_draw.debug_cubes->addCube(
-    as::mat4_from_rigid(next_rigid), as::vec4::one());
-  debug_draw.debug_cubes->addCube(
-    as::mat4_from_affine(next_affine), as::vec4::axis_w());
+    as::mat4_from_affine(next_affine), 0xff000000);
 
   debug_draw.debug_spheres->addSphere(
     as::mat4_from_vec3(next_position_rigid)
       * as::mat4_from_mat3(as::mat3_scale(0.2f)),
-    as::vec4::one());
+    0xffffffff);
   debug_draw.debug_spheres->addSphere(
     as::mat4_from_vec3(next_position_affine)
       * as::mat4_from_mat3(as::mat3_scale(0.2f)),
-    as::vec4::axis_w());
+    0xff000000);
 
   debug_draw.debug_spheres->addSphere(
     as::mat4_from_rigid(another_rigid)
       * as::mat4_from_mat3(as::mat3_scale(0.2f)),
-    as::vec4::one());
+    0xffffffff);
   debug_draw.debug_spheres->addSphere(
     as::mat4_from_affine(another_affine)
       * as::mat4_from_mat3(as::mat3_scale(0.2f)),
-    as::vec4::axis_w());
+    0xff000000);
 }
 
 void transforms_scene_t::on_camera_transform_changed(

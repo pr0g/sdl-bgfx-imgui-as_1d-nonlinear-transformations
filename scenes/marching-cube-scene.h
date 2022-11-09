@@ -64,7 +64,7 @@ struct marching_cube_scene_t : public scene_t
     bgfx::ViewId main_view, bgfx::ViewId ortho_view, uint16_t width,
     uint16_t height) override;
   void input(const SDL_Event& current_event) override;
-  void update(debug_draw_t& debug_draw) override;
+  void update(debug_draw_t& debug_draw, float delta_time) override;
   void teardown() override;
 
   as::vec2i screen_dimension{};
@@ -96,8 +96,6 @@ struct marching_cube_scene_t : public scene_t
   asci::ScrollTranslationCameraInput first_person_wheel_camera;
   asci::Cameras cameras;
   asci::CameraSystem camera_system;
-
-  int64_t prev;
 
   const int dimension = 25;
   mc::Point*** points;

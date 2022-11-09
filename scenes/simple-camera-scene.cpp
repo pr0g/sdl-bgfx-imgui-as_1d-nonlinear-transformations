@@ -6,6 +6,7 @@
 #include <as/as-view.hpp>
 #include <bx/timer.h>
 #include <imgui.h>
+#include <thh-bgfx-debug/debug-color.hpp>
 #include <thh-bgfx-debug/debug-sphere.hpp>
 
 #include <functional>
@@ -21,15 +22,9 @@ void simple_camera_scene_t::setup(
     as::perspective_d3d_lh(fov, float(width) / float(height), 0.01f, 1000.0f);
 }
 
-void simple_camera_scene_t::update(debug_draw_t& debug_draw)
+void simple_camera_scene_t::update(
+  debug_draw_t& debug_draw, const float delta_time)
 {
-  const auto freq = double(bx::getHPFrequency());
-  const auto now = bx::getHPCounter();
-  const auto delta = now - prev_;
-  prev_ = now;
-
-  const float delta_time = delta / static_cast<float>(freq);
-
   ImGui::Begin("Simple Camera");
 
   static float speed = 10.0f;
@@ -145,8 +140,9 @@ void simple_camera_scene_t::update(debug_draw_t& debug_draw)
   const float alpha =
     as::min(as::vec_distance(camera_.pivot, camera_.translation()), 2.0f)
     / 2.0f;
+  const auto a = uint8_t(alpha * 255.0f);
   debug_draw.debug_spheres->addSphere(
-    as::mat4_from_vec3(camera_.pivot), as::vec4(as::vec3::one(), alpha));
+    as::mat4_from_vec3(camera_.pivot), dbg::encodeColorAbgr(255, 255, 255, a));
   drawTransform(
     *debug_draw.debug_lines, as::affine_from_vec3(camera_.pivot), alpha);
 

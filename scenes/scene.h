@@ -41,6 +41,6 @@ struct scene_t
     bgfx::ViewId main_view, bgfx::ViewId ortho_view, uint16_t width,
     uint16_t height) = 0;
   virtual void input(const SDL_Event& current_event) = 0;
-  virtual void update(debug_draw_t& debug_draw) = 0;
+  virtual void update(debug_draw_t& debug_draw, float delta_time) = 0;
   virtual void teardown() = 0;
 };

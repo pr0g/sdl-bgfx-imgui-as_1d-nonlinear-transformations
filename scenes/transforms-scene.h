@@ -54,7 +54,7 @@ struct transforms_scene_t : public scene_t
     bgfx::ViewId main_view, bgfx::ViewId ortho_view, uint16_t width,
     uint16_t height) override;
   void input(const SDL_Event& current_event) override;
-  void update(debug_draw_t& debug_draw) override;
+  void update(debug_draw_t& debug_draw, float delta_time) override;
   void teardown() override {}
 
   void on_camera_transform_changed(const as::affine& camera_transform, bool internal);
@@ -76,8 +76,6 @@ struct transforms_scene_t : public scene_t
   as::index c3_index;
   as::index smooth_line_begin_index;
   as::index smooth_line_end_index;
-
-  int64_t prev;
 
   asci::SmoothProps smooth_props;
 

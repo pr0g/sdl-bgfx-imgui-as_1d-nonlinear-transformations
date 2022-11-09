@@ -99,8 +99,6 @@ void marching_cube_scene_t::setup(
 
   camera_system.cameras_ = cameras;
 
-  prev = bx::getHPCounter();
-
   points = mc::createPointVolume(dimension, 10000.0f);
   cell_values = mc::createCellValues(dimension);
   cell_positions = mc::createCellPositions(dimension);
@@ -113,7 +111,8 @@ void marching_cube_scene_t::input(const SDL_Event& current_event)
   camera_system.handleEvents(asci_sdl::sdlToInput(&current_event));
 }
 
-void marching_cube_scene_t::update(debug_draw_t& debug_draw)
+void marching_cube_scene_t::update(
+  debug_draw_t& debug_draw, const float delta_time)
 {
   auto freq = double(bx::getHPFrequency());
   int64_t time_window = fps::calculateWindow(fps, bx::getHPCounter());
@@ -121,12 +120,6 @@ void marching_cube_scene_t::update(debug_draw_t& debug_draw)
                                           / (double(time_window) / freq)
                                       : 0.0;
 
-  // frame dt
-  auto now = bx::getHPCounter();
-  auto delta = now - prev;
-  prev = now;
-
-  const float delta_time = delta / static_cast<float>(freq);
   target_camera = camera_system.stepCamera(target_camera, delta_time);
   camera =
     asci::smoothCamera(camera, target_camera, asci::SmoothProps{}, delta_time);

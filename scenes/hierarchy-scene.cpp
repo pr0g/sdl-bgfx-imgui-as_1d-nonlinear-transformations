@@ -46,7 +46,8 @@ void imgui_hierarchy_scene_t::setup(
   interaction.select(root_handles.front(), entities, root_handles);
 }
 
-void imgui_hierarchy_scene_t::update(debug_draw_t& debug_draw)
+void imgui_hierarchy_scene_t::update(
+  debug_draw_t& debug_draw, const float delta_time)
 {
   // imgui hierarchy experiments
   hy_ig::imguiInteractionDrawListHierarchy(entities, interaction, root_handles);
