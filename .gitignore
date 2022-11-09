@@ -4,3 +4,5 @@ imgui.ini
 *.bin
 .vscode/
 vc140.pdb
+/cmake-build-*/
+/.idea/
