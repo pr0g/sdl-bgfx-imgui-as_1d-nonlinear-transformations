@@ -38,20 +38,27 @@ Handedness handedness()
 
 static int g_target_frames_per_second = 20;
 
-const auto seconds_per_frame = [] {
-  return 1.0f / (float)g_target_frames_per_second;
-};
+const auto calculate_seconds_per_frame =
+  [](const int target_frames_per_second) {
+    return 1.0f / (float)target_frames_per_second;
+  };
 
 const auto seconds_elapsed = [](const int64_t previous, const int64_t current) {
   return (double)(current - previous) / double(bx::getHPFrequency());
 };
 
-void wait_for_update(const int64_t previous)
+const auto current_time = [] {
+  return (double)bx::getHPCounter() / double(bx::getHPFrequency());
+};
+
+void wait_for_update(const int64_t previous, const int target_frames_per_second)
 {
   const double seconds = seconds_elapsed(previous, bx::getHPCounter());
-  if (seconds < seconds_per_frame()) {
+  if (float seconds_per_frame =
+        calculate_seconds_per_frame(target_frames_per_second);
+      seconds < seconds_per_frame) {
     // wait for one ms less than delay (due to precision issues)
-    const double remainder_s = (double)seconds_per_frame() - seconds;
+    const double remainder_s = (double)seconds_per_frame - seconds;
     // wait 4ms less than actual remainder due to resolution of SDL_Delay
     // (we don't want to delay/sleep too long and get behind)
     const double remainder_pad_s = remainder_s - 0.004;
@@ -61,10 +68,9 @@ void wait_for_update(const int64_t previous)
     SDL_Delay(delay);
     const double seconds_left = seconds_elapsed(previous, bx::getHPCounter());
     // check we didn't wait too long and get behind
-    assert(seconds_left < seconds_per_frame());
+    assert(seconds_left < seconds_per_frame);
     // busy wait for the remaining time
-    while (seconds_elapsed(previous, bx::getHPCounter())
-           < seconds_per_frame()) {
+    while (seconds_elapsed(previous, bx::getHPCounter()) < seconds_per_frame) {
       ;
     }
   }
@@ -209,12 +215,16 @@ int main(int argc, char** argv)
     bgfx::setViewClear(ortho_view, BGFX_CLEAR_DEPTH);
     bgfx::setViewRect(ortho_view, 0, 0, width, height);
 
+    fps::Fps fps;
+    double framerate = 0;
     int frame = 0;
     int peep_events_early = 0;
     int peep_events_late = 0;
     int last_cached_input_count = 0;
-    int64_t previous_counter = bx::getHPCounter();
+    // int64_t previous_render_counter = bx::getHPCounter();
+    int64_t previous_update_counter = bx::getHPCounter();
     static bool process_cached_input = true;
+    auto next_update_time = current_time();
     for (bool quit = false; !quit;) {
       auto handle_event_fn = [&](const SDL_Event& current_event) {
         ImGui_ImplSDL2_ProcessEvent(&current_event);
@@ -235,28 +245,37 @@ int main(int argc, char** argv)
         }
       };
 
-      const int64_t current_counter = bx::getHPCounter();
-      const auto delta_time =
-        std::min(seconds_elapsed(previous_counter, current_counter), 0.25);
-      previous_counter = current_counter;
+      // const int64_t current_render_counter = bx::getHPCounter();
+      // const auto render_delta_time = std::min(
+      //   seconds_elapsed(previous_render_counter, current_render_counter),
+      //   0.25);
+      // previous_render_counter = current_render_counter;
 
-      if (scene) {
-        auto transforms_scene = static_cast<transforms_scene_t*>(scene.get());
-        if (process_cached_input) {
-          for (const auto& cached_event : transforms_scene->cached_events_) {
-            handle_event_fn(cached_event);
-          }
-        }
-        transforms_scene->cached_events_.clear();
-      }
+      // if (scene) {
+      //   auto transforms_scene =
+      //   static_cast<transforms_scene_t*>(scene.get()); if
+      //   (process_cached_input) {
+      //     for (const auto& cached_event : transforms_scene->cached_events_) {
+      //       handle_event_fn(cached_event);
+      //     }
+      //   }
+      //   transforms_scene->cached_events_.clear();
+      // }
 
-      SDL_PumpEvents();
-      peep_events_early = SDL_PeepEvents(
-        nullptr, 0, SDL_PEEKEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT);
+      // SDL_PumpEvents();
+      // peep_events_early = SDL_PeepEvents(
+      //   nullptr, 0, SDL_PEEKEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT);
 
       for (SDL_Event current_event; SDL_PollEvent(&current_event) != 0;) {
         handle_event_fn(current_event);
       }
+
+      // while (current_time() >= next_update_time) {
+      debug_lines.drop();
+      debug_lines_screen.drop();
+      debug_quads.drop();
+      debug_circles.drop();
+      debug_cubes.drop();
 
       ImGui_Implbgfx_NewFrame();
       ImGui_ImplSDL2_NewFrame();
@@ -277,19 +296,19 @@ int main(int argc, char** argv)
                                   &debug_lines,   &debug_lines_screen,
                                   &debug_cubes,   &debug_quads};
 
-          scene->update(debug_draw, delta_time);
+          const int64_t current_update_counter = bx::getHPCounter();
+          const auto update_delta_time = std::min(
+            seconds_elapsed(previous_update_counter, current_update_counter),
+            0.25);
+          previous_update_counter = current_update_counter;
+          scene->update(debug_draw, update_delta_time);
 
-          debug_lines.submit();
-          debug_lines_screen.submit();
-          debug_quads.submit();
-          debug_circles.submit();
-          debug_cubes.submit();
         } break;
       }
 
-      SDL_PumpEvents();
-      peep_events_late = SDL_PeepEvents(
-        nullptr, 0, SDL_PEEKEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT);
+      // SDL_PumpEvents();
+      // peep_events_late = SDL_PeepEvents(
+      //   nullptr, 0, SDL_PEEKEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT);
 
       ImGui::Begin("Input");
       ImGui::Checkbox("Process Cached Input", &process_cached_input);
@@ -298,27 +317,47 @@ int main(int argc, char** argv)
       ImGui::LabelText("Peep Events Early", "%d", peep_events_early);
       ImGui::LabelText("Peep Events Late", "%d", peep_events_late);
       ImGui::LabelText("Frame", "%d", frame - 1);
+      ImGui::LabelText("Time", "%f", current_time());
+      ImGui::LabelText("Framerate", "%f", framerate);
       ImGui::End();
 
-      if (process_cached_input) {
-        auto transforms_scene = static_cast<transforms_scene_t*>(scene.get());
-        for (SDL_Event current_event; SDL_PollEvent(&current_event) != 0;) {
-          transforms_scene->cached_events_.push_back(current_event);
-        }
-        last_cached_input_count = transforms_scene->cached_events_.size();
-      } else {
-        last_cached_input_count = 0;
-      }
+      // if (process_cached_input) {
+      //   auto transforms_scene =
+      //   static_cast<transforms_scene_t*>(scene.get()); for (SDL_Event
+      //   current_event; SDL_PollEvent(&current_event) != 0;) {
+      //     transforms_scene->cached_events_.push_back(current_event);
+      //   }
+      //   last_cached_input_count = transforms_scene->cached_events_.size();
+      // } else {
+      //   last_cached_input_count = 0;
+      // }
+
+      // next_update_time +=
+      //   calculate_seconds_per_frame(g_target_frames_per_second);
+
+      ImGui::Render();
+      // }
+
+      debug_lines.submit();
+      debug_lines_screen.submit();
+      debug_quads.submit();
+      debug_circles.submit();
+      debug_cubes.submit();
+
+      ImGui_Implbgfx_RenderDrawLists(ImGui::GetDrawData());
 
       bgfx::touch(main_view);
       bgfx::touch(ortho_view);
 
-      ImGui::Render();
-      ImGui_Implbgfx_RenderDrawLists(ImGui::GetDrawData());
-
       frame = bgfx::frame();
 
-      wait_for_update(previous_counter);
+      const int64_t time_window = fps::calculateWindow(fps, bx::getHPCounter());
+      framerate = time_window > -1
+                  ? (double)(fps.MaxSamples - 1)
+                      / (double(time_window) / double(bx::getHPFrequency()))
+                  : 0.0;
+
+      wait_for_update(previous_update_counter, g_target_frames_per_second);
     }
 
     if (scene) {
