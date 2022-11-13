@@ -18,9 +18,8 @@ FetchContent_Declare(
   GIT_TAG aab0c0d8fd17708c64522408d9b304729dbc3a3f)
 FetchContent_Declare(
   thh-bgfx-debug
-  SOURCE_DIR /Users/tomhultonharrop/Documents/Projects/thh-bgfx-debug)
-  # GIT_REPOSITORY https://github.com/pr0g/thh-bgfx-debug
-  # GIT_TAG 8ac20b7ae074387d3dc678d7ce757809800e8d28)
+  GIT_REPOSITORY https://github.com/pr0g/thh-bgfx-debug
+  GIT_TAG bb3f64ad1981b1ef71828fceb26307f408943aaf)
 FetchContent_Declare(
   hierarchy
   GIT_REPOSITORY https://github.com/pr0g/hierarchy.git

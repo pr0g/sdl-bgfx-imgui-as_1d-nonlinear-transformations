@@ -36,7 +36,7 @@ Handedness handedness()
 
 } // namespace asc
 
-static int g_target_frames_per_second = 20;
+// static int g_target_frames_per_second = 20;
 
 const auto calculate_seconds_per_frame =
   [](const int target_frames_per_second) {
@@ -215,16 +215,20 @@ int main(int argc, char** argv)
     bgfx::setViewClear(ortho_view, BGFX_CLEAR_DEPTH);
     bgfx::setViewRect(ortho_view, 0, 0, width, height);
 
+    const int updates_per_second = 60;
+    const int renders_per_second = 120;
+
     fps::Fps fps;
     double framerate = 0;
     int frame = 0;
-    int peep_events_early = 0;
-    int peep_events_late = 0;
-    int last_cached_input_count = 0;
-    // int64_t previous_render_counter = bx::getHPCounter();
+    // int peep_events_early = 0;
+    // int peep_events_late = 0;
+    // int last_cached_input_count = 0;
+    int64_t previous_render_counter = bx::getHPCounter();
     int64_t previous_update_counter = bx::getHPCounter();
     static bool process_cached_input = true;
     auto next_update_time = current_time();
+    double accumulator = 0.0f;
     for (bool quit = false; !quit;) {
       auto handle_event_fn = [&](const SDL_Event& current_event) {
         ImGui_ImplSDL2_ProcessEvent(&current_event);
@@ -245,11 +249,12 @@ int main(int argc, char** argv)
         }
       };
 
-      // const int64_t current_render_counter = bx::getHPCounter();
-      // const auto render_delta_time = std::min(
-      //   seconds_elapsed(previous_render_counter, current_render_counter),
-      //   0.25);
-      // previous_render_counter = current_render_counter;
+      const int64_t current_render_counter = bx::getHPCounter();
+      const auto render_delta_time = std::min(
+        seconds_elapsed(previous_render_counter, current_render_counter), 0.25);
+      previous_render_counter = current_render_counter;
+
+      accumulator += render_delta_time;
 
       // if (scene) {
       //   auto transforms_scene =
@@ -266,77 +271,88 @@ int main(int argc, char** argv)
       // peep_events_early = SDL_PeepEvents(
       //   nullptr, 0, SDL_PEEKEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT);
 
-      for (SDL_Event current_event; SDL_PollEvent(&current_event) != 0;) {
-        handle_event_fn(current_event);
-      }
-
       // while (current_time() >= next_update_time) {
-      debug_lines.drop();
-      debug_lines_screen.drop();
-      debug_quads.drop();
-      debug_circles.drop();
-      debug_cubes.drop();
+      const double update_dt = 1.0f / (double)updates_per_second;
+      while (accumulator >= update_dt) {
+        // const int64_t current_update_counter = bx::getHPCounter();
+        // const auto update_delta_time = std::min(
+        //   seconds_elapsed(previous_update_counter, current_update_counter),
+        //   0.25);
+        // previous_update_counter = current_update_counter;
 
-      ImGui_Implbgfx_NewFrame();
-      ImGui_ImplSDL2_NewFrame();
-      ImGui::NewFrame();
+        for (SDL_Event current_event; SDL_PollEvent(&current_event) != 0;) {
+          handle_event_fn(current_event);
+        }
 
-      switch (mode) {
-        case mode_e::waiting_for_scene:
-          ImGui::Begin("Scene Select");
-          ImGui::Combo(
-            "Scene Select", &scene_index, scene_names, std::size(scene_names));
-          if (ImGui::Button("Launch Scene")) {
-            begin_scene(scene_index);
-          }
-          ImGui::End();
-          break;
-        case mode_e::running_scene: {
-          debug_draw_t debug_draw{&debug_circles, &debug_spheres,
-                                  &debug_lines,   &debug_lines_screen,
-                                  &debug_cubes,   &debug_quads};
+        debug_lines.drop();
+        debug_lines_screen.drop();
+        debug_quads.drop();
+        debug_circles.drop();
+        debug_cubes.drop();
 
-          const int64_t current_update_counter = bx::getHPCounter();
-          const auto update_delta_time = std::min(
-            seconds_elapsed(previous_update_counter, current_update_counter),
-            0.25);
-          previous_update_counter = current_update_counter;
-          scene->update(debug_draw, update_delta_time);
+        ImGui_Implbgfx_NewFrame();
+        ImGui_ImplSDL2_NewFrame();
+        ImGui::NewFrame();
 
-        } break;
+        switch (mode) {
+          case mode_e::waiting_for_scene:
+            ImGui::Begin("Scene Select");
+            ImGui::Combo(
+              "Scene Select", &scene_index, scene_names,
+              std::size(scene_names));
+            if (ImGui::Button("Launch Scene")) {
+              begin_scene(scene_index);
+            }
+            ImGui::End();
+            break;
+          case mode_e::running_scene: {
+            debug_draw_t debug_draw{&debug_circles, &debug_spheres,
+                                    &debug_lines,   &debug_lines_screen,
+                                    &debug_cubes,   &debug_quads};
+
+            // const int64_t current_update_counter = bx::getHPCounter();
+            // const auto update_delta_time = std::min(
+            // seconds_elapsed(previous_update_counter, current_update_counter),
+            // 0.25);
+            // previous_update_counter = current_update_counter;
+            scene->update(debug_draw, update_dt);
+          } break;
+        }
+
+        // SDL_PumpEvents();
+        // peep_events_late = SDL_PeepEvents(
+        //   nullptr, 0, SDL_PEEKEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT);
+
+        ImGui::Begin("Input");
+        ImGui::Checkbox("Process Cached Input", &process_cached_input);
+        // ImGui::InputInt("Target Framerate", &g_target_frames_per_second);
+        // ImGui::LabelText("Cached Input Count", "%d",
+        // last_cached_input_count); ImGui::LabelText("Peep Events Early", "%d",
+        // peep_events_early); ImGui::LabelText("Peep Events Late", "%d",
+        // peep_events_late);
+        ImGui::LabelText("Frame", "%d", frame - 1);
+        ImGui::LabelText("Time", "%f", current_time());
+        ImGui::LabelText("Framerate", "%f", framerate);
+        ImGui::End();
+
+        // if (process_cached_input) {
+        //   auto transforms_scene =
+        //   static_cast<transforms_scene_t*>(scene.get()); for (SDL_Event
+        //   current_event; SDL_PollEvent(&current_event) != 0;) {
+        //     transforms_scene->cached_events_.push_back(current_event);
+        //   }
+        //   last_cached_input_count = transforms_scene->cached_events_.size();
+        // } else {
+        //   last_cached_input_count = 0;
+        // }
+
+        // next_update_time +=
+        //   calculate_seconds_per_frame(g_target_frames_per_second);
+
+        ImGui::Render();
+
+        accumulator -= update_dt;
       }
-
-      // SDL_PumpEvents();
-      // peep_events_late = SDL_PeepEvents(
-      //   nullptr, 0, SDL_PEEKEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT);
-
-      ImGui::Begin("Input");
-      ImGui::Checkbox("Process Cached Input", &process_cached_input);
-      ImGui::InputInt("Target Framerate", &g_target_frames_per_second);
-      ImGui::LabelText("Cached Input Count", "%d", last_cached_input_count);
-      ImGui::LabelText("Peep Events Early", "%d", peep_events_early);
-      ImGui::LabelText("Peep Events Late", "%d", peep_events_late);
-      ImGui::LabelText("Frame", "%d", frame - 1);
-      ImGui::LabelText("Time", "%f", current_time());
-      ImGui::LabelText("Framerate", "%f", framerate);
-      ImGui::End();
-
-      // if (process_cached_input) {
-      //   auto transforms_scene =
-      //   static_cast<transforms_scene_t*>(scene.get()); for (SDL_Event
-      //   current_event; SDL_PollEvent(&current_event) != 0;) {
-      //     transforms_scene->cached_events_.push_back(current_event);
-      //   }
-      //   last_cached_input_count = transforms_scene->cached_events_.size();
-      // } else {
-      //   last_cached_input_count = 0;
-      // }
-
-      // next_update_time +=
-      //   calculate_seconds_per_frame(g_target_frames_per_second);
-
-      ImGui::Render();
-      // }
 
       debug_lines.submit();
       debug_lines_screen.submit();
@@ -344,7 +360,9 @@ int main(int argc, char** argv)
       debug_circles.submit();
       debug_cubes.submit();
 
-      ImGui_Implbgfx_RenderDrawLists(ImGui::GetDrawData());
+      if (const auto draw_data = ImGui::GetDrawData()) {
+        ImGui_Implbgfx_RenderDrawLists(draw_data);
+      }
 
       bgfx::touch(main_view);
       bgfx::touch(ortho_view);
@@ -357,7 +375,7 @@ int main(int argc, char** argv)
                       / (double(time_window) / double(bx::getHPFrequency()))
                   : 0.0;
 
-      wait_for_update(previous_update_counter, g_target_frames_per_second);
+      wait_for_update(previous_render_counter, renders_per_second);
     }
 
     if (scene) {
