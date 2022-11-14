@@ -215,18 +215,13 @@ int main(int argc, char** argv)
     bgfx::setViewClear(ortho_view, BGFX_CLEAR_DEPTH);
     bgfx::setViewRect(ortho_view, 0, 0, width, height);
 
-    const int updates_per_second = 60;
-    const int renders_per_second = 120;
+    const int updates_per_second = 50;
+    const int renders_per_second = 60;
 
     fps::Fps fps;
-    double framerate = 0;
     int frame = 0;
-    // int peep_events_early = 0;
-    // int peep_events_late = 0;
-    // int last_cached_input_count = 0;
+    double framerate = 0;
     int64_t previous_render_counter = bx::getHPCounter();
-    int64_t previous_update_counter = bx::getHPCounter();
-    static bool process_cached_input = true;
     auto next_update_time = current_time();
     double accumulator = 0.0f;
     for (bool quit = false; !quit;) {
@@ -253,33 +248,11 @@ int main(int argc, char** argv)
       const auto render_delta_time = std::min(
         seconds_elapsed(previous_render_counter, current_render_counter), 0.25);
       previous_render_counter = current_render_counter;
-
       accumulator += render_delta_time;
 
-      // if (scene) {
-      //   auto transforms_scene =
-      //   static_cast<transforms_scene_t*>(scene.get()); if
-      //   (process_cached_input) {
-      //     for (const auto& cached_event : transforms_scene->cached_events_) {
-      //       handle_event_fn(cached_event);
-      //     }
-      //   }
-      //   transforms_scene->cached_events_.clear();
-      // }
-
-      // SDL_PumpEvents();
-      // peep_events_early = SDL_PeepEvents(
-      //   nullptr, 0, SDL_PEEKEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT);
-
-      // while (current_time() >= next_update_time) {
-      const double update_dt = 1.0f / (double)updates_per_second;
+      const double update_dt = 1.0 / (double)updates_per_second;
+      int32_t updates = 0;
       while (accumulator >= update_dt) {
-        // const int64_t current_update_counter = bx::getHPCounter();
-        // const auto update_delta_time = std::min(
-        //   seconds_elapsed(previous_update_counter, current_update_counter),
-        //   0.25);
-        // previous_update_counter = current_update_counter;
-
         for (SDL_Event current_event; SDL_PollEvent(&current_event) != 0;) {
           handle_event_fn(current_event);
         }
@@ -309,49 +282,23 @@ int main(int argc, char** argv)
             debug_draw_t debug_draw{&debug_circles, &debug_spheres,
                                     &debug_lines,   &debug_lines_screen,
                                     &debug_cubes,   &debug_quads};
-
-            // const int64_t current_update_counter = bx::getHPCounter();
-            // const auto update_delta_time = std::min(
-            // seconds_elapsed(previous_update_counter, current_update_counter),
-            // 0.25);
-            // previous_update_counter = current_update_counter;
             scene->update(debug_draw, update_dt);
           } break;
         }
 
-        // SDL_PumpEvents();
-        // peep_events_late = SDL_PeepEvents(
-        //   nullptr, 0, SDL_PEEKEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT);
+        accumulator -= update_dt;
+        updates++;
 
         ImGui::Begin("Input");
-        ImGui::Checkbox("Process Cached Input", &process_cached_input);
-        // ImGui::InputInt("Target Framerate", &g_target_frames_per_second);
-        // ImGui::LabelText("Cached Input Count", "%d",
-        // last_cached_input_count); ImGui::LabelText("Peep Events Early", "%d",
-        // peep_events_early); ImGui::LabelText("Peep Events Late", "%d",
-        // peep_events_late);
         ImGui::LabelText("Frame", "%d", frame - 1);
         ImGui::LabelText("Time", "%f", current_time());
         ImGui::LabelText("Framerate", "%f", framerate);
+        ImGui::LabelText("Updates", "%d", updates);
+        ImGui::LabelText("Accumulator", "%f", accumulator);
+        ImGui::LabelText("Lerp", "%f", accumulator / update_dt);
         ImGui::End();
 
-        // if (process_cached_input) {
-        //   auto transforms_scene =
-        //   static_cast<transforms_scene_t*>(scene.get()); for (SDL_Event
-        //   current_event; SDL_PollEvent(&current_event) != 0;) {
-        //     transforms_scene->cached_events_.push_back(current_event);
-        //   }
-        //   last_cached_input_count = transforms_scene->cached_events_.size();
-        // } else {
-        //   last_cached_input_count = 0;
-        // }
-
-        // next_update_time +=
-        //   calculate_seconds_per_frame(g_target_frames_per_second);
-
         ImGui::Render();
-
-        accumulator -= update_dt;
       }
 
       debug_lines.submit();
