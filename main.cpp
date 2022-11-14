@@ -116,7 +116,7 @@ int main(int argc, char** argv)
   bgfx_init.type = bgfx::RendererType::Count; // auto choose renderer
   bgfx_init.resolution.width = width;
   bgfx_init.resolution.height = height;
-  bgfx_init.resolution.reset = BGFX_RESET_NONE;
+  bgfx_init.resolution.reset = BGFX_RESET_VSYNC;
   bgfx_init.platformData = pd;
   bgfx::init(bgfx_init);
 
@@ -215,8 +215,8 @@ int main(int argc, char** argv)
     bgfx::setViewClear(ortho_view, BGFX_CLEAR_DEPTH);
     bgfx::setViewRect(ortho_view, 0, 0, width, height);
 
-    const int updates_per_second = 50;
-    const int renders_per_second = 60;
+    int updates_per_second = 120;
+    int renders_per_second = 60;
 
     fps::Fps fps;
     int frame = 0;
@@ -296,6 +296,8 @@ int main(int argc, char** argv)
         ImGui::LabelText("Updates", "%d", updates);
         ImGui::LabelText("Accumulator", "%f", accumulator);
         ImGui::LabelText("Lerp", "%f", accumulator / update_dt);
+        ImGui::SliderInt("Target Renders Per Second", &renders_per_second, 10, 120);
+        ImGui::SliderInt("Target Updates Per Second", &updates_per_second, 10, 360);
         ImGui::End();
 
         ImGui::Render();
