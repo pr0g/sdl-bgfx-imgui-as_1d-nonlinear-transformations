@@ -9,8 +9,6 @@
 #include <bgfx/bgfx.h>
 #include <thh-bgfx-debug/debug-shader.hpp>
 
-union SDL_Event;
-
 struct debug_settings_t
 {
   bool linear = true;

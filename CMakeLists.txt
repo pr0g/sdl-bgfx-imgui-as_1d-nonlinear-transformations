@@ -48,6 +48,7 @@ target_sources(
           scenes/transforms-scene.cpp
           scenes/hierarchy-scene.cpp
           scenes/simple-camera-scene.cpp
+          scenes/globe-scene.cpp
           math-utils.cpp)
 
 target_link_libraries(
