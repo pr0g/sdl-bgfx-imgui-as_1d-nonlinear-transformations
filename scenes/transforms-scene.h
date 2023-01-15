@@ -57,7 +57,8 @@ struct transforms_scene_t : public scene_t
   void update(debug_draw_t& debug_draw, float delta_time) override;
   void teardown() override {}
 
-  void on_camera_transform_changed(const as::affine& camera_transform, bool internal);
+  void on_camera_transform_changed(
+    const as::affine& camera_transform, bool internal);
 
   as::vec2i screen_dimension{};
   bgfx::ViewId main_view_;
@@ -112,8 +113,6 @@ struct transforms_scene_t : public scene_t
   float camera_animation_t = 0.0f;
   CameraMode camera_mode = CameraMode::Control;
 
-  fps::Fps fps;
-
   float hit_distance = -1.0f;
   as::vec3 ray_origin;
   as::vec3 ray_direction;
@@ -125,6 +124,4 @@ struct transforms_scene_t : public scene_t
 
   as::affine next_stored_camera_transform_ = as::affine::identity();
   bool tracking_ = false;
-
-  std::vector<SDL_Event> cached_events_;
 };

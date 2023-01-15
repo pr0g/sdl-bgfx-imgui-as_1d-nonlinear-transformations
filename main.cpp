@@ -36,8 +36,6 @@ Handedness handedness()
 
 } // namespace asc
 
-// static int g_target_frames_per_second = 20;
-
 const auto calculate_seconds_per_frame =
   [](const int target_frames_per_second) {
     return 1.0f / (float)target_frames_per_second;
@@ -116,7 +114,8 @@ int main(int argc, char** argv)
   bgfx_init.type = bgfx::RendererType::Count; // auto choose renderer
   bgfx_init.resolution.width = width;
   bgfx_init.resolution.height = height;
-  bgfx_init.resolution.reset = BGFX_RESET_NONE;
+  // use BGFX_RESET_NONE for uncapped display refresh rate testing
+  bgfx_init.resolution.reset = BGFX_RESET_VSYNC;
   bgfx_init.platformData = pd;
   bgfx::init(bgfx_init);
 
@@ -216,19 +215,15 @@ int main(int argc, char** argv)
     bgfx::setViewRect(ortho_view, 0, 0, width, height);
 
     const int updates_per_second = 60;
-    const int renders_per_second = 120;
+    const int renders_per_second = 60;
 
-    fps::Fps fps;
-    double framerate = 0;
+    fps::Fps fps_update;
+    fps::Fps fps_render;
     int frame = 0;
-    // int peep_events_early = 0;
-    // int peep_events_late = 0;
-    // int last_cached_input_count = 0;
+    double render_rate = 0.0; // framerate
+    double update_rate = 0.0;
+    double accumulator = 0.0;
     int64_t previous_render_counter = bx::getHPCounter();
-    int64_t previous_update_counter = bx::getHPCounter();
-    static bool process_cached_input = true;
-    auto next_update_time = current_time();
-    double accumulator = 0.0f;
     for (bool quit = false; !quit;) {
       auto handle_event_fn = [&](const SDL_Event& current_event) {
         ImGui_ImplSDL2_ProcessEvent(&current_event);
@@ -256,30 +251,8 @@ int main(int argc, char** argv)
 
       accumulator += render_delta_time;
 
-      // if (scene) {
-      //   auto transforms_scene =
-      //   static_cast<transforms_scene_t*>(scene.get()); if
-      //   (process_cached_input) {
-      //     for (const auto& cached_event : transforms_scene->cached_events_) {
-      //       handle_event_fn(cached_event);
-      //     }
-      //   }
-      //   transforms_scene->cached_events_.clear();
-      // }
-
-      // SDL_PumpEvents();
-      // peep_events_early = SDL_PeepEvents(
-      //   nullptr, 0, SDL_PEEKEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT);
-
-      // while (current_time() >= next_update_time) {
       const double update_dt = 1.0f / (double)updates_per_second;
       while (accumulator >= update_dt) {
-        // const int64_t current_update_counter = bx::getHPCounter();
-        // const auto update_delta_time = std::min(
-        //   seconds_elapsed(previous_update_counter, current_update_counter),
-        //   0.25);
-        // previous_update_counter = current_update_counter;
-
         for (SDL_Event current_event; SDL_PollEvent(&current_event) != 0;) {
           handle_event_fn(current_event);
         }
@@ -309,45 +282,22 @@ int main(int argc, char** argv)
             debug_draw_t debug_draw{&debug_circles, &debug_spheres,
                                     &debug_lines,   &debug_lines_screen,
                                     &debug_cubes,   &debug_quads};
-
-            // const int64_t current_update_counter = bx::getHPCounter();
-            // const auto update_delta_time = std::min(
-            // seconds_elapsed(previous_update_counter, current_update_counter),
-            // 0.25);
-            // previous_update_counter = current_update_counter;
             scene->update(debug_draw, update_dt);
           } break;
         }
 
-        // SDL_PumpEvents();
-        // peep_events_late = SDL_PeepEvents(
-        //   nullptr, 0, SDL_PEEKEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT);
+        const int64_t time_window_update =
+          fps::calculateWindow(fps_update, bx::getHPCounter());
+        update_rate =
+          time_window_update > -1
+            ? (double)(fps_update.MaxSamples - 1)
+                / (double(time_window_update) / double(bx::getHPFrequency()))
+            : 0.0;
 
-        ImGui::Begin("Input");
-        ImGui::Checkbox("Process Cached Input", &process_cached_input);
-        // ImGui::InputInt("Target Framerate", &g_target_frames_per_second);
-        // ImGui::LabelText("Cached Input Count", "%d",
-        // last_cached_input_count); ImGui::LabelText("Peep Events Early", "%d",
-        // peep_events_early); ImGui::LabelText("Peep Events Late", "%d",
-        // peep_events_late);
-        ImGui::LabelText("Frame", "%d", frame - 1);
-        ImGui::LabelText("Time", "%f", current_time());
-        ImGui::LabelText("Framerate", "%f", framerate);
+        ImGui::Begin("Game loop");
+        ImGui::LabelText("Render rate", "%f", render_rate);
+        ImGui::LabelText("Update rate", "%f", update_rate);
         ImGui::End();
-
-        // if (process_cached_input) {
-        //   auto transforms_scene =
-        //   static_cast<transforms_scene_t*>(scene.get()); for (SDL_Event
-        //   current_event; SDL_PollEvent(&current_event) != 0;) {
-        //     transforms_scene->cached_events_.push_back(current_event);
-        //   }
-        //   last_cached_input_count = transforms_scene->cached_events_.size();
-        // } else {
-        //   last_cached_input_count = 0;
-        // }
-
-        // next_update_time +=
-        //   calculate_seconds_per_frame(g_target_frames_per_second);
 
         ImGui::Render();
 
@@ -369,11 +319,13 @@ int main(int argc, char** argv)
 
       frame = bgfx::frame();
 
-      const int64_t time_window = fps::calculateWindow(fps, bx::getHPCounter());
-      framerate = time_window > -1
-                  ? (double)(fps.MaxSamples - 1)
-                      / (double(time_window) / double(bx::getHPFrequency()))
-                  : 0.0;
+      const int64_t time_window_render =
+        fps::calculateWindow(fps_render, bx::getHPCounter());
+      render_rate =
+        time_window_render > -1
+          ? (double)(fps_render.MaxSamples - 1)
+              / (double(time_window_render) / double(bx::getHPFrequency()))
+          : 0.0;
 
       wait_for_update(previous_render_counter, renders_per_second);
     }

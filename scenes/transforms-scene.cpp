@@ -182,12 +182,6 @@ void transforms_scene_t::update(
   ImGui::Text("%f", as::degrees(camera.yaw));
   ImGui::End();
 
-  const int64_t time_window = fps::calculateWindow(fps, bx::getHPCounter());
-  const double framerate =
-    time_window > -1 ? (double)(fps.MaxSamples - 1)
-                         / (double(time_window) / double(bx::getHPFrequency()))
-                     : 0.0;
-
   ImGui::Begin("Transforms");
   float translation_imgui[3];
   as::vec_to_arr(pivot_translation_, translation_imgui);
@@ -675,11 +669,6 @@ void transforms_scene_t::update(
   debug_draw.debug_lines_screen->addLine(
     as::vec3(end_screen.x, end_screen.y - 10.0f, 0.0f),
     as::vec3(end_screen.x, end_screen.y + 10.0f, 0.0f), 0xff000000);
-
-  ImGui::Text("Framerate: ");
-  ImGui::SameLine(100);
-  ImGui::Text("%f", framerate);
-  ImGui::End();
 
   ImGui::Begin("Noise");
   static float noise1_freq = 0.5f;
