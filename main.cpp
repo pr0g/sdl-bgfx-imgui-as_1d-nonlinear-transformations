@@ -257,11 +257,11 @@ int main(int argc, char** argv)
           handle_event_fn(current_event);
         }
 
-        debug_lines.drop();
-        debug_lines_screen.drop();
-        debug_quads.drop();
-        debug_circles.drop();
-        debug_cubes.drop();
+        debug_lines.clear();
+        debug_lines_screen.clear();
+        debug_quads.clear();
+        debug_circles.clear();
+        debug_cubes.clear();
 
         ImGui_Implbgfx_NewFrame();
         ImGui_ImplSDL2_NewFrame();
