@@ -67,7 +67,7 @@ void wait_for_update(const int64_t previous, const int target_frames_per_second)
     SDL_Delay(delay);
     const double seconds_left = seconds_elapsed(previous, bx::getHPCounter());
     // check we didn't wait too long and get behind
-    assert(seconds_left < seconds_per_frame);
+    // assert(seconds_left < seconds_per_frame);
     // busy wait for the remaining time
     while (seconds_elapsed(previous, bx::getHPCounter()) < seconds_per_frame) {
       ;

@@ -26,7 +26,7 @@ void globe_scene_t::setup(
   perspective_projection_ = as::perspective_direct3d_lh(
     as::radians(60.0f), float(width) / float(height), 0.01f, 1000.0f);
 
-  first_person_rotate_camera_.constrain_pitch_ = [] { return false; };
+  first_person_rotate_camera_.constrain_pitch_ = [] { return true; };
 
   camera_.pivot = as::vec3::axis_y(11.0f);
   camera_.offset = as::vec3::axis_z(-10.0f);
