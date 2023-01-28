@@ -1,10 +1,10 @@
 #include "bgfx-imgui/imgui_impl_bgfx.h"
 
+#include "scenes/globe-scene.h"
 #include "scenes/hierarchy-scene.h"
 #include "scenes/marching-cube-scene.h"
 #include "scenes/simple-camera-scene.h"
 #include "scenes/transforms-scene.h"
-#include "scenes/globe-scene.h"
 
 #include "sdl-imgui/imgui_impl_sdl.h"
 

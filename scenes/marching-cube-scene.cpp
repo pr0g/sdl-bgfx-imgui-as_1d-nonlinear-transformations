@@ -62,7 +62,7 @@ void marching_cube_scene_t::setup(
     uint16_t(float(width) * gizmo_size_percent),
     uint16_t(float(height) * gizmo_size_percent));
 
-  perspective_projection = as::perspective_d3d_lh(
+  perspective_projection = as::perspective_direct3d_lh(
     as::radians(35.0f), float(width) / float(height), 0.01f, 100.0f);
 
   pos_col_vert_layout.begin()
@@ -92,12 +92,11 @@ void marching_cube_scene_t::setup(
   u_light_dir = bgfx::createUniform("u_lightDir", bgfx::UniformType::Vec4, 1);
   u_camera_pos = bgfx::createUniform("u_cameraPos", bgfx::UniformType::Vec4, 1);
 
+  asci::Cameras& cameras = camera_system.cameras_;
   cameras.addCamera(&first_person_rotate_camera);
   cameras.addCamera(&first_person_pan_camera);
   cameras.addCamera(&first_person_translate_camera);
   cameras.addCamera(&first_person_wheel_camera);
-
-  camera_system.cameras_ = cameras;
 
   points = mc::createPointVolume(dimension, 10000.0f);
   cell_values = mc::createCellValues(dimension);
@@ -163,7 +162,7 @@ void marching_cube_scene_t::update(
         const auto orientation = as::affine_inverse(camera.view()).rotation;
         const auto world_position = as::screen_to_world(
           as::vec2i(x, y), perspective_projection, camera.view(),
-          screen_dimension);
+          screen_dimension, as::vec2(0.0f, 1.0f));
         const auto ray_origin = camera.translation();
         const auto ray_direction =
           as::vec_normalize(world_position - ray_origin);
@@ -318,7 +317,8 @@ void marching_cube_scene_t::update(
 
     float proj[16];
     as::mat_to_arr(
-      as::ortho_d3d_lh(-extent_x, extent_x, -extent_y, extent_y, 0.01f, 100.0f),
+      as::ortho_direct3d_lh(
+        -extent_x, extent_x, -extent_y, extent_y, 0.01f, 100.0f),
       proj);
 
     bgfx::setViewTransform(gizmo_view_, view, proj);

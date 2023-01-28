@@ -94,7 +94,6 @@ struct marching_cube_scene_t : public scene_t
   asci::TranslateCameraInput first_person_translate_camera{
     asci::lookTranslation, asci::translatePivot};
   asci::ScrollTranslationCameraInput first_person_wheel_camera;
-  asci::Cameras cameras;
   asci::CameraSystem camera_system;
 
   const int dimension = 25;

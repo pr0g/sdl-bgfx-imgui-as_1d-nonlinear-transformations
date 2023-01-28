@@ -36,11 +36,16 @@ struct globe_scene_t : public scene_t
   asc::Camera target_camera_;
 
   asci::RotateCameraInput first_person_rotate_camera_{asci::MouseButton::Right};
-  asci::TranslateCameraInput first_person_translate_camera_{
-    asci::lookTranslation, asci::translatePivot};
-  asci::Cameras cameras_;
+  asci::PivotDollyScrollCameraInput first_person_dolly_camera_;
+
   asci::CameraSystem camera_system_;
 
   bgfx::ViewId main_view_;
   bgfx::ViewId ortho_view_;
+
+  as::vec2i screen_dimension_;
+
+  bool rotating_ = false;
+  as::vec2 roll_pitch_ = as::vec2::zero();
+  as::mat3 model_ = as::mat3::identity();
 };

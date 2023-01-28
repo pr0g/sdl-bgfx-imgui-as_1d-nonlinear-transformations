@@ -18,8 +18,8 @@ void simple_camera_scene_t::setup(
   main_view_ = main_view;
 
   const float fov = as::radians(60.0f);
-  perspective_projection_ =
-    as::perspective_d3d_lh(fov, float(width) / float(height), 0.01f, 1000.0f);
+  perspective_projection_ = as::perspective_direct3d_lh(
+    fov, float(width) / float(height), 0.01f, 1000.0f);
 }
 
 void simple_camera_scene_t::update(

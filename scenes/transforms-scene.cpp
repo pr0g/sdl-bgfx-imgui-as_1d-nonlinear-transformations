@@ -38,8 +38,8 @@ void transforms_scene_t::setup(
   target_camera = camera;
 
   const float fov = as::radians(60.0f);
-  perspective_projection =
-    as::perspective_d3d_lh(fov, float(width) / float(height), 0.01f, 1000.0f);
+  perspective_projection = as::perspective_direct3d_lh(
+    fov, float(width) / float(height), 0.01f, 1000.0f);
 
   p0_index = curve_handles.addHandle(as::vec3(2.0f, -8.0f, 0.0f));
   p1_index = curve_handles.addHandle(as::vec3(18.0f, -8.0f, 0.0f));
@@ -59,12 +59,12 @@ void transforms_scene_t::setup(
   first_person_rotate_camera.constrain_pitch_ = constrain_pitch;
   pivot_rotate_camera.constrain_pitch_ = constrain_pitch;
 
+  asci::Cameras& cameras = camera_system.cameras_;
   cameras.addCamera(&first_person_rotate_camera);
   cameras.addCamera(&first_person_scroll_camera);
   cameras.addCamera(&first_person_pan_camera);
   cameras.addCamera(&first_person_translate_camera);
   cameras.addCamera(&first_person_focus_camera);
-
   cameras.addCamera(&pivot_camera);
   pivot_camera.pivotFn_ = pivotFn;
   pivot_camera.pivot_cameras_.addCamera(&pivot_dolly_scroll_camera);
@@ -73,8 +73,6 @@ void transforms_scene_t::setup(
   pivot_camera.pivot_cameras_.addCamera(&pivot_translate_camera);
   pivot_camera.pivot_cameras_.addCamera(&pivot_pan_camera);
   pivot_camera.pivot_cameras_.addCamera(&pivot_focus_camera);
-
-  camera_system.cameras_ = cameras;
 }
 
 void transforms_scene_t::input(const SDL_Event& current_event)
@@ -142,7 +140,8 @@ void transforms_scene_t::update(
   int y;
   SDL_GetMouseState(&x, &y);
   const auto world_position = as::screen_to_world(
-    as::vec2i(x, y), perspective_projection, camera.view(), screen_dimension);
+    as::vec2i(x, y), perspective_projection, camera.view(), screen_dimension,
+    as::vec2(0.0f, 1.0f));
   ray_origin = camera.transform().translation;
   ray_direction = as::vec_normalize(world_position - ray_origin);
   hit_distance =
@@ -153,7 +152,7 @@ void transforms_scene_t::update(
     curve_handles.updateDrag(next_hit);
   }
 
-  static bool smoothing = false;
+  static bool smoothing = true;
 
   ImGui::Begin("Camera");
   ImGui::PushItemWidth(70);
@@ -177,9 +176,12 @@ void transforms_scene_t::update(
     "Pan Invert X", &first_person_pan_camera.props_.pan_invert_x_);
   ImGui::Checkbox(
     "Pan Invert Y", &first_person_pan_camera.props_.pan_invert_y_);
-  ImGui::Text("Yaw Camera: ");
-  ImGui::SameLine(100);
-  ImGui::Text("%f", as::degrees(camera.yaw));
+  ImGui::LabelText("Target Pitch", "%f", as::degrees(target_camera.pitch));
+  ImGui::LabelText("Current Pitch", "%f", as::degrees(camera.pitch));
+  ImGui::LabelText("Target Yaw", "%f", as::degrees(target_camera.yaw));
+  ImGui::LabelText("Current Yaw", "%f", as::degrees(camera.yaw));
+  ImGui::LabelText("Target Roll", "%f", as::degrees(target_camera.roll));
+  ImGui::LabelText("Current Roll", "%f", as::degrees(camera.roll));
   ImGui::End();
 
   ImGui::Begin("Transforms");
@@ -651,7 +653,7 @@ void transforms_scene_t::update(
   float view_o[16];
   as::mat_to_arr(as::mat4::identity(), view_o);
 
-  const as::mat4 orthographic_projection = as::ortho_d3d_lh(
+  const as::mat4 orthographic_projection = as::ortho_direct3d_lh(
     0.0f, screen_dimension.x, screen_dimension.y, 0.0f, 0.0f, 1.0f);
 
   float proj_o[16];
