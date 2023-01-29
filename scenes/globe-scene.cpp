@@ -41,13 +41,19 @@ void globe_scene_t::setup(
   float inner_rot = 0.0f;
   const float horizontal_increment = as::k_tau / float(loop_count);
   const float vertical_increment = as::k_pi / float(loop_count);
-  for (size_t outer = 0; outer < loop_count; ++outer) {
+
+  // top vertex
+  sphere_vertices.push_back(
+    {as::vec3::axis_y(),
+     dbg::encodeColorAbgr(
+       ns::noise1dZeroToOne(rng, seed), ns::noise1dZeroToOne(rng, seed),
+       ns::noise1dZeroToOne(rng, seed), 1.0f)});
+
+  // vertex rings
+  current_vertical_angle_rad += vertical_increment;
+  for (size_t outer = 1; outer < loop_count; ++outer) {
     const float vertical_position_first = std::sin(current_vertical_angle_rad);
-    const float vertical_position_second =
-      std::sin(current_vertical_angle_rad + vertical_increment);
     const float horizontal_scale_first = std::cos(current_vertical_angle_rad);
-    const float horizontal_scale_second =
-      std::cos(current_vertical_angle_rad + vertical_increment);
     for (size_t inner = 0; inner < loop_count; ++inner) {
       sphere_vertices.push_back(
         {as::vec3(
@@ -57,32 +63,47 @@ void globe_scene_t::setup(
          dbg::encodeColorAbgr(
            ns::noise1dZeroToOne(rng, seed), ns::noise1dZeroToOne(rng, seed),
            ns::noise1dZeroToOne(rng, seed), 1.0f)});
-      sphere_vertices.push_back(
-        {as::vec3(
-           std::cos(inner_rot) * horizontal_scale_second,
-           vertical_position_second,
-           std::sin(inner_rot) * horizontal_scale_second),
-         0xffffffff});
       inner_rot += horizontal_increment;
       rng++;
     }
     current_vertical_angle_rad += vertical_increment;
+    inner_rot = 0.0f;
   }
 
-  const int twice_loop_count = loop_count * 2;
-  for (int loop = 0; loop < loop_count; ++loop) {
-    for (int i = 0; i < twice_loop_count; i += 2) {
-      sphere_indices.push_back(i + (loop * twice_loop_count));
+  // bottom vertex
+  sphere_vertices.push_back(
+    {-as::vec3::axis_y(),
+     dbg::encodeColorAbgr(
+       ns::noise1dZeroToOne(rng, seed), ns::noise1dZeroToOne(rng, seed),
+       ns::noise1dZeroToOne(rng, seed), 1.0f)});
+
+  // top fan
+  for (int i = 1; i <= loop_count; i++) {
+    sphere_indices.push_back(0);
+    sphere_indices.push_back(i);
+    sphere_indices.push_back((i % loop_count) + 1);
+  }
+
+  // loops
+  for (int loop = 0; loop < loop_count - 2; ++loop) {
+    for (int i = 0; i < loop_count; i++) {
+      const auto loop_offset = loop * loop_count + 1;
+      sphere_indices.push_back(i + loop_offset);
+      sphere_indices.push_back(i + loop_count + loop_offset);
+      sphere_indices.push_back(((i + 1) % loop_count) + loop_offset);
+      sphere_indices.push_back(i + loop_count + loop_offset);
       sphere_indices.push_back(
-        (i + 1) % twice_loop_count + (loop * twice_loop_count));
-      sphere_indices.push_back(
-        (i + 2) % twice_loop_count + (loop * twice_loop_count));
-      sphere_indices.push_back(i + 1 + (loop * twice_loop_count));
-      sphere_indices.push_back(
-        (i + 3) % twice_loop_count + (loop * twice_loop_count));
-      sphere_indices.push_back(
-        (i + 2) % twice_loop_count + (loop * twice_loop_count));
+        ((i + 1) % loop_count) + loop_count + loop_offset);
+      sphere_indices.push_back(((i + 1) % loop_count) + loop_offset);
     }
+  }
+
+  // bottom fan
+  for (int i = 0; i <= loop_count; i++) {
+    const auto offset = sphere_vertices.size() - loop_count - 1;
+    sphere_indices.push_back(i + offset);
+    sphere_indices.push_back(sphere_vertices.size() - 1);
+    sphere_indices.push_back(((i + 1) % loop_count) + offset);
   }
 
   sphere_col_vbh_ = bgfx::createVertexBuffer(
