@@ -1,6 +1,5 @@
 #include "globe-scene.h"
 
-#include "bgfx-helpers.h"
 #include "noise.h"
 
 #include <SDL.h>
@@ -20,7 +19,6 @@ void globe_scene_t::setup(
     .end();
 
   main_view_ = main_view;
-  ortho_view_ = ortho_view;
 
   screen_dimension_ = as::vec2i(width, height);
   perspective_projection_ = as::perspective_direct3d_lh(

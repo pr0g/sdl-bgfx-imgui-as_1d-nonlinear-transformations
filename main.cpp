@@ -1,5 +1,6 @@
 #include "bgfx-imgui/imgui_impl_bgfx.h"
 
+#include "scenes/arcball-scene.h"
 #include "scenes/globe-scene.h"
 #include "scenes/hierarchy-scene.h"
 #include "scenes/marching-cube-scene.h"
@@ -121,8 +122,12 @@ int main(int argc, char** argv)
   bgfx::init(bgfx_init);
 
   const char* scene_names[] = {
-    "Non-Linear Transformations", "Marching Cubes", "Hierarchy",
-    "Simple Camera", "Globe Scene"};
+    "Non-Linear Transformations",
+    "Marching Cubes",
+    "Hierarchy",
+    "Simple Camera",
+    "Globe Scene",
+    "Arcball"};
 
   std::unique_ptr<scene_t> scene = nullptr;
   auto scene_builder = [](const int scene_id) -> std::unique_ptr<scene_t> {
@@ -137,6 +142,8 @@ int main(int argc, char** argv)
         return std::make_unique<simple_camera_scene_t>();
       case 4:
         return std::make_unique<globe_scene_t>();
+      case 5:
+        return std::make_unique<arcball_scene_t>();
       default:
         return nullptr;
     }

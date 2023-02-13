@@ -1,18 +1,12 @@
 #pragma once
 
+#include "bgfx-helpers.h"
 #include "scene.h"
 
 #include <as-camera-input/as-camera-input.hpp>
-
 #include <bgfx/bgfx.h>
 
 #include <vector>
-
-struct PosColorVertex
-{
-  as::vec3 position_;
-  uint32_t abgr_;
-};
 
 struct globe_scene_t : public scene_t
 {
@@ -41,7 +35,6 @@ struct globe_scene_t : public scene_t
   asci::CameraSystem camera_system_;
 
   bgfx::ViewId main_view_;
-  bgfx::ViewId ortho_view_;
 
   as::vec2i screen_dimension_;
 

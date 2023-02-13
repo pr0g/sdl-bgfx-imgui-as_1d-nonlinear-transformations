@@ -15,12 +15,6 @@
 #include <thh-bgfx-debug/debug-quad.hpp>
 #include <thh-bgfx-debug/debug-sphere.hpp>
 
-struct PosColorVertex
-{
-  as::vec3 position_;
-  uint32_t abgr_;
-};
-
 struct PosNormalVertex
 {
   as::vec3 position_;
