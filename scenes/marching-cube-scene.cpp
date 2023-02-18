@@ -15,12 +15,6 @@
 #include <thh-bgfx-debug/debug-quad.hpp>
 #include <thh-bgfx-debug/debug-sphere.hpp>
 
-struct PosNormalVertex
-{
-  as::vec3 position_;
-  as::vec3 normal_;
-};
-
 static const PosColorVertex CubeVerticesCol[] = {
   {as::vec3{-1.0f, 1.0f, 1.0f}, 0xff000000},
   {as::vec3{1.0f, 1.0f, 1.0f}, 0xff0000ff},

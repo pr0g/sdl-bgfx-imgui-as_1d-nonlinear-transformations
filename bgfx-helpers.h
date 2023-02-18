@@ -12,6 +12,12 @@ struct PosColorVertex
   uint32_t abgr_;
 };
 
+struct PosNormalVertex
+{
+  as::vec3 position_;
+  as::vec3 normal_;
+};
+
 bgfx::ShaderHandle createShader(const std::string& shader, const char* name);
 
 std::optional<bgfx::ProgramHandle> createShaderProgram(
