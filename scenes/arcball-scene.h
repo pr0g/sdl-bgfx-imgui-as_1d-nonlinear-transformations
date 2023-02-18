@@ -25,9 +25,9 @@ struct arcball_scene_t : public scene_t
   bgfx::IndexBufferHandle ship_norm_ibh_;
   bgfx::ProgramHandle program_norm_;
 
-  bgfx::UniformHandle u_light_dir_;
+  bgfx::UniformHandle u_light_pos_;
   bgfx::UniformHandle u_camera_pos_;
-  as::vec3 light_dir_{-1.0f, 1.0f, -1.0f};
+  as::vec3 light_pos_{0.0f, 2.0f, 10.0f};
 
   as::mat4 perspective_projection_;
 

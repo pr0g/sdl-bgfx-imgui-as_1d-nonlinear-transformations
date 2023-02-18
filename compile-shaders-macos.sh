@@ -19,3 +19,12 @@
 ./third-party/build/bin/shaderc \
 -f shader/next/f_next.sc -o shader/next/f_next.bin \
 --platform osx --type fragment --verbose -i ./ -p metal
+
+# basic (normal) lighting shader
+./third-party/build/bin/shaderc \
+-f shader/basic-lighting/v_basic.sc -o shader/basic-lighting/v_basic.bin \
+--platform osx --type vertex --verbose -i ./ -p metal
+
+./third-party/build/bin/shaderc \
+-f shader/basic-lighting/f_basic.sc -o shader/basic-lighting/f_basic.bin \
+--platform osx --type fragment --verbose -i ./ -p metal

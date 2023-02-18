@@ -70,14 +70,15 @@ void arcball_scene_t::setup(
     ship_indices_.data(), ship_indices_.size() * sizeof(uint16_t)));
 
   program_norm_ =
-    createShaderProgram("shader/next/v_next.bin", "shader/next/f_next.bin")
+    createShaderProgram(
+      "shader/basic-lighting/v_basic.bin", "shader/basic-lighting/f_basic.bin")
       .value_or(bgfx::ProgramHandle(BGFX_INVALID_HANDLE));
 
   if (!isValid(program_norm_)) {
     std::terminate();
   }
 
-  u_light_dir_ = bgfx::createUniform("u_lightDir", bgfx::UniformType::Vec4, 1);
+  u_light_pos_ = bgfx::createUniform("u_lightPos", bgfx::UniformType::Vec4, 1);
   u_camera_pos_ =
     bgfx::createUniform("u_cameraPos", bgfx::UniformType::Vec4, 1);
 
@@ -112,7 +113,7 @@ void arcball_scene_t::update(debug_draw_t& debug_draw, const float delta_time)
 
   bgfx::setTransform(model);
 
-  bgfx::setUniform(u_light_dir_, (void*)&light_dir_, 1);
+  bgfx::setUniform(u_light_pos_, (void*)&light_pos_, 1);
   bgfx::setUniform(u_camera_pos_, (void*)&camera_.pivot, 1);
 
   bgfx::setVertexBuffer(0, ship_norm_vbh_);
