@@ -95,7 +95,11 @@ void arcball_scene_t::setup(
 
   asci::Cameras& cameras = camera_system_.cameras_;
   cameras.addCamera(&first_person_rotate_camera_);
-  cameras.addCamera(&first_person_translate_camera_);
+  // cameras.addCamera(&first_person_translate_camera_);
+
+  camera_.pivot = as::vec3(0.0f, 0.0f, 2.0f);
+  camera_.offset = as::vec3(0.0f, 0.0f, -2.0f);
+  target_camera_ = camera_;
 }
 
 void arcball_scene_t::input(const SDL_Event& current_event)
@@ -124,7 +128,6 @@ void arcball_scene_t::input(const SDL_Event& current_event)
     if (mouse_button->button == SDL_BUTTON_LEFT) {
       dragging_ = false;
       q_down_ = q_now_;
-      m_down_ = m_now_;
     }
   }
 }
@@ -152,7 +155,9 @@ void arcball_scene_t::update(debug_draw_t& debug_draw, const float delta_time)
     const auto axis = as::vec3_cross(v_from_, v_to_);
     const auto angle = as::vec_dot(v_from_, v_to_);
     const as::quat q_drag = as::quat(angle, axis);
-    q_now_ = q_drag * q_down_;
+    q_now_ = as::quat_from_mat3(as::mat3_from_affine(camera_.transform()))
+           * q_drag * as::quat_from_mat3(as::mat3_from_affine(camera_.view()))
+           * q_down_;
   }
   m_now_ = as::mat3_from_quat(q_now_);
 
