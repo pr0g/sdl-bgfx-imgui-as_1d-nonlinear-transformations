@@ -2,6 +2,7 @@
 
 #include <as-camera-input-sdl/as-camera-input-sdl.hpp>
 #include <as/as-view.hpp>
+#include <thh-bgfx-debug/debug-circle.hpp>
 
 void arcball_scene_t::setup(
   const bgfx::ViewId main_view, const bgfx::ViewId ortho_view,
@@ -13,6 +14,8 @@ void arcball_scene_t::setup(
     .end();
 
   main_view_ = main_view;
+  ortho_view_ = ortho_view;
+  screen_dimension_ = {width, height};
 
   perspective_projection_ = as::perspective_direct3d_lh(
     as::radians(60.0f), float(width) / float(height), 0.01f, 1000.0f);
@@ -120,4 +123,18 @@ void arcball_scene_t::update(debug_draw_t& debug_draw, const float delta_time)
   bgfx::setIndexBuffer(ship_norm_ibh_);
   bgfx::setState(BGFX_STATE_DEFAULT | BGFX_STATE_CULL_CCW);
   bgfx::submit(main_view_, program_norm_);
+
+  const as::mat4 orthographic_projection = as::ortho_direct3d_lh(
+    0.0f, screen_dimension_.x, screen_dimension_.y, 0.0f, 0.0f, 1.0f);
+
+  float proj_o[16];
+  as::mat_to_arr(orthographic_projection, proj_o);
+
+  bgfx::setViewTransform(ortho_view_, nullptr, proj_o);
+
+  debug_draw.debug_circles_screen->addWireCircle(
+    as::mat4_from_mat3_vec3(
+      as::mat3_scale(300.0f),
+      as::vec3_from_vec2(as::vec2_from_vec2i(screen_dimension_) / 2.0f, 0.5f)),
+    0xffffffff);
 }

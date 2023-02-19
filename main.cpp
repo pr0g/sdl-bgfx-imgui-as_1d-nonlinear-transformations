@@ -169,6 +169,7 @@ int main(int argc, char** argv)
     dbg::DebugLines debug_lines_screen;
     dbg::DebugCircles debug_circles;
     dbg::DebugSpheres debug_spheres(debug_circles);
+    dbg::DebugCircles debug_circles_screen;
     dbg::DebugQuads debug_quads;
     dbg::DebugCubes debug_cubes;
 
@@ -206,6 +207,8 @@ int main(int argc, char** argv)
       debug_lines.setRenderContext(main_view, simple_program.handle());
       debug_lines_screen.setRenderContext(ortho_view, simple_program.handle());
       debug_circles.setRenderContext(main_view, instance_program.handle());
+      debug_circles_screen.setRenderContext(
+        ortho_view, instance_program.handle());
       debug_quads.setRenderContext(main_view, instance_program.handle());
       debug_cubes.setRenderContext(main_view, instance_program.handle());
 
@@ -271,6 +274,7 @@ int main(int argc, char** argv)
         debug_lines_screen.clear();
         debug_quads.clear();
         debug_circles.clear();
+        debug_circles_screen.clear();
         debug_cubes.clear();
 
         ImGui_Implbgfx_NewFrame();
@@ -289,9 +293,10 @@ int main(int argc, char** argv)
             ImGui::End();
             break;
           case mode_e::running_scene: {
-            debug_draw_t debug_draw{&debug_circles, &debug_spheres,
-                                    &debug_lines,   &debug_lines_screen,
-                                    &debug_cubes,   &debug_quads};
+            debug_draw_t debug_draw{&debug_circles,      &debug_circles_screen,
+                                    &debug_spheres,      &debug_lines,
+                                    &debug_lines_screen, &debug_cubes,
+                                    &debug_quads};
             scene->update(debug_draw, update_dt);
           } break;
         }
@@ -318,6 +323,7 @@ int main(int argc, char** argv)
       debug_lines_screen.submit();
       debug_quads.submit();
       debug_circles.submit();
+      debug_circles_screen.submit();
       debug_cubes.submit();
 
       if (const auto draw_data = ImGui::GetDrawData()) {

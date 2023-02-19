@@ -38,7 +38,6 @@ void marching_cube_scene_t::setup(
   screen_dimension = as::vec2i(width, height);
 
   main_view_ = main_view;
-  ortho_view_ = ortho_view;
 
   // size and placement of gizmo on screen
   const float gizmo_offset_percent = 0.85f;

@@ -29,6 +29,7 @@ struct arcball_scene_t : public scene_t
   bgfx::UniformHandle u_camera_pos_;
   as::vec3 light_pos_{0.0f, 2.0f, 10.0f};
 
+  as::vec2i screen_dimension_;
   as::mat4 perspective_projection_;
 
   asc::Camera camera_;
@@ -39,4 +40,5 @@ struct arcball_scene_t : public scene_t
     asci::lookTranslation, asci::translatePivot};
 
   bgfx::ViewId main_view_;
+  bgfx::ViewId ortho_view_;
 };

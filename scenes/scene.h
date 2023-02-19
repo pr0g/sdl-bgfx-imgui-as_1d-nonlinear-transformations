@@ -26,6 +26,7 @@ class DebugQuads;
 struct debug_draw_t
 {
   dbg::DebugCircles* debug_circles = nullptr;
+  dbg::DebugCircles* debug_circles_screen = nullptr;
   dbg::DebugSpheres* debug_spheres = nullptr;
   dbg::DebugLines* debug_lines = nullptr;
   dbg::DebugLines* debug_lines_screen = nullptr;

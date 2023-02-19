@@ -69,7 +69,6 @@ struct marching_cube_scene_t : public scene_t
 
   as::vec2i screen_dimension{};
   bgfx::ViewId main_view_;
-  bgfx::ViewId ortho_view_;
   const bgfx::ViewId gizmo_view_ = 2;
 
   as::mat4 perspective_projection;
