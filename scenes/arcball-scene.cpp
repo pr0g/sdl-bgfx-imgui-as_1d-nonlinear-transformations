@@ -95,11 +95,7 @@ void arcball_scene_t::setup(
 
   asci::Cameras& cameras = camera_system_.cameras_;
   cameras.addCamera(&first_person_rotate_camera_);
-  // cameras.addCamera(&first_person_translate_camera_);
-
-  camera_.pivot = as::vec3(0.0f, 0.0f, 2.0f);
-  camera_.offset = as::vec3(0.0f, 0.0f, -2.0f);
-  target_camera_ = camera_;
+  cameras.addCamera(&first_person_translate_camera_);
 }
 
 void arcball_scene_t::input(const SDL_Event& current_event)

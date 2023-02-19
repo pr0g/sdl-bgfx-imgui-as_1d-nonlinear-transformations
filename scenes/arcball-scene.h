@@ -36,8 +36,8 @@ struct arcball_scene_t : public scene_t
   asc::Camera target_camera_;
   asci::CameraSystem camera_system_;
   asci::RotateCameraInput first_person_rotate_camera_{asci::MouseButton::Right};
-  // asci::TranslateCameraInput first_person_translate_camera_{
-    // asci::lookTranslation, asci::translatePivot};
+  asci::TranslateCameraInput first_person_translate_camera_{
+    asci::lookTranslation, asci::translatePivot};
 
   bgfx::ViewId main_view_;
   bgfx::ViewId ortho_view_;
