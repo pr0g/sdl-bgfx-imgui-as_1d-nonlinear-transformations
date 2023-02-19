@@ -3,6 +3,7 @@
 #include <as-camera-input-sdl/as-camera-input-sdl.hpp>
 #include <as/as-view.hpp>
 #include <thh-bgfx-debug/debug-circle.hpp>
+#include <thh-bgfx-debug/debug-line.hpp>
 
 #include <SDL.h>
 
@@ -199,4 +200,37 @@ void arcball_scene_t::update(debug_draw_t& debug_draw, const float delta_time)
     as::mat4_from_mat3_vec3(
       as::mat3_scale(radius), as::vec3_from_vec2(as::vec2::zero(), 0.5f)),
     0xffffffff);
+
+  // halve arc between unit vectors v0 and v1
+  auto vec3_bisect = [](const as::vec3& v0, const as::vec3& v1) {
+    const as::vec3 v = v0 + v1;
+    if (const float length = as::vec_length_sq(v); length < 1.0e-5f) {
+      return as::vec3(0.0f, 0.0f, 1.0f);
+    } else {
+      return v * 1.0f / std::sqrt(length);
+    }
+  };
+
+  debug_draw.debug_lines_screen->setTransform(
+    as::mat4_from_mat3(as::mat3_scale(radius)));
+
+  if (dragging_) {
+    const int segment_count = 16;
+    as::vec3 pts[segment_count + 1];
+    pts[0] = v_from_;
+    pts[1] = pts[segment_count] = v_to_;
+    for (int i = 0; i < 4; i++) {
+      pts[1] = vec3_bisect(pts[0], pts[1]);
+    }
+    const float dot = 2.0f * as::vec_dot(pts[0], pts[1]);
+    for (int i = 2; i < segment_count; i++) {
+      pts[i] = (pts[i - 1] * dot) - pts[i - 2];
+    }
+    const auto y_flip = as::vec3(1.0f, -1.0f, 1.0f);
+    for (int i = 0; i < segment_count; i++) {
+      debug_draw.debug_lines_screen->addLine(
+        (pts[i] * y_flip + as::vec3::axis_z()),
+        (pts[i + 1] * y_flip + as::vec3::axis_z()), 0xffffff00);
+    }
+  }
 }
