@@ -27,7 +27,7 @@ struct arcball_scene_t : public scene_t
 
   bgfx::UniformHandle u_light_pos_;
   bgfx::UniformHandle u_camera_pos_;
-  as::vec3 light_pos_{0.0f, 2.0f, 10.0f};
+  as::vec3 light_pos_{0.0f, 2.0f, 2.0f};
 
   as::vec2i screen_dimension_;
   as::mat4 perspective_projection_;
@@ -41,4 +41,16 @@ struct arcball_scene_t : public scene_t
 
   bgfx::ViewId main_view_;
   bgfx::ViewId ortho_view_;
+
+  // arcball
+  as::vec2i mouse_now_;
+  as::vec2 v_now_;
+  as::vec2 v_down_;
+  as::quat q_now_ = as::quat::identity();
+  as::quat q_down_ = as::quat::identity();
+  as::mat3 m_now_ = as::mat3::identity();
+  as::mat3 m_down_ = as::mat3::identity();
+  as::vec3 v_from_;
+  as::vec3 v_to_;
+  bool dragging_ = false;
 };

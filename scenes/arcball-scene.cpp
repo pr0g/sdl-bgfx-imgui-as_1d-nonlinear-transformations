@@ -4,6 +4,13 @@
 #include <as/as-view.hpp>
 #include <thh-bgfx-debug/debug-circle.hpp>
 
+#include <SDL.h>
+
+float aspect(const as::vec2i& screen_dimension)
+{
+  return (float)screen_dimension.x / (float)screen_dimension.y;
+}
+
 void arcball_scene_t::setup(
   const bgfx::ViewId main_view, const bgfx::ViewId ortho_view,
   const uint16_t width, const uint16_t height)
@@ -18,7 +25,7 @@ void arcball_scene_t::setup(
   screen_dimension_ = {width, height};
 
   perspective_projection_ = as::perspective_direct3d_lh(
-    as::radians(60.0f), float(width) / float(height), 0.01f, 1000.0f);
+    as::radians(90.0f), float(width) / float(height), 0.01f, 1000.0f);
 
   ship_vertices_ = {
     {as::vec3{3.0f, 0.0f, 0.0f}, as::vec3{0.0f, 0.0f, 1.0f}}, // 0
@@ -93,10 +100,61 @@ void arcball_scene_t::setup(
 void arcball_scene_t::input(const SDL_Event& current_event)
 {
   camera_system_.handleEvents(asci_sdl::sdlToInput(&current_event));
+
+  if (current_event.type == SDL_MOUSEMOTION) {
+    SDL_MouseMotionEvent* mouse_motion = (SDL_MouseMotionEvent*)&current_event;
+    mouse_now_.x = mouse_motion->x;
+    v_now_.x = (2.0f * mouse_now_.x / screen_dimension_.x - 1.0f)
+             * aspect(screen_dimension_);
+    mouse_now_.y = screen_dimension_.y - mouse_motion->y;
+    v_now_.y = 2.0f * mouse_now_.y / screen_dimension_.y - 1.0f;
+  }
+
+  if (current_event.type == SDL_MOUSEBUTTONDOWN) {
+    SDL_MouseButtonEvent* mouse_button = (SDL_MouseButtonEvent*)&current_event;
+    if (mouse_button->button == SDL_BUTTON_LEFT) {
+      dragging_ = true;
+      v_down_ = v_now_;
+    }
+  }
+
+  if (current_event.type == SDL_MOUSEBUTTONUP) {
+    SDL_MouseButtonEvent* mouse_button = (SDL_MouseButtonEvent*)&current_event;
+    if (mouse_button->button == SDL_BUTTON_LEFT) {
+      dragging_ = false;
+      q_down_ = q_now_;
+      m_down_ = m_now_;
+    }
+  }
+}
+
+static as::vec3 mouse_on_sphere(
+  const as::vec2& mouse, const as::vec2& center, const float radius)
+{
+  auto ball_mouse = as::vec3((mouse - center) / radius, 0.0f);
+  auto mag = as::vec_dot(ball_mouse, ball_mouse);
+  if (mag > 1.0f) {
+    float scale = 1.0f / std::sqrt(mag);
+    ball_mouse = as::vec3(as::vec2_from_vec3(ball_mouse * scale), 0.0f);
+  } else {
+    // sign flipped for lh (positive for rh)
+    ball_mouse.z = -std::sqrt(1.0f - mag);
+  }
+  return ball_mouse;
 }
 
 void arcball_scene_t::update(debug_draw_t& debug_draw, const float delta_time)
 {
+  v_from_ = mouse_on_sphere(v_down_, as::vec2::zero(), 0.75f);
+  v_to_ = mouse_on_sphere(v_now_, as::vec2::zero(), 0.75f);
+  if (dragging_) {
+    const auto axis = as::vec3_cross(v_from_, v_to_);
+    const auto angle = as::vec_dot(v_from_, v_to_);
+    const as::quat q_drag = as::quat(angle, axis);
+    q_now_ = q_drag * q_down_;
+  }
+  m_now_ = as::mat3_from_quat(q_now_);
+
   target_camera_ = camera_system_.stepCamera(target_camera_, delta_time);
   camera_ = asci::smoothCamera(
     camera_, target_camera_, asci::SmoothProps{}, delta_time);
@@ -108,11 +166,15 @@ void arcball_scene_t::update(debug_draw_t& debug_draw, const float delta_time)
 
   bgfx::setViewTransform(main_view_, view, proj);
 
+  const float radius = 0.75f;
+
+  auto offset = as::mat4_from_mat3_vec3(
+    as::mat3_scale(radius * (1.0f / 3.0f)), as::vec3::axis_z(2.0f));
+
+  offset = as::mat_mul(as::mat4_from_mat3(m_now_), offset);
+
   float model[16];
-  as::mat_to_arr(
-    as::mat4_from_mat3_vec3(
-      as::mat3_rotation_x(-as::k_half_pi), as::vec3::axis_z(10.0f)),
-    model);
+  as::mat_to_arr(offset, model);
 
   bgfx::setTransform(model);
 
@@ -124,8 +186,9 @@ void arcball_scene_t::update(debug_draw_t& debug_draw, const float delta_time)
   bgfx::setState(BGFX_STATE_DEFAULT | BGFX_STATE_CULL_CCW);
   bgfx::submit(main_view_, program_norm_);
 
-  const as::mat4 orthographic_projection = as::ortho_direct3d_lh(
-    0.0f, screen_dimension_.x, screen_dimension_.y, 0.0f, 0.0f, 1.0f);
+  const float ar = aspect(screen_dimension_);
+  const as::mat4 orthographic_projection =
+    as::ortho_direct3d_lh(-1.0f * ar, 1.0f * ar, 1.0f, -1.0f, 0.0f, 1.0f);
 
   float proj_o[16];
   as::mat_to_arr(orthographic_projection, proj_o);
@@ -134,7 +197,6 @@ void arcball_scene_t::update(debug_draw_t& debug_draw, const float delta_time)
 
   debug_draw.debug_circles_screen->addWireCircle(
     as::mat4_from_mat3_vec3(
-      as::mat3_scale(300.0f),
-      as::vec3_from_vec2(as::vec2_from_vec2i(screen_dimension_) / 2.0f, 0.5f)),
+      as::mat3_scale(radius), as::vec3_from_vec2(as::vec2::zero(), 0.5f)),
     0xffffffff);
 }
