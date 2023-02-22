@@ -124,6 +124,20 @@ void arcball_scene_t::input(const SDL_Event& current_event)
     if (mouse_button->button == SDL_BUTTON_LEFT) {
       dragging_ = false;
       q_down_ = q_now_;
+      m_down_ = m_now_;
+    }
+  }
+
+  if (current_event.type == SDL_KEYDOWN) {
+    SDL_KeyboardEvent* keyboard_event = (SDL_KeyboardEvent*)&current_event;
+    if (keyboard_event->keysym.sym == SDLK_LSHIFT) {
+      constraint_pressed_ = true;
+    }
+  }
+  if (current_event.type == SDL_KEYUP) {
+    SDL_KeyboardEvent* keyboard_event = (SDL_KeyboardEvent*)&current_event;
+    if (keyboard_event->keysym.sym == SDLK_LSHIFT) {
+      constraint_pressed_ = false;
     }
   }
 }
@@ -155,7 +169,8 @@ as::vec3 bisect(const as::vec3& v0, const as::vec3& v1)
 }
 
 static void draw_arc(
-  dbg::DebugLines& debug_lines_screen, const as::vec3& from, const as::vec3& to)
+  dbg::DebugLines& debug_lines_screen, const as::vec3& from, const as::vec3& to,
+  const uint32_t color)
 {
   const int segment_count = 16;
   as::vec3 pts[segment_count + 1];
@@ -172,12 +187,12 @@ static void draw_arc(
   for (int i = 0; i < segment_count; i++) {
     debug_lines_screen.addLine(
       (pts[i] * y_flip + as::vec3::axis_z()),
-      (pts[i + 1] * y_flip + as::vec3::axis_z()), 0xffffff00);
+      (pts[i + 1] * y_flip + as::vec3::axis_z()), color);
   }
 }
 
 static void draw_half_arc(
-  dbg::DebugLines& debug_lines_screen, const as::vec3& n)
+  dbg::DebugLines& debug_lines_screen, const as::vec3& n, const uint32_t color)
 {
   as::vec3 p, m;
   p.z = 0.0f;
@@ -190,16 +205,57 @@ static void draw_half_arc(
     p.y = 1.0f;
   }
   m = as::vec3_cross(p, n);
-  draw_arc(debug_lines_screen, p, m);
-  draw_arc(debug_lines_screen, m, -p);
+  draw_arc(debug_lines_screen, p, m, color);
+  draw_arc(debug_lines_screen, m, -p, color);
 }
 
 static void draw_constraints(
-  dbg::DebugLines& debug_lines_screen, const as::mat3& now)
+  dbg::DebugLines& debug_lines_screen, const as::mat3& now,
+  const std::optional<as::index> axis_index, const bool dragging)
 {
-  draw_half_arc(debug_lines_screen, as::mat3_basis_x(now));
-  draw_half_arc(debug_lines_screen, as::mat3_basis_y(now));
-  draw_half_arc(debug_lines_screen, as::mat3_basis_z(now));
+  for (as::index i = 0; i < as::mat3::dim(); i++) {
+    const bool matching_axis = axis_index.has_value() && *axis_index == i;
+    draw_half_arc(debug_lines_screen, as::mat_col(now, i), [matching_axis] {
+      if (matching_axis) {
+        return 0xff000000;
+      }
+      return 0xffffff00;
+    }());
+  }
+}
+
+static as::vec3 constrain_to_axis(
+  const as::vec3& unconstrained, const as::vec3& axis)
+{
+  const as::vec3 point_on_plane =
+    unconstrained - (axis * as::vec_dot(axis, unconstrained));
+  const float distance = as::vec_length_sq(point_on_plane);
+  if (distance > 0.0f) {
+    if (point_on_plane.z < 0.0f) {
+      return point_on_plane * (1.0f / std::sqrt(distance));
+    }
+  }
+  if (axis.z == 1.0f) {
+    return as::vec3(1.0f, 0.0f, 0.0f);
+  }
+  return as::vec_normalize(as::vec3(-axis.y, axis.x, 0.0f));
+}
+
+static as::index nearest_constraint_axis(
+  const as::vec3& unconstrained, const as::mat3& axes)
+{
+  float max = -1.0f;
+  as::index nearest = 0;
+  for (as::index i = 0; i < as::mat3::dim(); ++i) {
+    const as::vec3 point_on_plane =
+      constrain_to_axis(unconstrained, as::mat_col(axes, i));
+    if (const float dot = as::vec_dot(point_on_plane, unconstrained);
+        dot > max) {
+      max = dot;
+      nearest = i;
+    }
+  }
+  return nearest;
 }
 
 void arcball_scene_t::update(debug_draw_t& debug_draw, const float delta_time)
@@ -207,11 +263,21 @@ void arcball_scene_t::update(debug_draw_t& debug_draw, const float delta_time)
   v_from_ = mouse_on_sphere(v_down_, as::vec2::zero(), 0.75f);
   v_to_ = mouse_on_sphere(v_now_, as::vec2::zero(), 0.75f);
   if (dragging_) {
+    if (axis_index_.has_value()) {
+      v_from_ = constrain_to_axis(v_from_, as::mat_col(m_down_, *axis_index_));
+      v_to_ = constrain_to_axis(v_to_, as::mat_col(m_down_, *axis_index_));
+    }
     const as::quat q_drag =
       as::quat(as::vec_dot(v_from_, v_to_), as::vec3_cross(v_from_, v_to_));
     q_now_ = as::quat_from_mat3(as::mat3_from_affine(camera_.transform()))
            * q_drag * as::quat_from_mat3(as::mat3_from_affine(camera_.view()))
            * q_down_;
+  } else {
+    if (constraint_pressed_) {
+      axis_index_ = nearest_constraint_axis(v_to_, m_now_);
+    } else {
+      axis_index_.reset();
+    }
   }
   m_now_ = as::mat3_from_quat(q_now_);
 
@@ -264,8 +330,9 @@ void arcball_scene_t::update(debug_draw_t& debug_draw, const float delta_time)
     as::mat4_from_mat3(as::mat3_scale(radius)));
 
   if (dragging_) {
-    draw_arc(*debug_draw.debug_lines_screen, v_from_, v_to_);
+    draw_arc(*debug_draw.debug_lines_screen, v_from_, v_to_, 0xffff00ee);
   }
 
-  draw_constraints(*debug_draw.debug_lines_screen, m_now_);
+  draw_constraints(
+    *debug_draw.debug_lines_screen, m_now_, axis_index_, dragging_);
 }

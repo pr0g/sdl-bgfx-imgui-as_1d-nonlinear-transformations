@@ -49,7 +49,10 @@ struct arcball_scene_t : public scene_t
   as::quat q_now_ = as::quat::identity();
   as::quat q_down_ = as::quat::identity();
   as::mat3 m_now_ = as::mat3::identity();
+  as::mat3 m_down_ = as::mat3::identity();
   as::vec3 v_from_;
   as::vec3 v_to_;
   bool dragging_ = false;
+  bool constraint_pressed_ = false;
+  std::optional<as::index> axis_index_;
 };
