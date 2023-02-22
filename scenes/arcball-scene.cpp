@@ -143,14 +143,72 @@ static as::vec3 mouse_on_sphere(
   return ball_mouse;
 }
 
+// halve arc between unit vectors v0 and v1
+as::vec3 bisect(const as::vec3& v0, const as::vec3& v1)
+{
+  const as::vec3 v = v0 + v1;
+  if (const float length = as::vec_length_sq(v); length < 1.0e-5f) {
+    return as::vec3(0.0f, 0.0f, 1.0f);
+  } else {
+    return v * 1.0f / std::sqrt(length);
+  }
+}
+
+static void draw_arc(
+  dbg::DebugLines& debug_lines_screen, const as::vec3& from, const as::vec3& to)
+{
+  const int segment_count = 16;
+  as::vec3 pts[segment_count + 1];
+  pts[0] = from;
+  pts[1] = pts[segment_count] = to;
+  for (int i = 0; i < 4; i++) {
+    pts[1] = bisect(pts[0], pts[1]);
+  }
+  const float dot = 2.0f * as::vec_dot(pts[0], pts[1]);
+  for (int i = 2; i < segment_count; i++) {
+    pts[i] = (pts[i - 1] * dot) - pts[i - 2];
+  }
+  const auto y_flip = as::vec3(1.0f, -1.0f, 1.0f);
+  for (int i = 0; i < segment_count; i++) {
+    debug_lines_screen.addLine(
+      (pts[i] * y_flip + as::vec3::axis_z()),
+      (pts[i + 1] * y_flip + as::vec3::axis_z()), 0xffffff00);
+  }
+}
+
+static void draw_half_arc(
+  dbg::DebugLines& debug_lines_screen, const as::vec3& n)
+{
+  as::vec3 p, m;
+  p.z = 0.0f;
+  if (n.z != 1.0f) {
+    p.x = -n.y;
+    p.y = n.x;
+    p = as::vec_normalize(p);
+  } else {
+    p.x = 0.0f;
+    p.y = 1.0f;
+  }
+  m = as::vec3_cross(p, n);
+  draw_arc(debug_lines_screen, p, m);
+  draw_arc(debug_lines_screen, m, -p);
+}
+
+static void draw_constraints(
+  dbg::DebugLines& debug_lines_screen, const as::mat3& now)
+{
+  draw_half_arc(debug_lines_screen, as::mat3_basis_x(now));
+  draw_half_arc(debug_lines_screen, as::mat3_basis_y(now));
+  draw_half_arc(debug_lines_screen, as::mat3_basis_z(now));
+}
+
 void arcball_scene_t::update(debug_draw_t& debug_draw, const float delta_time)
 {
   v_from_ = mouse_on_sphere(v_down_, as::vec2::zero(), 0.75f);
   v_to_ = mouse_on_sphere(v_now_, as::vec2::zero(), 0.75f);
   if (dragging_) {
-    const auto axis = as::vec3_cross(v_from_, v_to_);
-    const auto angle = as::vec_dot(v_from_, v_to_);
-    const as::quat q_drag = as::quat(angle, axis);
+    const as::quat q_drag =
+      as::quat(as::vec_dot(v_from_, v_to_), as::vec3_cross(v_from_, v_to_));
     q_now_ = as::quat_from_mat3(as::mat3_from_affine(camera_.transform()))
            * q_drag * as::quat_from_mat3(as::mat3_from_affine(camera_.view()))
            * q_down_;
@@ -190,7 +248,7 @@ void arcball_scene_t::update(debug_draw_t& debug_draw, const float delta_time)
 
   const float ar = aspect(screen_dimension_);
   const as::mat4 orthographic_projection =
-    as::ortho_direct3d_lh(-1.0f * ar, 1.0f * ar, 1.0f, -1.0f, 0.0f, 1.0f);
+    as::ortho_direct3d_lh(-1.0f * ar, 1.0f * ar, 1.0f, -1.0f, -10.0f, 10.0f);
 
   float proj_o[16];
   as::mat_to_arr(orthographic_projection, proj_o);
@@ -202,36 +260,12 @@ void arcball_scene_t::update(debug_draw_t& debug_draw, const float delta_time)
       as::mat3_scale(radius), as::vec3_from_vec2(as::vec2::zero(), 0.5f)),
     0xffffffff);
 
-  // halve arc between unit vectors v0 and v1
-  auto vec3_bisect = [](const as::vec3& v0, const as::vec3& v1) {
-    const as::vec3 v = v0 + v1;
-    if (const float length = as::vec_length_sq(v); length < 1.0e-5f) {
-      return as::vec3(0.0f, 0.0f, 1.0f);
-    } else {
-      return v * 1.0f / std::sqrt(length);
-    }
-  };
-
   debug_draw.debug_lines_screen->setTransform(
     as::mat4_from_mat3(as::mat3_scale(radius)));
 
   if (dragging_) {
-    const int segment_count = 16;
-    as::vec3 pts[segment_count + 1];
-    pts[0] = v_from_;
-    pts[1] = pts[segment_count] = v_to_;
-    for (int i = 0; i < 4; i++) {
-      pts[1] = vec3_bisect(pts[0], pts[1]);
-    }
-    const float dot = 2.0f * as::vec_dot(pts[0], pts[1]);
-    for (int i = 2; i < segment_count; i++) {
-      pts[i] = (pts[i - 1] * dot) - pts[i - 2];
-    }
-    const auto y_flip = as::vec3(1.0f, -1.0f, 1.0f);
-    for (int i = 0; i < segment_count; i++) {
-      debug_draw.debug_lines_screen->addLine(
-        (pts[i] * y_flip + as::vec3::axis_z()),
-        (pts[i + 1] * y_flip + as::vec3::axis_z()), 0xffffff00);
-    }
+    draw_arc(*debug_draw.debug_lines_screen, v_from_, v_to_);
   }
+
+  draw_constraints(*debug_draw.debug_lines_screen, m_now_);
 }
