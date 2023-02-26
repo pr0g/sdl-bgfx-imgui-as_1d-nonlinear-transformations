@@ -227,13 +227,14 @@ static void draw_constraints(
 static as::vec3 constrain_to_axis(
   const as::vec3& unconstrained, const as::vec3& axis)
 {
-  const as::vec3 point_on_plane =
+  as::vec3 point_on_plane =
     unconstrained - (axis * as::vec_dot(axis, unconstrained));
-  const float distance = as::vec_length_sq(point_on_plane);
-  if (distance > 0.0f) {
-    if (point_on_plane.z < 0.0f) {
-      return point_on_plane * (1.0f / std::sqrt(distance));
+  const float norm = as::vec_dot(point_on_plane, point_on_plane);
+  if (norm > 0.0f) {
+    if (point_on_plane.z > 0.0f) {
+      point_on_plane = -point_on_plane;
     }
+    return point_on_plane * (1.0f / std::sqrt(norm));
   }
   if (axis.z == 1.0f) {
     return as::vec3(1.0f, 0.0f, 0.0f);
@@ -260,8 +261,10 @@ static as::index nearest_constraint_axis(
 
 void arcball_scene_t::update(debug_draw_t& debug_draw, const float delta_time)
 {
-  v_from_ = mouse_on_sphere(v_down_, as::vec2::zero(), 0.75f);
-  v_to_ = mouse_on_sphere(v_now_, as::vec2::zero(), 0.75f);
+  const float radius = 0.75f;
+
+  v_from_ = mouse_on_sphere(v_down_, as::vec2::zero(), radius);
+  v_to_ = mouse_on_sphere(v_now_, as::vec2::zero(), radius);
   if (dragging_) {
     if (axis_index_.has_value()) {
       v_from_ = constrain_to_axis(v_from_, as::mat_col(m_down_, *axis_index_));
@@ -291,8 +294,6 @@ void arcball_scene_t::update(debug_draw_t& debug_draw, const float delta_time)
   as::mat_to_arr(perspective_projection_, proj);
 
   bgfx::setViewTransform(main_view_, view, proj);
-
-  const float radius = 0.75f;
 
   auto offset = as::mat4_from_mat3_vec3(
     as::mat3_scale(radius * (1.0f / 3.0f)), as::vec3::axis_z(2.0f));
