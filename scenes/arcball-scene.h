@@ -8,6 +8,13 @@
 
 #include <vector>
 
+// notice
+// the code contained in this file is derivative of the original arcball
+// demo by Ken Showmake (see
+// https://github.com/erich666/GraphicsGems/tree/master/gemsiv/arcball)
+// the original license can be found here
+// https://github.com/erich666/GraphicsGems/blob/master/LICENSE.md
+
 struct arcball_scene_t : public scene_t
 {
   void setup(
