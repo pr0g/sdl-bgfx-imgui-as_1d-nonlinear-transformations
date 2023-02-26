@@ -130,13 +130,13 @@ void arcball_scene_t::input(const SDL_Event& current_event)
 
   if (current_event.type == SDL_KEYDOWN) {
     SDL_KeyboardEvent* keyboard_event = (SDL_KeyboardEvent*)&current_event;
-    if (keyboard_event->keysym.sym == SDLK_LSHIFT) {
+    if (keyboard_event->keysym.sym == SDLK_LCTRL) {
       constraint_pressed_ = true;
     }
   }
   if (current_event.type == SDL_KEYUP) {
     SDL_KeyboardEvent* keyboard_event = (SDL_KeyboardEvent*)&current_event;
-    if (keyboard_event->keysym.sym == SDLK_LSHIFT) {
+    if (keyboard_event->keysym.sym == SDLK_LCTRL) {
       constraint_pressed_ = false;
     }
   }
@@ -267,8 +267,16 @@ void arcball_scene_t::update(debug_draw_t& debug_draw, const float delta_time)
   v_to_ = mouse_on_sphere(v_now_, as::vec2::zero(), radius);
   if (dragging_) {
     if (axis_index_.has_value()) {
-      v_from_ = constrain_to_axis(v_from_, as::mat_col(m_down_, *axis_index_));
-      v_to_ = constrain_to_axis(v_to_, as::mat_col(m_down_, *axis_index_));
+      v_from_ = constrain_to_axis(
+        v_from_,
+        as::mat_col(
+          as::mat_mul(m_down_, as::mat3_from_affine(target_camera_.view())),
+          *axis_index_));
+      v_to_ = constrain_to_axis(
+        v_to_,
+        as::mat_col(
+          as::mat_mul(m_down_, as::mat3_from_affine(target_camera_.view())),
+          *axis_index_));
     }
     const as::quat q_drag =
       as::quat(as::vec_dot(v_from_, v_to_), as::vec3_cross(v_from_, v_to_));
@@ -277,7 +285,9 @@ void arcball_scene_t::update(debug_draw_t& debug_draw, const float delta_time)
            * q_down_;
   } else {
     if (constraint_pressed_) {
-      axis_index_ = nearest_constraint_axis(v_to_, m_now_);
+      axis_index_ = nearest_constraint_axis(
+        v_to_,
+        as::mat_mul(m_now_, as::mat3_from_affine(target_camera_.view())));
     } else {
       axis_index_.reset();
     }
@@ -335,5 +345,7 @@ void arcball_scene_t::update(debug_draw_t& debug_draw, const float delta_time)
   }
 
   draw_constraints(
-    *debug_draw.debug_lines_screen, m_now_, axis_index_, dragging_);
+    *debug_draw.debug_lines_screen,
+    as::mat_mul(m_now_, as::mat3_from_affine(target_camera_.view())),
+    axis_index_, dragging_);
 }
