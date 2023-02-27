@@ -1,11 +1,11 @@
 #include "arcball-scene.h"
 
+#include <SDL.h>
 #include <as-camera-input-sdl/as-camera-input-sdl.hpp>
 #include <as/as-view.hpp>
+#include <imgui.h>
 #include <thh-bgfx-debug/debug-circle.hpp>
 #include <thh-bgfx-debug/debug-line.hpp>
-
-#include <SDL.h>
 
 float aspect(const as::vec2i& screen_dimension)
 {
@@ -98,6 +98,14 @@ void arcball_scene_t::setup(
   cameras.addCamera(&first_person_translate_camera_);
 }
 
+static as::vec2 ndc_from_screen(
+  const as::vec2i& screen, const as::vec2i& dimension)
+{
+  return as::vec2(
+    (2.0f * screen.x / dimension.x - 1.0f) * aspect(dimension),
+    2.0f * screen.y / dimension.y - 1.0f);
+}
+
 void arcball_scene_t::input(const SDL_Event& current_event)
 {
   camera_system_.handleEvents(asci_sdl::sdlToInput(&current_event));
@@ -170,7 +178,7 @@ as::vec3 bisect(const as::vec3& v0, const as::vec3& v1)
 
 static void draw_arc(
   dbg::DebugLines& debug_lines_screen, const as::vec3& from, const as::vec3& to,
-  const uint32_t color)
+  const as::vec2& position, const uint32_t color)
 {
   const int segment_count = 16;
   as::vec3 pts[segment_count + 1];
@@ -186,13 +194,14 @@ static void draw_arc(
   const auto y_flip = as::vec3(1.0f, -1.0f, 1.0f);
   for (int i = 0; i < segment_count; i++) {
     debug_lines_screen.addLine(
-      (pts[i] * y_flip + as::vec3::axis_z()),
-      (pts[i + 1] * y_flip + as::vec3::axis_z()), color);
+      pts[i] * y_flip + as::vec3_from_vec2(position),
+      pts[i + 1] * y_flip + as::vec3_from_vec2(position), color);
   }
 }
 
 static void draw_half_arc(
-  dbg::DebugLines& debug_lines_screen, const as::vec3& n, const uint32_t color)
+  dbg::DebugLines& debug_lines_screen, const as::vec3& n,
+  const as::vec2& position, const uint32_t color)
 {
   as::vec3 p, m;
   p.z = 0.0f;
@@ -205,22 +214,28 @@ static void draw_half_arc(
     p.y = 1.0f;
   }
   m = as::vec3_cross(p, n);
-  draw_arc(debug_lines_screen, p, m, color);
-  draw_arc(debug_lines_screen, m, -p, color);
+  // draw front
+  draw_arc(debug_lines_screen, p, m, position, color);
+  draw_arc(debug_lines_screen, m, -p, position, color);
+  // draw back arcs
+  draw_arc(debug_lines_screen, -p, -m, position, 0xffbbbb00);
+  draw_arc(debug_lines_screen, -m, p, position, 0xffbbbb00);
 }
 
 static void draw_constraints(
   dbg::DebugLines& debug_lines_screen, const as::mat3& now,
-  const std::optional<as::index> axis_index, const bool dragging)
+  const std::optional<as::index> axis_index, const as::vec2& position,
+  const bool dragging)
 {
   for (as::index i = 0; i < as::mat3::dim(); i++) {
-    const bool matching_axis = axis_index.has_value() && *axis_index == i;
-    draw_half_arc(debug_lines_screen, as::mat_col(now, i), [matching_axis] {
-      if (matching_axis) {
-        return 0xff000000;
-      }
-      return 0xffffff00;
-    }());
+    draw_half_arc(
+      debug_lines_screen, as::mat_col(now, i), position,
+      [matching_axis = axis_index.has_value() && *axis_index == i] {
+        if (matching_axis) {
+          return 0xff000000;
+        }
+        return 0xffffff00;
+      }());
   }
 }
 
@@ -261,10 +276,18 @@ static as::index nearest_constraint_axis(
 
 void arcball_scene_t::update(debug_draw_t& debug_draw, const float delta_time)
 {
-  const float radius = 0.75f;
+  ImGui::Begin("Sphere");
+  float position_imgui[2];
+  as::vec_to_arr(sphere_position_, position_imgui);
+  static bool track = false;
+  ImGui::Checkbox("Track position", &track);
+  ImGui::SliderFloat2("Position", position_imgui, -1.0f, 1.0f);
+  ImGui::SliderFloat("Radius", &sphere_radius_, 0.01f, 1.0f);
+  sphere_position_ = as::vec2_from_arr(position_imgui);
+  ImGui::End();
 
-  v_from_ = mouse_on_sphere(v_down_, as::vec2::zero(), radius);
-  v_to_ = mouse_on_sphere(v_now_, as::vec2::zero(), radius);
+  v_from_ = mouse_on_sphere(v_down_, sphere_position_, sphere_radius_);
+  v_to_ = mouse_on_sphere(v_now_, sphere_position_, sphere_radius_);
   if (dragging_) {
     if (axis_index_.has_value()) {
       v_from_ = constrain_to_axis(
@@ -305,10 +328,8 @@ void arcball_scene_t::update(debug_draw_t& debug_draw, const float delta_time)
 
   bgfx::setViewTransform(main_view_, view, proj);
 
-  auto offset = as::mat4_from_mat3_vec3(
-    as::mat3_scale(radius * (1.0f / 3.0f)), as::vec3::axis_z(2.0f));
-
-  offset = as::mat_mul(as::mat4_from_mat3(m_now_), offset);
+  const auto offset = as::mat_mul(
+    as::mat4_from_mat3(m_now_), as::mat4_from_vec3(as::vec3::axis_z(8.0f)));
 
   float model[16];
   as::mat_to_arr(offset, model);
@@ -329,23 +350,36 @@ void arcball_scene_t::update(debug_draw_t& debug_draw, const float delta_time)
 
   float proj_o[16];
   as::mat_to_arr(orthographic_projection, proj_o);
-
   bgfx::setViewTransform(ortho_view_, nullptr, proj_o);
+
+  if (track) {
+    const auto pos = as::world_to_screen(
+      as::mat4_translation(offset), perspective_projection_, camera_.view(),
+      screen_dimension_);
+    sphere_position_ = ndc_from_screen(
+      as::vec2i(pos.x, screen_dimension_.y - pos.y), screen_dimension_);
+  }
 
   debug_draw.debug_circles_screen->addWireCircle(
     as::mat4_from_mat3_vec3(
-      as::mat3_scale(radius), as::vec3_from_vec2(as::vec2::zero(), 0.5f)),
+      as::mat3_scale(sphere_radius_),
+      as::vec3_from_vec2(as::vec2(sphere_position_.x, -sphere_position_.y))),
     0xffffffff);
 
   debug_draw.debug_lines_screen->setTransform(
-    as::mat4_from_mat3(as::mat3_scale(radius)));
+    as::mat4_from_mat3(as::mat3_scale(sphere_radius_)));
 
   if (dragging_) {
-    draw_arc(*debug_draw.debug_lines_screen, v_from_, v_to_, 0xffff00ee);
+    draw_arc(
+      *debug_draw.debug_lines_screen, v_from_, v_to_,
+      as::vec2(sphere_position_.x, -sphere_position_.y) * 1.0f / sphere_radius_,
+      0xffff00ee);
   }
 
   draw_constraints(
     *debug_draw.debug_lines_screen,
     as::mat_mul(m_now_, as::mat3_from_affine(target_camera_.view())),
-    axis_index_, dragging_);
+    axis_index_,
+    as::vec2(sphere_position_.x, -sphere_position_.y) * 1.0f / sphere_radius_,
+    dragging_);
 }

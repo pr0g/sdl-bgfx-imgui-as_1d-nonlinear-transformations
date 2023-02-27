@@ -34,7 +34,7 @@ struct arcball_scene_t : public scene_t
 
   bgfx::UniformHandle u_light_pos_;
   bgfx::UniformHandle u_camera_pos_;
-  as::vec3 light_pos_{0.0f, 2.0f, 2.0f};
+  as::vec3 light_pos_{0.0f, 8.0f, 8.0f};
 
   as::vec2i screen_dimension_;
   as::mat4 perspective_projection_;
@@ -62,4 +62,7 @@ struct arcball_scene_t : public scene_t
   bool dragging_ = false;
   bool constraint_pressed_ = false;
   std::optional<as::index> axis_index_;
+
+  as::vec2 sphere_position_ = as::vec2::zero();
+  float sphere_radius_ = 0.75f;
 };
