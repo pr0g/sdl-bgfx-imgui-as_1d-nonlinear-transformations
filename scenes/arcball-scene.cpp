@@ -26,7 +26,7 @@ void arcball_scene_t::setup(
   screen_dimension_ = {width, height};
 
   perspective_projection_ = as::perspective_direct3d_lh(
-    as::radians(90.0f), float(width) / float(height), 0.01f, 1000.0f);
+    as::radians(60.0f), float(width) / float(height), 0.01f, 1000.0f);
 
   ship_vertices_ = {
     {as::vec3{3.0f, 0.0f, 0.0f}, as::vec3{0.0f, 0.0f, 1.0f}}, // 0
