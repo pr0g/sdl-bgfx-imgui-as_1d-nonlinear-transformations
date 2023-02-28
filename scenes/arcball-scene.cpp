@@ -108,15 +108,17 @@ static as::vec2 ndc_from_screen(
 
 void arcball_scene_t::input(const SDL_Event& current_event)
 {
+  if (ImGui::GetIO().WantCaptureMouse) {
+    return;
+  }
+
   camera_system_.handleEvents(asci_sdl::sdlToInput(&current_event));
 
   if (current_event.type == SDL_MOUSEMOTION) {
     SDL_MouseMotionEvent* mouse_motion = (SDL_MouseMotionEvent*)&current_event;
-    mouse_now_.x = mouse_motion->x;
-    v_now_.x = (2.0f * mouse_now_.x / screen_dimension_.x - 1.0f)
-             * aspect(screen_dimension_);
-    mouse_now_.y = screen_dimension_.y - mouse_motion->y;
-    v_now_.y = 2.0f * mouse_now_.y / screen_dimension_.y - 1.0f;
+    mouse_now_ =
+      as::vec2i(mouse_motion->x, screen_dimension_.y - mouse_motion->y);
+    v_now_ = ndc_from_screen(mouse_now_, screen_dimension_);
   }
 
   if (current_event.type == SDL_MOUSEBUTTONDOWN) {
@@ -244,12 +246,12 @@ static as::vec3 constrain_to_axis(
 {
   as::vec3 point_on_plane =
     unconstrained - (axis * as::vec_dot(axis, unconstrained));
-  const float norm = as::vec_dot(point_on_plane, point_on_plane);
-  if (norm > 0.0f) {
+  const float length_sq = as::vec_length_sq(point_on_plane);
+  if (length_sq != 0.0f) {
     if (point_on_plane.z > 0.0f) {
       point_on_plane = -point_on_plane;
     }
-    return point_on_plane * (1.0f / std::sqrt(norm));
+    return point_on_plane * (1.0f / std::sqrt(length_sq));
   }
   if (axis.z == 1.0f) {
     return as::vec3(1.0f, 0.0f, 0.0f);
@@ -276,7 +278,7 @@ static as::index nearest_constraint_axis(
 
 void arcball_scene_t::update(debug_draw_t& debug_draw, const float delta_time)
 {
-  ImGui::Begin("Sphere");
+  ImGui::Begin("Arcball");
   float position_imgui[2];
   as::vec_to_arr(sphere_position_, position_imgui);
   static bool track = false;
