@@ -53,6 +53,7 @@ struct arcball_scene_t : public scene_t
   as::vec2i mouse_now_;
   as::vec2 v_now_;
   as::vec2 v_down_;
+  as::quat q_target = as::quat::identity();
   as::quat q_now_ = as::quat::identity();
   as::quat q_down_ = as::quat::identity();
   as::mat3 m_now_ = as::mat3::identity();

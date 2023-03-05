@@ -133,8 +133,8 @@ void arcball_scene_t::input(const SDL_Event& current_event)
     SDL_MouseButtonEvent* mouse_button = (SDL_MouseButtonEvent*)&current_event;
     if (mouse_button->button == SDL_BUTTON_LEFT) {
       dragging_ = false;
-      q_down_ = q_now_;
-      m_down_ = m_now_;
+      q_down_ = q_target;
+      m_down_ = as::mat3_from_quat(q_target);
     }
   }
 
@@ -286,6 +286,8 @@ void arcball_scene_t::update(debug_draw_t& debug_draw, const float delta_time)
   ImGui::SliderFloat2("Position", position_imgui, -1.0f, 1.0f);
   ImGui::SliderFloat("Radius", &sphere_radius_, 0.01f, 1.0f);
   sphere_position_ = as::vec2_from_arr(position_imgui);
+  static float smoothing = 5.0f;
+  ImGui::SliderFloat("Smoothing", &smoothing, 0.01f, 8.0f);
   ImGui::End();
 
   v_from_ = mouse_on_sphere(v_down_, sphere_position_, sphere_radius_);
@@ -305,9 +307,9 @@ void arcball_scene_t::update(debug_draw_t& debug_draw, const float delta_time)
     }
     const as::quat q_drag =
       as::quat(as::vec_dot(v_from_, v_to_), as::vec3_cross(v_from_, v_to_));
-    q_now_ = as::quat_from_mat3(as::mat3_from_affine(camera_.transform()))
-           * q_drag * as::quat_from_mat3(as::mat3_from_affine(camera_.view()))
-           * q_down_;
+    q_target = as::quat_from_mat3(as::mat3_from_affine(camera_.transform()))
+             * q_drag * as::quat_from_mat3(as::mat3_from_affine(camera_.view()))
+             * q_down_;
   } else {
     if (constraint_pressed_) {
       axis_index_ = nearest_constraint_axis(
@@ -317,6 +319,10 @@ void arcball_scene_t::update(debug_draw_t& debug_draw, const float delta_time)
       axis_index_.reset();
     }
   }
+
+  const as::real rotate_rate = std::exp2(smoothing);
+  const as::real rotate_t = std::exp2(-rotate_rate * delta_time);
+  q_now_ = as::quat_slerp(q_target, q_now_, rotate_t); // shortest distance
   m_now_ = as::mat3_from_quat(q_now_);
 
   target_camera_ = camera_system_.stepCamera(target_camera_, delta_time);
