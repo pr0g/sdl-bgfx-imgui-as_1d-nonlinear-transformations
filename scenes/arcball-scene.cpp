@@ -1,11 +1,15 @@
 #include "arcball-scene.h"
 
+#include "debug.h"
+
 #include <SDL.h>
 #include <as-camera-input-sdl/as-camera-input-sdl.hpp>
 #include <as/as-view.hpp>
 #include <imgui.h>
 #include <thh-bgfx-debug/debug-circle.hpp>
 #include <thh-bgfx-debug/debug-line.hpp>
+
+static const float g_start_height = 5.0f;
 
 float aspect(const as::vec2i& screen_dimension)
 {
@@ -96,6 +100,9 @@ void arcball_scene_t::setup(
   asci::Cameras& cameras = camera_system_.cameras_;
   cameras.addCamera(&first_person_rotate_camera_);
   cameras.addCamera(&first_person_translate_camera_);
+
+  target_camera_.pivot = as::vec3::axis_y(g_start_height);
+  camera_ = target_camera_;
 }
 
 static as::vec2 ndc_from_screen(
@@ -290,6 +297,8 @@ void arcball_scene_t::update(debug_draw_t& debug_draw, const float delta_time)
   ImGui::SliderFloat("Smoothing", &smoothing, 0.01f, 8.0f);
   ImGui::End();
 
+  drawGrid(*debug_draw.debug_lines, camera_.translation());
+
   v_from_ = mouse_on_sphere(v_down_, sphere_position_, sphere_radius_);
   v_to_ = mouse_on_sphere(v_now_, sphere_position_, sphere_radius_);
   if (dragging_) {
@@ -337,7 +346,8 @@ void arcball_scene_t::update(debug_draw_t& debug_draw, const float delta_time)
   bgfx::setViewTransform(main_view_, view, proj);
 
   const auto offset = as::mat_mul(
-    as::mat4_from_mat3(m_now_), as::mat4_from_vec3(as::vec3::axis_z(8.0f)));
+    as::mat4_from_mat3(m_now_),
+    as::mat4_from_vec3(as::vec3(0.0f, g_start_height, 8.0f)));
 
   float model[16];
   as::mat_to_arr(offset, model);

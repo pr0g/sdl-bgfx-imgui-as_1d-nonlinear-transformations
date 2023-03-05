@@ -28,8 +28,12 @@ FetchContent_Declare(
   nlohmann-json
   GIT_REPOSITORY https://github.com/nlohmann/json.git
   GIT_TAG e10a3fac8a255433146e3f06a703dc110fc3c3da)
+FetchContent_Declare(
+  as
+  GIT_REPOSITORY https://github.com/pr0g/as.git
+  GIT_TAG 9355e7572b354cdce950cedd131acd68a910804c)
 
-FetchContent_MakeAvailable(as-camera-input-sdl EasyIterator thh-bgfx-debug
+FetchContent_MakeAvailable(as-camera-input-sdl as EasyIterator thh-bgfx-debug
                            hierarchy nlohmann-json)
 
 add_executable(${PROJECT_NAME})
@@ -63,7 +67,8 @@ target_link_libraries(
           EasyIterator
           thh-bgfx-debug
           hierarchy
-          nlohmann_json::nlohmann_json)
+          nlohmann_json::nlohmann_json
+          as)
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR})
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
