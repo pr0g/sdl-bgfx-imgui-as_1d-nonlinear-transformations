@@ -137,9 +137,7 @@ void list_scene_t::update(debug_draw_t& debug_draw, float delta_time)
   bgfx::setViewTransform(ortho_view_, view_o, proj_o);
 
   namespace ei = easy_iterator;
-  // for (const auto& [index, item] : ei::enumerate(list_.items_)) {
-  for (int index = 0; index < list_.items_.size(); index++) {
-    const auto& item = list_.items_[index];
+  for (const auto& [index, item] : ei::enumerate(list_.items_)) {
     if (index == selected_index_) {
       continue;
     }
@@ -150,22 +148,12 @@ void list_scene_t::update(debug_draw_t& debug_draw, float delta_time)
     if (index <= available_index_ && index > selected_index_) {
       offset = -1;
     }
-    // if (index == available_index_ && index != selected_index_) {
-    //   if (available_index_ < selected_index_) {
-    //     offset = selected_index_ - available_index_;
-    //   } else {
-    //     offset = -(selected_index_ - available_index_);
-    //   }
-    // }
     draw_box(
       debug_draw,
       list_.position_
         + as::vec2(0.0f, (item.size_.y + list_.spacing_) * (index + offset)),
       item.size_, item.color_);
   }
-
-  float itemBoundBottom = 0.0f;
-  float itemAfterBoundBottom = 0.0f;
 
   const auto list_position = list_.position_;
   if (selected_index_ != -1) {
@@ -212,9 +200,6 @@ void list_scene_t::update(debug_draw_t& debug_draw, float delta_time)
           list_position.x + item_after.size_.x,
           list_position.y + item_after.size_.y
             + index_after * (item_after.size_.y + list_.spacing_))};
-      itemBoundBottom = item_bound.bottom_right_.y;
-      itemAfterBoundBottom =
-        item_after_bound.top_left_.y + (item_after.size_.y / 2);
       if (
         item_bound.bottom_right_.y
         >= item_after_bound.top_left_.y + (item_after.size_.y / 2)) {
@@ -223,10 +208,7 @@ void list_scene_t::update(debug_draw_t& debug_draw, float delta_time)
     }
   }
 
-  bgfx::dbgTextPrintf(0, 2, 0x0f, "item bound bottom %f", itemBoundBottom);
-  bgfx::dbgTextPrintf(
-    0, 3, 0x0f, "item after bound bottom %f", itemAfterBoundBottom);
-
+  // debug bounds drawing
   // const as::vec2 list_position = list_.position_;
   // for (const auto& [index, item] : ei::enumerate(list_.items_)) {
   //   const bound_t bound = bound_t{
