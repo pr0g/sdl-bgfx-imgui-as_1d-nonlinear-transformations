@@ -54,6 +54,7 @@ target_sources(
           scenes/simple-camera-scene.cpp
           scenes/globe-scene.cpp
           scenes/arcball-scene.cpp
+          scenes/list-scene.cpp
           math-utils.cpp)
 
 target_link_libraries(

@@ -3,6 +3,7 @@
 #include "scenes/arcball-scene.h"
 #include "scenes/globe-scene.h"
 #include "scenes/hierarchy-scene.h"
+#include "scenes/list-scene.h"
 #include "scenes/marching-cube-scene.h"
 #include "scenes/simple-camera-scene.h"
 #include "scenes/transforms-scene.h"
@@ -121,13 +122,16 @@ int main(int argc, char** argv)
   bgfx_init.platformData = pd;
   bgfx::init(bgfx_init);
 
+  bgfx::setDebug(BGFX_DEBUG_TEXT);
+
   const char* scene_names[] = {
     "Non-Linear Transformations",
     "Marching Cubes",
     "Hierarchy",
     "Simple Camera",
     "Globe Scene",
-    "Arcball"};
+    "Arcball",
+    "List"};
 
   std::unique_ptr<scene_t> scene = nullptr;
   auto scene_builder = [](const int scene_id) -> std::unique_ptr<scene_t> {
@@ -144,6 +148,8 @@ int main(int argc, char** argv)
         return std::make_unique<globe_scene_t>();
       case 5:
         return std::make_unique<arcball_scene_t>();
+      case 6:
+        return std::make_unique<list_scene_t>();
       default:
         return nullptr;
     }
