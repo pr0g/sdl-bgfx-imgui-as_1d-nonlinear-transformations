@@ -14,8 +14,8 @@ FetchContent_Declare(
   GIT_TAG c83e6ae2a0727a6e8f7f40ec277f49683f74771a)
 FetchContent_Declare(
   EasyIterator
-  GIT_REPOSITORY https://github.com/TheLartians/EasyIterator.git
-  GIT_TAG aab0c0d8fd17708c64522408d9b304729dbc3a3f)
+  GIT_REPOSITORY https://github.com/pr0g/EasyIterator.git
+  GIT_TAG a79b099b02773aec648da7d4a4d81a24397136ab)
 FetchContent_Declare(
   thh-bgfx-debug
   GIT_REPOSITORY https://github.com/pr0g/thh-bgfx-debug
@@ -61,8 +61,6 @@ target_link_libraries(
   ${PROJECT_NAME}
   PRIVATE SDL2::SDL2
           SDL2::SDL2main
-          bgfx::bgfx
-          bgfx::bx
           imgui.cmake::imgui.cmake
           as-camera-input-sdl
           EasyIterator
@@ -72,7 +70,7 @@ target_link_libraries(
           as)
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR})
-target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
+target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
 
 # required for project when using visual studio generator
 set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY
