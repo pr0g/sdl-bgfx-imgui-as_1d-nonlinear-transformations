@@ -53,9 +53,9 @@ void draw_box(
   debug_draw_t& debug_draw, const as::vec2& position, const as::vec2& bounds,
   const uint32_t color)
 {
-  const as::vec2 top_left = position;
-  const as::vec2 bottom_right = position + bounds;
-  draw_box(debug_draw, bound_t{top_left, bottom_right}, color);
+  draw_box(
+    debug_draw,
+    bound_t{.top_left_ = position, .bottom_right_ = position + bounds}, color);
 }
 
 void list_scene_t::setup(
@@ -87,10 +87,10 @@ void list_scene_t::input(const SDL_Event& current_event)
       const as::vec2 list_position = list_.position_;
       for (const auto& [index, item] : ei::enumerate(list_.items_)) {
         const bound_t bound = bound_t{
-          as::vec2(
+          .top_left_ = as::vec2(
             list_position.x,
             list_position.y + index * (item.size_.y + list_.spacing_)),
-          as::vec2(
+          .bottom_right_ = as::vec2(
             list_position.x + item.size_.x,
             list_position.y + item.size_.y
               + index * (item.size_.y + list_.spacing_))};
@@ -160,8 +160,8 @@ void list_scene_t::update(debug_draw_t& debug_draw, float delta_time)
     const auto& item = list_.items_[selected_index_];
     draw_box(debug_draw, drag_position_, item.size_, item.color_);
     const bound_t item_bound = bound_t{
-      as::vec2(list_position.x, drag_position_.y),
-      as::vec2(
+      .top_left_ = as::vec2(list_position.x, drag_position_.y),
+      .bottom_right_ = as::vec2(
         list_position.x + item.size_.x, drag_position_.y + item.size_.y)};
 
     if (const int index_before = available_index_ - 1; index_before >= 0) {
