@@ -5,10 +5,9 @@
 
 #include <as/as-math-ops.hpp>
 #include <as/as-view.hpp>
-
 #include <easy_iterator.h>
 
-bool contained(const bound_t& bound, const as::vec2& point)
+static bool contained(const bound_t& bound, const as::vec2& point)
 {
   if (
     point.x >= bound.top_left_.x && point.x < bound.bottom_right_.x

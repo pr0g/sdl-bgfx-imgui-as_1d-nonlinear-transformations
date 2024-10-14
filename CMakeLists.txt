@@ -102,7 +102,7 @@ if(SDL_BGFX_IMGUI_ENABLE_TESTING)
   add_executable(${PROJECT_NAME}-list-test)
   target_sources(${PROJECT_NAME}-list-test PRIVATE list.cpp list.test.cpp)
   target_link_libraries(${PROJECT_NAME}-list-test Catch2::Catch2WithMain as
-                        EasyIterator)
+                        EasyIterator thh-bgfx-debug)
   target_compile_features(${PROJECT_NAME}-list-test PRIVATE cxx_std_20)
   target_compile_definitions(
     ${PROJECT_NAME}-list-test
