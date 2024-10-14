@@ -47,6 +47,7 @@ target_sources(
           hierarchy-imgui.cpp
           bgfx-helpers.cpp
           debug.cpp
+          list.cpp
           marching-cubes/marching-cubes.cpp
           scenes/marching-cube-scene.cpp
           scenes/transforms-scene.cpp
