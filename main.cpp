@@ -8,7 +8,7 @@
 #include "scenes/simple-camera-scene.h"
 #include "scenes/transforms-scene.h"
 
-#include "sdl-imgui/imgui_impl_sdl.h"
+#include "sdl-imgui/imgui_impl_sdl2.h"
 
 #include <SDL.h>
 #include <SDL_syswm.h>

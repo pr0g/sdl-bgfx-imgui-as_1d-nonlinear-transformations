@@ -1,6 +1,8 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.23)
 
 project(sdl-bgfx-imgui-as_1d-nonlinear-transformations LANGUAGES CXX)
+
+option(SDL_BGFX_IMGUI_ENABLE_TESTING "Enable tests for the project" OFF)
 
 find_package(SDL2 REQUIRED CONFIG)
 find_package(bgfx REQUIRED CONFIG)
@@ -14,8 +16,8 @@ FetchContent_Declare(
   GIT_TAG c83e6ae2a0727a6e8f7f40ec277f49683f74771a)
 FetchContent_Declare(
   EasyIterator
-  GIT_REPOSITORY https://github.com/pr0g/EasyIterator.git
-  GIT_TAG a79b099b02773aec648da7d4a4d81a24397136ab)
+  GIT_REPOSITORY https://github.com/TheLartians/EasyIterator.git
+  GIT_TAG f3f89399ba8bca617040c1503f4f9fe3582a6abd)
 FetchContent_Declare(
   thh-bgfx-debug
   GIT_REPOSITORY https://github.com/pr0g/thh-bgfx-debug
@@ -27,7 +29,7 @@ FetchContent_Declare(
 FetchContent_Declare(
   nlohmann-json
   GIT_REPOSITORY https://github.com/nlohmann/json.git
-  GIT_TAG e10a3fac8a255433146e3f06a703dc110fc3c3da)
+  GIT_TAG 0457de21cffb298c22b629e538036bfeb96130b7)
 FetchContent_Declare(
   as
   GIT_REPOSITORY https://github.com/pr0g/as.git
@@ -40,7 +42,7 @@ add_executable(${PROJECT_NAME})
 target_sources(
   ${PROJECT_NAME}
   PRIVATE main.cpp
-          sdl-imgui/imgui_impl_sdl.cpp
+          sdl-imgui/imgui_impl_sdl2.cpp
           bgfx-imgui/imgui_impl_bgfx.cpp
           smooth-line.cpp
           fps.cpp
@@ -92,4 +94,21 @@ if(WIN32)
     COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:SDL2::SDL2>
             $<TARGET_FILE_DIR:${PROJECT_NAME}>
     VERBATIM)
+endif()
+
+if(SDL_BGFX_IMGUI_ENABLE_TESTING)
+  find_package(Catch2 REQUIRED CONFIG)
+  include(CTest)
+  add_executable(${PROJECT_NAME}-list-test)
+  target_sources(${PROJECT_NAME}-list-test PRIVATE list.cpp list.test.cpp)
+  target_link_libraries(${PROJECT_NAME}-list-test Catch2::Catch2WithMain as
+                        EasyIterator)
+  target_compile_features(${PROJECT_NAME}-list-test PRIVATE cxx_std_20)
+  target_compile_definitions(
+    ${PROJECT_NAME}-list-test
+    PRIVATE $<$<BOOL:${AS_PRECISION_FLOAT}>:AS_PRECISION_FLOAT>
+            $<$<BOOL:${AS_PRECISION_DOUBLE}>:AS_PRECISION_DOUBLE>
+            $<$<BOOL:${AS_COL_MAJOR}>:AS_COL_MAJOR>
+            $<$<BOOL:${AS_ROW_MAJOR}>:AS_ROW_MAJOR>)
+  add_test(NAME "list tests" COMMAND ${PROJECT_NAME}-list-test)
 endif()

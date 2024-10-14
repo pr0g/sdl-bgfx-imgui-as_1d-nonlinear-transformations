@@ -5,21 +5,28 @@ project(third-party)
 
 include(ExternalProject)
 
+option(MC_GOL_APP_BUILD_TESTING "Enable testing" OFF)
+
 get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
 if(NOT isMultiConfig)
   if(NOT CMAKE_BUILD_TYPE)
+    # set Debug as default build type if one is not provided (match CMake
+    # default behavior)
     set(CMAKE_BUILD_TYPE
         Debug
         CACHE STRING "" FORCE)
   endif()
+  # give different build types their own folder with single config generators
   set(build_type_dir ${CMAKE_BUILD_TYPE})
+  # pass through build type arg to ExternalProject_Add command
   set(build_type_arg -DCMAKE_BUILD_TYPE=$<CONFIG>)
 endif()
 
 ExternalProject_Add(
   SDL2
-  URL https://www.libsdl.org/release/SDL2-2.0.20.tar.gz
-  URL_HASH MD5=a53acc02e1cca98c4123229069b67c9e
+  GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+  GIT_TAG release-2.30.2
+  GIT_SHALLOW TRUE
   BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/SDL2/build/${build_type_dir}
   INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}
   CMAKE_ARGS ${build_type_arg} -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>)
@@ -27,7 +34,8 @@ ExternalProject_Add(
 ExternalProject_Add(
   bgfx
   GIT_REPOSITORY https://github.com/bkaradzic/bgfx.cmake.git
-  GIT_TAG 907dc5fbd70f891ef6f465a0b778a6e0757c40f4
+  GIT_TAG v1.127.8765-472
+  GIT_SHALLOW TRUE
   BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/bgfx/build/${build_type_dir}
   INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}
   CMAKE_ARGS ${build_type_arg} -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
@@ -37,10 +45,20 @@ ExternalProject_Add(
 ExternalProject_Add(
   imgui.cmake
   GIT_REPOSITORY https://github.com/pr0g/imgui.cmake.git
-  GIT_TAG 668eab7759d005190afa7dae85a25269fd926246
+  GIT_TAG abf77e443a0d23b6d874dbbb42bbd02009562a9a
   BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/imgui/build/${build_type_dir}
   INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}
-  CMAKE_COMMAND ${THIRD_PARTY_CMAKE_COMMAND}
   CMAKE_ARGS ${build_type_arg} -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
              "$<$<CONFIG:Debug>:-DCMAKE_DEBUG_POSTFIX=d>"
              -DIMGUI_DISABLE_OBSOLETE_FUNCTIONS=ON)
+
+if(MC_GOL_APP_BUILD_TESTING)
+  ExternalProject_Add(
+    Catch2
+    GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+    GIT_TAG v3.6.0
+    BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/Catch2/build/${build_type_dir}
+    INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}
+    CMAKE_ARGS ${build_type_arg} -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+    CMAKE_CACHE_ARGS -DCMAKE_DEBUG_POSTFIX:STRING=d)
+endif()
