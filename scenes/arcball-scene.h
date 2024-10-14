@@ -1,3 +1,5 @@
+#pragma once
+
 #include "scene.h"
 
 #include "bgfx-helpers.h"

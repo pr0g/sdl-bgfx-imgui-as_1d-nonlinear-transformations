@@ -67,15 +67,16 @@ void list_scene_t::setup(
     as::ortho_metal_lh(0.0f, width, height, 0.0f, 0.0f, 1.0f);
   screen_dimension_ = as::vec2i(width, height);
 
-  list_.items_ = std::vector<item_t>{
-    {dbg::encodeColorAbgr((uint8_t)255, 255, 255, 255), as::vec2(200, 50)},
-    {dbg::encodeColorAbgr((uint8_t)255, 0, 0, 255), as::vec2(200, 50)},
-    {dbg::encodeColorAbgr((uint8_t)0, 255, 0, 255), as::vec2(200, 50)},
-    {dbg::encodeColorAbgr((uint8_t)0, 0, 255, 255), as::vec2(200, 50)},
-    {dbg::encodeColorAbgr((uint8_t)255, 255, 0, 255), as::vec2(200, 50)},
-    {dbg::encodeColorAbgr((uint8_t)0, 255, 255, 255), as::vec2(200, 50)},
-  };
   list_.position_ = as::vec2(200, 200);
+  list_.item_size_ = as::vec2(200, 50);
+  list_.items_ = std::vector<item_t>{
+    {dbg::encodeColorAbgr((uint8_t)255, 255, 255, 255)},
+    {dbg::encodeColorAbgr((uint8_t)255, 0, 0, 255)},
+    {dbg::encodeColorAbgr((uint8_t)0, 255, 0, 255)},
+    {dbg::encodeColorAbgr((uint8_t)0, 0, 255, 255)},
+    {dbg::encodeColorAbgr((uint8_t)255, 255, 0, 255)},
+    {dbg::encodeColorAbgr((uint8_t)0, 255, 255, 255)},
+  };
 }
 
 void list_scene_t::input(const SDL_Event& current_event)
@@ -85,21 +86,22 @@ void list_scene_t::input(const SDL_Event& current_event)
     if (mouse_button->button == SDL_BUTTON_LEFT) {
       namespace ei = easy_iterator;
       const as::vec2 list_position = list_.position_;
+      const as::vec3 item_size = list_.item_size_;
       for (const auto& [index, item] : ei::enumerate(list_.items_)) {
         const bound_t bound = bound_t{
           .top_left_ = as::vec2(
             list_position.x,
-            list_position.y + index * (item.size_.y + list_.spacing_)),
+            list_position.y + index * (item_size.y + list_.spacing_)),
           .bottom_right_ = as::vec2(
-            list_position.x + item.size_.x,
-            list_position.y + item.size_.y
-              + index * (item.size_.y + list_.spacing_))};
+            list_position.x + item_size.x,
+            list_position.y + item_size.y
+              + index * (item_size.y + list_.spacing_))};
         if (contained(bound, as::vec2_from_vec2i(mouse_now_))) {
           selected_index_ = index;
           available_index_ = index;
           drag_position_ =
             list_position
-            + as::vec2(0.0f, index * (item.size_.y + list_.spacing_));
+            + as::vec2(0.0f, index * (item_size.y + list_.spacing_));
         }
       }
     }
@@ -140,6 +142,8 @@ void list_scene_t::update(debug_draw_t& debug_draw, float delta_time)
   as::mat_to_arr(orthographic_projection_, proj_o);
   bgfx::setViewTransform(ortho_view_, view_o, proj_o);
 
+  const auto item_size = list_.item_size_;
+  const auto list_position = list_.position_;
   namespace ei = easy_iterator;
   for (const auto& [index, item] : ei::enumerate(list_.items_)) {
     if (index == selected_index_) {
@@ -154,37 +158,35 @@ void list_scene_t::update(debug_draw_t& debug_draw, float delta_time)
     }
     draw_box(
       debug_draw,
-      list_.position_
-        + as::vec2(0.0f, (item.size_.y + list_.spacing_) * (index + offset)),
-      item.size_, item.color_);
+      list_position
+        + as::vec2(0.0f, (item_size.y + list_.spacing_) * (index + offset)),
+      item_size, item.color_);
   }
 
-  const auto list_position = list_.position_;
   if (selected_index_ != -1) {
     const auto& item = list_.items_[selected_index_];
-    draw_box(debug_draw, drag_position_, item.size_, item.color_);
+    draw_box(debug_draw, drag_position_, item_size, item.color_);
     const bound_t item_bound = bound_t{
       .top_left_ = as::vec2(list_position.x, drag_position_.y),
       .bottom_right_ = as::vec2(
-        list_position.x + item.size_.x, drag_position_.y + item.size_.y)};
+        list_position.x + item_size.x, drag_position_.y + item_size.y)};
 
     if (const int index_before = available_index_ - 1; index_before >= 0) {
       const auto& item_before = list_.items_[index_before];
       const auto position =
         list_.position_
-        + as::vec2(0.0f, (item_before.size_.y + list_.spacing_) * index_before);
+        + as::vec2(0.0f, (item_size.y + list_.spacing_) * index_before);
       const bound_t item_before_bound = bound_t{
         as::vec2(
           list_position.x,
-          list_position.y
-            + index_before * (item_before.size_.y + list_.spacing_)),
+          list_position.y + index_before * (item_size.y + list_.spacing_)),
         as::vec2(
-          list_position.x + item_before.size_.x,
-          list_position.y + item_before.size_.y
-            + index_before * (item_before.size_.y + list_.spacing_))};
+          list_position.x + item_size.x,
+          list_position.y + item_size.y
+            + index_before * (item_size.y + list_.spacing_))};
       if (
         item_bound.top_left_.y
-        < item_before_bound.bottom_right_.y - (item_before.size_.y / 2)) {
+        < item_before_bound.bottom_right_.y - (item_size.y / 2)) {
         available_index_--;
       }
     }
@@ -194,19 +196,18 @@ void list_scene_t::update(debug_draw_t& debug_draw, float delta_time)
       const auto& item_after = list_.items_[index_after];
       const auto position =
         list_.position_
-        + as::vec2(0.0f, (item_after.size_.y + list_.spacing_) * index_after);
+        + as::vec2(0.0f, (item_size.y + list_.spacing_) * index_after);
       const bound_t item_after_bound = bound_t{
         as::vec2(
           list_position.x,
-          list_position.y
-            + index_after * (item_after.size_.y + list_.spacing_)),
+          list_position.y + index_after * (item_size.y + list_.spacing_)),
         as::vec2(
-          list_position.x + item_after.size_.x,
-          list_position.y + item_after.size_.y
-            + index_after * (item_after.size_.y + list_.spacing_))};
+          list_position.x + item_size.x,
+          list_position.y + item_size.y
+            + index_after * (item_size.y + list_.spacing_))};
       if (
         item_bound.bottom_right_.y
-        >= item_after_bound.top_left_.y + (item_after.size_.y / 2)) {
+        >= item_after_bound.top_left_.y + (item_size.y / 2)) {
         available_index_++;
       }
     }
@@ -226,6 +227,7 @@ void list_scene_t::update(debug_draw_t& debug_draw, float delta_time)
   //   draw_box(debug_draw, bound, item.color_);
   // }
 
+  // display logical mouse position
   debug_draw.debug_circles_screen->addWireCircle(
     as::mat4_from_mat3_vec3(
       as::mat3_scale(5.0f),
