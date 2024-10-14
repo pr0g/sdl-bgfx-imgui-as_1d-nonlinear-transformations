@@ -108,6 +108,10 @@ void list_scene_t::input(const SDL_Event& current_event)
   if (current_event.type == SDL_MOUSEBUTTONUP) {
     SDL_MouseButtonEvent* mouse_button = (SDL_MouseButtonEvent*)&current_event;
     if (mouse_button->button == SDL_BUTTON_LEFT) {
+      auto temp = std::move(list_.items_[selected_index_]);
+      list_.items_.erase(std::begin(list_.items_) + selected_index_);
+      list_.items_.insert(
+        std::begin(list_.items_) + available_index_, std::move(temp));
       selected_index_ = -1;
       available_index_ = -1;
       drag_position_ = as::vec2::zero();
