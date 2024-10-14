@@ -9,22 +9,6 @@
 #include <bgfx/bgfx.h>
 #include <easy_iterator.h>
 
-struct bound_t
-{
-  as::vec2 top_left_;
-  as::vec2 bottom_right_;
-};
-
-bool contained(const bound_t& bound, const as::vec2& point)
-{
-  if (
-    point.x >= bound.top_left_.x && point.x < bound.bottom_right_.x
-    && point.y >= bound.top_left_.y && point.y < bound.bottom_right_.y) {
-    return true;
-  }
-  return false;
-}
-
 void draw_box(
   debug_draw_t& debug_draw, const bound_t& bounds, const uint32_t color)
 {
@@ -50,12 +34,12 @@ void draw_box(
 }
 
 void draw_box(
-  debug_draw_t& debug_draw, const as::vec2& position, const as::vec2& bounds,
+  debug_draw_t& debug_draw, const as::vec2& position, const as::vec2& size,
   const uint32_t color)
 {
   draw_box(
     debug_draw,
-    bound_t{.top_left_ = position, .bottom_right_ = position + bounds}, color);
+    bound_t{.top_left_ = position, .bottom_right_ = position + size}, color);
 }
 
 void list_scene_t::setup(
@@ -84,39 +68,14 @@ void list_scene_t::input(const SDL_Event& current_event)
   if (current_event.type == SDL_MOUSEBUTTONDOWN) {
     SDL_MouseButtonEvent* mouse_button = (SDL_MouseButtonEvent*)&current_event;
     if (mouse_button->button == SDL_BUTTON_LEFT) {
-      namespace ei = easy_iterator;
-      const as::vec2 list_position = list_.position_;
-      const as::vec3 item_size = list_.item_size_;
-      for (const auto& [index, item] : ei::enumerate(list_.items_)) {
-        const bound_t bound = bound_t{
-          .top_left_ = as::vec2(
-            list_position.x,
-            list_position.y + index * (item_size.y + list_.spacing_)),
-          .bottom_right_ = as::vec2(
-            list_position.x + item_size.x,
-            list_position.y + item_size.y
-              + index * (item_size.y + list_.spacing_))};
-        if (contained(bound, as::vec2_from_vec2i(mouse_now_))) {
-          selected_index_ = index;
-          available_index_ = index;
-          drag_position_ =
-            list_position
-            + as::vec2(0.0f, index * (item_size.y + list_.spacing_));
-        }
-      }
+      press_list(list_, mouse_now_);
     }
   }
 
   if (current_event.type == SDL_MOUSEBUTTONUP) {
     SDL_MouseButtonEvent* mouse_button = (SDL_MouseButtonEvent*)&current_event;
     if (mouse_button->button == SDL_BUTTON_LEFT) {
-      auto temp = std::move(list_.items_[selected_index_]);
-      list_.items_.erase(std::begin(list_.items_) + selected_index_);
-      list_.items_.insert(
-        std::begin(list_.items_) + available_index_, std::move(temp));
-      selected_index_ = -1;
-      available_index_ = -1;
-      drag_position_ = as::vec2::zero();
+      release_list(list_);
     }
   }
 
@@ -124,9 +83,7 @@ void list_scene_t::input(const SDL_Event& current_event)
     SDL_MouseMotionEvent* mouse_motion = (SDL_MouseMotionEvent*)&current_event;
     const as::vec2i mouse_now = as::vec2i(mouse_motion->x, mouse_motion->y);
     const as::vec2i mouse_delta = mouse_now - mouse_now_;
-    if (selected_index_ != -1) {
-      drag_position_.y += (float)mouse_delta.y;
-    }
+    move_list(list_, (float)mouse_delta.y);
     mouse_now_ = mouse_now;
   }
 }
@@ -142,90 +99,12 @@ void list_scene_t::update(debug_draw_t& debug_draw, float delta_time)
   as::mat_to_arr(orthographic_projection_, proj_o);
   bgfx::setViewTransform(ortho_view_, view_o, proj_o);
 
-  const auto item_size = list_.item_size_;
-  const auto list_position = list_.position_;
-  namespace ei = easy_iterator;
-  for (const auto& [index, item] : ei::enumerate(list_.items_)) {
-    if (index == selected_index_) {
-      continue;
-    }
-    int offset = 0;
-    if (index >= available_index_ && index < selected_index_) {
-      offset = 1;
-    }
-    if (index <= available_index_ && index > selected_index_) {
-      offset = -1;
-    }
-    draw_box(
-      debug_draw,
-      list_position
-        + as::vec2(0.0f, (item_size.y + list_.spacing_) * (index + offset)),
-      item_size, item.color_);
-  }
-
-  if (selected_index_ != -1) {
-    const auto& item = list_.items_[selected_index_];
-    draw_box(debug_draw, drag_position_, item_size, item.color_);
-    const bound_t item_bound = bound_t{
-      .top_left_ = as::vec2(list_position.x, drag_position_.y),
-      .bottom_right_ = as::vec2(
-        list_position.x + item_size.x, drag_position_.y + item_size.y)};
-
-    if (const int index_before = available_index_ - 1; index_before >= 0) {
-      const auto& item_before = list_.items_[index_before];
-      const auto position =
-        list_.position_
-        + as::vec2(0.0f, (item_size.y + list_.spacing_) * index_before);
-      const bound_t item_before_bound = bound_t{
-        as::vec2(
-          list_position.x,
-          list_position.y + index_before * (item_size.y + list_.spacing_)),
-        as::vec2(
-          list_position.x + item_size.x,
-          list_position.y + item_size.y
-            + index_before * (item_size.y + list_.spacing_))};
-      if (
-        item_bound.top_left_.y
-        < item_before_bound.bottom_right_.y - (item_size.y / 2)) {
-        available_index_--;
-      }
-    }
-
-    if (const int index_after = available_index_ + 1;
-        index_after < list_.items_.size()) {
-      const auto& item_after = list_.items_[index_after];
-      const auto position =
-        list_.position_
-        + as::vec2(0.0f, (item_size.y + list_.spacing_) * index_after);
-      const bound_t item_after_bound = bound_t{
-        as::vec2(
-          list_position.x,
-          list_position.y + index_after * (item_size.y + list_.spacing_)),
-        as::vec2(
-          list_position.x + item_size.x,
-          list_position.y + item_size.y
-            + index_after * (item_size.y + list_.spacing_))};
-      if (
-        item_bound.bottom_right_.y
-        >= item_after_bound.top_left_.y + (item_size.y / 2)) {
-        available_index_++;
-      }
-    }
-  }
-
-  // debug bounds drawing
-  // const as::vec2 list_position = list_.position_;
-  // for (const auto& [index, item] : ei::enumerate(list_.items_)) {
-  //   const bound_t bound = bound_t{
-  //     as::vec2(
-  //       list_position.x,
-  //       list_position.y + index * (item.bounds_.y + list_.spacing_)),
-  //     as::vec2(
-  //       list_position.x + item.bounds_.x,
-  //       list_position.y + item.bounds_.y
-  //         + index * (item.bounds_.y + list_.spacing_))};
-  //   draw_box(debug_draw, bound, item.color_);
-  // }
+  update_list(
+    list_,
+    [&debug_draw](
+      const as::vec2& position, const as::vec2& size, const uint32_t color) {
+      draw_box(debug_draw, position, size, color);
+    });
 
   // display logical mouse position
   debug_draw.debug_circles_screen->addWireCircle(
