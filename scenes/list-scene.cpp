@@ -59,9 +59,7 @@ void list_scene_t::setup(
     as::ortho_metal_lh(0.0f, width, height, 0.0f, 0.0f, 1.0f);
   screen_dimension_ = as::vec2i(width, height);
 
-  list_.position_ = as::vec2(200, 200);
-  list_.item_size_ = as::vec2(200, 50);
-  list_.items_ = std::vector<item_t>{
+  items_ = std::vector<item_t>{
     {.color_ = dbg::encodeColorAbgr((uint8_t)255, 255, 255, 255),
      .name_ = "Item 1"},
     {.color_ = dbg::encodeColorAbgr((uint8_t)255, 0, 0, 255),
@@ -75,6 +73,12 @@ void list_scene_t::setup(
     {.color_ = dbg::encodeColorAbgr((uint8_t)0, 255, 255, 255),
      .name_ = "Item 6"},
   };
+
+  list_.items_ = items_.data();
+  list_.item_count_ = items_.size();
+  list_.item_stride_ = sizeof(item_t);
+  list_.position_ = as::vec2(200, 200);
+  list_.item_size_ = as::vec2(200, 50);
 }
 
 void list_scene_t::input(const SDL_Event& current_event)
@@ -121,10 +125,10 @@ void list_scene_t::update(debug_draw_t& debug_draw, float delta_time)
   ImGui::SetWindowSize(ImGui::GetIO().DisplaySize);
 
   update_list(
-    list_, [&debug_draw](
-             const as::vec2& position, const as::vec2& size,
-             const uint32_t color, const std::string& name) {
-      draw_box(debug_draw, position, size, color, name);
+    list_,
+    [&debug_draw](const as::vec2& position, const as::vec2& size, void* item) {
+      const auto list_item = static_cast<item_t*>(item);
+      draw_box(debug_draw, position, size, list_item->color_, list_item->name_);
     });
 
   ImGui::End();

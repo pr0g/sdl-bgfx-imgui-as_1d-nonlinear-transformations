@@ -22,35 +22,16 @@ void update_list(list_t& list, const draw_box_fn& draw_box)
   const auto item_size = list.item_size_;
   const auto list_position = list.position_;
 
-  namespace ei = easy_iterator;
-  for (const auto& [index, item] : ei::enumerate(list.items_)) {
-    if (index == list.selected_index_) {
-      continue;
-    }
-    int offset = 0;
-    if (index >= list.available_index_ && index < list.selected_index_) {
-      offset = 1;
-    }
-    if (index <= list.available_index_ && index > list.selected_index_) {
-      offset = -1;
-    }
-    draw_box(
-      list_position
-        + as::vec2(
-          0.0f, (item_size.y + list.vertical_spacing_) * (index + offset)),
-      item_size, item.color_, item.name_);
-  }
-
+  auto items = static_cast<std::byte*>(list.items_);
   if (list.selected_index_ != -1) {
-    const auto& item = list.items_[list.selected_index_];
-    draw_box(list.drag_position_, list.item_size_, item.color_, item.name_);
+    void* item = items + list.selected_index_ * list.item_stride_;
+    draw_box(list.drag_position_, list.item_size_, item);
     const bound_t item_bound = bound_t{
       .top_left_ = as::vec2(list_position.x, list.drag_position_.y),
       .bottom_right_ = as::vec2(
         list_position.x + item_size.x, list.drag_position_.y + item_size.y)};
 
     if (const int index_before = list.available_index_ - 1; index_before >= 0) {
-      const auto& item_before = list.items_[index_before];
       const auto position =
         list.position_
         + as::vec2(0.0f, (item_size.y + list.vertical_spacing_) * index_before);
@@ -71,8 +52,7 @@ void update_list(list_t& list, const draw_box_fn& draw_box)
     }
 
     if (const int index_after = list.available_index_ + 1;
-        index_after < list.items_.size()) {
-      const auto& item_after = list.items_[index_after];
+        index_after < list.item_count_) {
       const auto position =
         list.position_
         + as::vec2(0.0f, (item_size.y + list.vertical_spacing_) * index_after);
@@ -93,6 +73,25 @@ void update_list(list_t& list, const draw_box_fn& draw_box)
     }
   }
 
+  for (int index = 0; index < list.item_count_; index++) {
+    void* item = items + index * list.item_stride_;
+    if (index == list.selected_index_) {
+      continue;
+    }
+    int offset = 0;
+    if (index >= list.available_index_ && index < list.selected_index_) {
+      offset = 1;
+    }
+    if (index <= list.available_index_ && index > list.selected_index_) {
+      offset = -1;
+    }
+    draw_box(
+      list_position
+        + as::vec2(
+          0.0f, (item_size.y + list.vertical_spacing_) * (index + offset)),
+      item_size, item);
+  }
+
   // debug bounds drawing
   // for (const auto& [index, item] : ei::enumerate(list.items_)) {
   //   const bound_t bound = bound_t{
@@ -109,10 +108,9 @@ void update_list(list_t& list, const draw_box_fn& draw_box)
 
 void press_list(list_t& list, const as::vec2i& mouse_position)
 {
-  namespace ei = easy_iterator;
   const as::vec2 list_position = list.position_;
   const as::vec3 item_size = list.item_size_;
-  for (const auto& [index, item] : ei::enumerate(list.items_)) {
+  for (int index = 0; index < list.item_count_; index++) {
     const bound_t bound = bound_t{
       .top_left_ = as::vec2(
         list_position.x,
@@ -133,10 +131,10 @@ void press_list(list_t& list, const as::vec2i& mouse_position)
 
 void release_list(list_t& list)
 {
-  auto temp = std::move(list.items_[list.selected_index_]);
-  list.items_.erase(std::begin(list.items_) + list.selected_index_);
-  list.items_.insert(
-    std::begin(list.items_) + list.available_index_, std::move(temp));
+  // auto temp = std::move(list.items_[list.selected_index_]);
+  // list.items_.erase(std::begin(list.items_) + list.selected_index_);
+  // list.items_.insert(
+  //   std::begin(list.items_) + list.available_index_, std::move(temp));
   list.selected_index_ = -1;
   list.available_index_ = -1;
   list.drag_position_ = as::vec2::zero();

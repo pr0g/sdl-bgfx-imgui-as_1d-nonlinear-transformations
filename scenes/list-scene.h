@@ -21,6 +21,7 @@ struct list_scene_t : public scene_t
   asc::Camera camera_;
 
   list_t list_;
+  std::vector<item_t> items_;
 
   as::vec2i mouse_now_;
   as::vec2i screen_dimension_;
