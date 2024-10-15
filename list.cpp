@@ -38,12 +38,12 @@ void update_list(list_t& list, const draw_box_fn& draw_box)
       list_position
         + as::vec2(
           0.0f, (item_size.y + list.vertical_spacing_) * (index + offset)),
-      item_size, item.color_);
+      item_size, item.color_, item.name_);
   }
 
   if (list.selected_index_ != -1) {
     const auto& item = list.items_[list.selected_index_];
-    draw_box(list.drag_position_, list.item_size_, item.color_);
+    draw_box(list.drag_position_, list.item_size_, item.color_, item.name_);
     const bound_t item_bound = bound_t{
       .top_left_ = as::vec2(list_position.x, list.drag_position_.y),
       .bottom_right_ = as::vec2(

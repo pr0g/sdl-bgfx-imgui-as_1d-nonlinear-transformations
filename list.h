@@ -3,6 +3,7 @@
 #include <as/as-math-ops.hpp>
 
 #include <functional>
+#include <string>
 #include <vector>
 
 struct bound_t
@@ -14,6 +15,7 @@ struct bound_t
 struct item_t
 {
   uint32_t color_;
+  std::string name_;
 };
 
 struct list_t
@@ -29,7 +31,8 @@ struct list_t
 };
 
 using draw_box_fn = std::function<void(
-  const as::vec2& position, const as::vec2& size, const uint32_t color)>;
+  const as::vec2& position, const as::vec2& size, uint32_t color,
+  const std::string& name)>;
 
 void update_list(list_t& list, const draw_box_fn& draw_box);
 

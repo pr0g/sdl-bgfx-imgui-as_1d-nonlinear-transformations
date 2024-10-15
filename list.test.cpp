@@ -23,8 +23,9 @@ TEST_CASE("Verify list interaction")
     press_list(list, as::vec2i(300, 225));
     move_list(list, 200.0f);
     update_list(
-      list,
-      [](const as::vec2& position, const as::vec2& size, const uint32_t color) {
+      list, [](
+              const as::vec2& position, const as::vec2& size,
+              const uint32_t color, const std::string& name) {
         // white box has been dragged down to the second position
         if (as::real_near(position.y, 405.0f)) {
           CHECK(color == dbg::encodeColorAbgr((uint8_t)255, 255, 255, 255));

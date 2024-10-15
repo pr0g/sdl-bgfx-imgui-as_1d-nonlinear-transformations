@@ -8,9 +8,11 @@
 #include <SDL.h>
 #include <bgfx/bgfx.h>
 #include <easy_iterator.h>
+#include <imgui.h>
 
 void draw_box(
-  debug_draw_t& debug_draw, const bound_t& bounds, const uint32_t color)
+  debug_draw_t& debug_draw, const bound_t& bounds, const uint32_t color,
+  const std::string& name)
 {
   // top
   debug_draw.debug_lines_screen->addLine(
@@ -31,15 +33,21 @@ void draw_box(
   debug_draw.debug_lines_screen->addLine(
     as::vec3(bounds.bottom_right_.x, bounds.top_left_.y, 0.0f),
     as::vec3_from_vec2(bounds.bottom_right_), color);
+
+  ImDrawList* drawList = ImGui::GetBackgroundDrawList();
+  drawList->AddText(
+    ImVec2(bounds.top_left_.x, bounds.top_left_.y),
+    IM_COL32(255, 255, 255, 255), name.c_str());
 }
 
 void draw_box(
   debug_draw_t& debug_draw, const as::vec2& position, const as::vec2& size,
-  const uint32_t color)
+  const uint32_t color, const std::string& name)
 {
   draw_box(
     debug_draw,
-    bound_t{.top_left_ = position, .bottom_right_ = position + size}, color);
+    bound_t{.top_left_ = position, .bottom_right_ = position + size}, color,
+    name);
 }
 
 void list_scene_t::setup(
@@ -54,12 +62,18 @@ void list_scene_t::setup(
   list_.position_ = as::vec2(200, 200);
   list_.item_size_ = as::vec2(200, 50);
   list_.items_ = std::vector<item_t>{
-    {dbg::encodeColorAbgr((uint8_t)255, 255, 255, 255)},
-    {dbg::encodeColorAbgr((uint8_t)255, 0, 0, 255)},
-    {dbg::encodeColorAbgr((uint8_t)0, 255, 0, 255)},
-    {dbg::encodeColorAbgr((uint8_t)0, 0, 255, 255)},
-    {dbg::encodeColorAbgr((uint8_t)255, 255, 0, 255)},
-    {dbg::encodeColorAbgr((uint8_t)0, 255, 255, 255)},
+    {.color_ = dbg::encodeColorAbgr((uint8_t)255, 255, 255, 255),
+     .name_ = "Item 1"},
+    {.color_ = dbg::encodeColorAbgr((uint8_t)255, 0, 0, 255),
+     .name_ = "Item 2"},
+    {.color_ = dbg::encodeColorAbgr((uint8_t)0, 255, 0, 255),
+     .name_ = "Item 3"},
+    {.color_ = dbg::encodeColorAbgr((uint8_t)0, 0, 255, 255),
+     .name_ = "Item 4"},
+    {.color_ = dbg::encodeColorAbgr((uint8_t)255, 255, 0, 255),
+     .name_ = "Item 4"},
+    {.color_ = dbg::encodeColorAbgr((uint8_t)0, 255, 255, 255),
+     .name_ = "Item 6"},
   };
 }
 
@@ -99,12 +113,21 @@ void list_scene_t::update(debug_draw_t& debug_draw, float delta_time)
   as::mat_to_arr(orthographic_projection_, proj_o);
   bgfx::setViewTransform(ortho_view_, view_o, proj_o);
 
+  ImGui::Begin(
+    "Invisible Window", nullptr,
+    ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration
+      | ImGuiWindowFlags_NoInputs);
+  ImGui::SetWindowPos(ImVec2(0, 0));
+  ImGui::SetWindowSize(ImGui::GetIO().DisplaySize);
+
   update_list(
-    list_,
-    [&debug_draw](
-      const as::vec2& position, const as::vec2& size, const uint32_t color) {
-      draw_box(debug_draw, position, size, color);
+    list_, [&debug_draw](
+             const as::vec2& position, const as::vec2& size,
+             const uint32_t color, const std::string& name) {
+      draw_box(debug_draw, position, size, color, name);
     });
+
+  ImGui::End();
 
   // display logical mouse position
   debug_draw.debug_circles_screen->addWireCircle(
