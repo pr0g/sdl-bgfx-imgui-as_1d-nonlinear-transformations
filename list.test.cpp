@@ -33,7 +33,8 @@ TEST_CASE("Verify list interaction")
     press_list(list, as::vec2i(300, 225));
     move_list(list, 55.0f);
     update_list(
-      list, [](const as::vec2& position, const as::vec2& size, void* item) {
+      list,
+      [](const as::vec2& position, const as::vec2& size, const void* item) {
         const auto* list_item = static_cast<const item_t*>(item);
         // white box has been dragged down to the second position
         if (as::real_near(position.y, 255.0f)) {

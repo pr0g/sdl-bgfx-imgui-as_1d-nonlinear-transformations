@@ -30,7 +30,6 @@ void update_list(list_t& list, const draw_box_fn& draw_box)
       .top_left_ = as::vec2(list_position.x, list.drag_position_.y),
       .bottom_right_ = as::vec2(
         list_position.x + item_size.x, list.drag_position_.y + item_size.y)};
-
     if (const int index_before = list.available_index_ - 1; index_before >= 0) {
       const auto position =
         list.position_
@@ -91,19 +90,6 @@ void update_list(list_t& list, const draw_box_fn& draw_box)
           0.0f, (item_size.y + list.vertical_spacing_) * (index + offset)),
       item_size, item);
   }
-
-  // debug bounds drawing
-  // for (const auto& [index, item] : ei::enumerate(list.items_)) {
-  //   const bound_t bound = bound_t{
-  //     as::vec2(
-  //       list_position.x,
-  //       list_position.y + index * (item_size.y + list.vertical_spacing_)),
-  //     as::vec2(
-  //       list_position.x + item_size.x,
-  //       list_position.y + item_size.y
-  //         + index * (item_size.y + list.vertical_spacing_))};
-  //   draw_box(debug_draw, bound, item.color_);
-  // }
 }
 
 void press_list(list_t& list, const as::vec2i& mouse_position)
@@ -129,12 +115,9 @@ void press_list(list_t& list, const as::vec2i& mouse_position)
   }
 }
 
-void release_list(list_t& list)
+void release_list(list_t& list, const reorder_fn& reorder)
 {
-  // auto temp = std::move(list.items_[list.selected_index_]);
-  // list.items_.erase(std::begin(list.items_) + list.selected_index_);
-  // list.items_.insert(
-  //   std::begin(list.items_) + list.available_index_, std::move(temp));
+  reorder(list);
   list.selected_index_ = -1;
   list.available_index_ = -1;
   list.drag_position_ = as::vec2::zero();

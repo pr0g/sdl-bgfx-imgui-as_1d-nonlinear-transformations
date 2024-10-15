@@ -69,7 +69,7 @@ void list_scene_t::setup(
     {.color_ = dbg::encodeColorAbgr((uint8_t)0, 0, 255, 255),
      .name_ = "Item 4"},
     {.color_ = dbg::encodeColorAbgr((uint8_t)255, 255, 0, 255),
-     .name_ = "Item 4"},
+     .name_ = "Item 5"},
     {.color_ = dbg::encodeColorAbgr((uint8_t)0, 255, 255, 255),
      .name_ = "Item 6"},
   };
@@ -93,7 +93,7 @@ void list_scene_t::input(const SDL_Event& current_event)
   if (current_event.type == SDL_MOUSEBUTTONUP) {
     SDL_MouseButtonEvent* mouse_button = (SDL_MouseButtonEvent*)&current_event;
     if (mouse_button->button == SDL_BUTTON_LEFT) {
-      release_list(list_);
+      release_list(list_, [](list_t& list) { reorder_list<item_t>(list); });
     }
   }
 
@@ -125,9 +125,9 @@ void list_scene_t::update(debug_draw_t& debug_draw, float delta_time)
   ImGui::SetWindowSize(ImGui::GetIO().DisplaySize);
 
   update_list(
-    list_,
-    [&debug_draw](const as::vec2& position, const as::vec2& size, void* item) {
-      const auto list_item = static_cast<item_t*>(item);
+    list_, [&debug_draw](
+             const as::vec2& position, const as::vec2& size, const void* item) {
+      const auto* list_item = static_cast<const item_t*>(item);
       draw_box(debug_draw, position, size, list_item->color_, list_item->name_);
     });
 
