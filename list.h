@@ -6,14 +6,12 @@
 #include <string>
 #include <vector>
 
-struct bound_t
-{
+struct bound_t {
   as::vec2i top_left_;
   as::vec2i bottom_right_;
 };
 
-struct list_t
-{
+struct list_t {
   as::vec2i position_;
   as::vec2i item_size_;
   float vertical_spacing_ = 5.0f;
@@ -35,8 +33,7 @@ void press_list(list_t& list, const as::vec2i& mouse_position);
 void move_list(list_t& list, int32_t movement_delta);
 
 template<typename Item>
-void release_list(list_t& list)
-{
+void release_list(list_t& list) {
   auto* items = static_cast<Item*>(list.items_);
   const int32_t begin = std::min(list.available_index_, list.selected_index_);
   const int32_t end = std::max(list.available_index_, list.selected_index_) + 1;

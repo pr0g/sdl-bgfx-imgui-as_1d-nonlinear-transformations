@@ -7,8 +7,7 @@
 #include <as/as-view.hpp>
 #include <easy_iterator.h>
 
-static bool contained(const bound_t& bound, const as::vec2i& point)
-{
+static bool contained(const bound_t& bound, const as::vec2i& point) {
   if (
     point.x >= bound.top_left_.x && point.x < bound.bottom_right_.x
     && point.y >= bound.top_left_.y && point.y < bound.bottom_right_.y) {
@@ -17,8 +16,7 @@ static bool contained(const bound_t& bound, const as::vec2i& point)
   return false;
 }
 
-void update_list(list_t& list, const draw_box_fn& draw_box)
-{
+void update_list(list_t& list, const draw_box_fn& draw_box) {
   const auto item_size = list.item_size_;
   const auto list_position = list.position_;
 
@@ -85,8 +83,7 @@ void update_list(list_t& list, const draw_box_fn& draw_box)
   }
 }
 
-void press_list(list_t& list, const as::vec2i& mouse_position)
-{
+void press_list(list_t& list, const as::vec2i& mouse_position) {
   const as::vec2i list_position = list.position_;
   const as::vec2i item_size = list.item_size_;
   for (int32_t index = 0; index < list.item_count_; index++) {
@@ -108,8 +105,7 @@ void press_list(list_t& list, const as::vec2i& mouse_position)
   }
 }
 
-void move_list(list_t& list, const int32_t movement_delta)
-{
+void move_list(list_t& list, const int32_t movement_delta) {
   if (list.selected_index_ != -1) {
     list.drag_position_.y += movement_delta;
   }

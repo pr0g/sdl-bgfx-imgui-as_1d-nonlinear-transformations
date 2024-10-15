@@ -12,8 +12,7 @@
 
 void draw_box(
   debug_draw_t& debug_draw, const bound_t& bounds, const uint32_t color,
-  const std::string& name)
-{
+  const std::string& name) {
   // top
   debug_draw.debug_lines_screen->addLine(
     as::vec3_from_vec2(as::vec2_from_vec2i(bounds.top_left_)),
@@ -42,8 +41,7 @@ void draw_box(
 
 void draw_box(
   debug_draw_t& debug_draw, const as::vec2i& position, const as::vec2i& size,
-  const uint32_t color, const std::string& name)
-{
+  const uint32_t color, const std::string& name) {
   draw_box(
     debug_draw,
     bound_t{.top_left_ = position, .bottom_right_ = position + size}, color,
@@ -52,8 +50,7 @@ void draw_box(
 
 void list_scene_t::setup(
   bgfx::ViewId main_view, bgfx::ViewId ortho_view, uint16_t width,
-  uint16_t height)
-{
+  uint16_t height) {
   ortho_view_ = ortho_view;
   orthographic_projection_ =
     as::ortho_metal_lh(0.0f, width, height, 0.0f, 0.0f, 1.0f);
@@ -72,8 +69,7 @@ void list_scene_t::setup(
   list_.item_size_ = as::vec2i(200, 50);
 }
 
-void list_scene_t::input(const SDL_Event& current_event)
-{
+void list_scene_t::input(const SDL_Event& current_event) {
   if (current_event.type == SDL_MOUSEBUTTONDOWN) {
     SDL_MouseButtonEvent* mouse_button = (SDL_MouseButtonEvent*)&current_event;
     if (mouse_button->button == SDL_BUTTON_LEFT) {
@@ -97,8 +93,7 @@ void list_scene_t::input(const SDL_Event& current_event)
   }
 }
 
-void list_scene_t::update(debug_draw_t& debug_draw, float delta_time)
-{
+void list_scene_t::update(debug_draw_t& debug_draw, float delta_time) {
   bgfx::dbgTextClear();
 
   float view_o[16];

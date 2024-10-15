@@ -14,14 +14,12 @@ const inline auto blue = dbg::encodeColorAbgr((uint8_t)0, 0, 255, 255);
 const inline auto yellow = dbg::encodeColorAbgr((uint8_t)255, 255, 0, 255);
 const inline auto cyan = dbg::encodeColorAbgr((uint8_t)0, 255, 255, 255);
 
-struct item_t
-{
+struct item_t {
   uint32_t color_;
   std::string name_;
 };
 
-struct list_scene_t : public scene_t
-{
+struct list_scene_t : public scene_t {
   void setup(
     bgfx::ViewId main_view, bgfx::ViewId ortho_view, uint16_t width,
     uint16_t height) override;

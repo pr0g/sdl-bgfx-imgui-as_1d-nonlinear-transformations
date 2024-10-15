@@ -8,11 +8,11 @@ AlwaysBreakTemplateDeclarations: Yes
 AllowAllArgumentsOnNextLine: true
 BreakBeforeBraces: Custom
 BraceWrapping:
-    AfterNamespace: true
-    AfterStruct: true
-    AfterClass: true
-    AfterEnum: true
-    AfterFunction: true
+    AfterNamespace: false
+    AfterStruct: false
+    AfterClass: false
+    AfterEnum: false
+    AfterFunction: false
     SplitEmptyFunction: true
 ColumnLimit: 80
 IndentWidth: 2

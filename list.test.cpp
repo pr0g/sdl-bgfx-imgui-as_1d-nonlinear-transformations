@@ -3,8 +3,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-TEST_CASE("Verify list interaction")
-{
+TEST_CASE("Verify list interaction") {
   auto list_items = std::vector<item_t>{
     {.color_ = white, .name_ = "Item 1"},  {.color_ = red, .name_ = "Item 2"},
     {.color_ = green, .name_ = "Item 3"},  {.color_ = blue, .name_ = "Item 4"},
@@ -21,8 +20,7 @@ TEST_CASE("Verify list interaction")
   const int32_t vertical_offset = list.item_size_.y + list.vertical_spacing_;
   const as::vec2i half_item_size = list.item_size_ / 2;
 
-  SECTION("List item can be dragged down by one")
-  {
+  SECTION("List item can be dragged down by one") {
     // press center of top of list
     press_list(list, list.position_ + half_item_size);
     move_list(list, vertical_offset);
@@ -43,8 +41,7 @@ TEST_CASE("Verify list interaction")
       });
   }
 
-  SECTION("List item can be dragged up by one")
-  {
+  SECTION("List item can be dragged up by one") {
     // press center of bottom of list
     press_list(
       list,
@@ -68,8 +65,7 @@ TEST_CASE("Verify list interaction")
       });
   }
 
-  SECTION("List item can be dragged down multiple")
-  {
+  SECTION("List item can be dragged down multiple") {
     const auto press_start =
       list.position_ + half_item_size + as::vec2i(0, vertical_offset * 1);
     const auto press_delta = vertical_offset * 3;
@@ -95,8 +91,7 @@ TEST_CASE("Verify list interaction")
       });
   }
 
-  SECTION("List item can be dragged up multiple")
-  {
+  SECTION("List item can be dragged up multiple") {
     const auto press_start =
       list.position_ + half_item_size + as::vec2i(0, vertical_offset * 5);
     const auto press_delta = -vertical_offset * 4;
@@ -122,8 +117,7 @@ TEST_CASE("Verify list interaction")
       });
   }
 
-  SECTION("List order updated after release")
-  {
+  SECTION("List order updated after release") {
     // press third item
     const auto press_start =
       list.position_ + half_item_size + as::vec2i(0, vertical_offset * 2);
