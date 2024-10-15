@@ -5,6 +5,20 @@
 
 #include <as-camera/as-camera.hpp>
 #include <bgfx/bgfx.h>
+#include <thh-bgfx-debug/debug-color.hpp>
+
+const inline auto white = dbg::encodeColorAbgr((uint8_t)255, 255, 255, 255);
+const inline auto red = dbg::encodeColorAbgr((uint8_t)255, 0, 0, 255);
+const inline auto green = dbg::encodeColorAbgr((uint8_t)0, 255, 0, 255);
+const inline auto blue = dbg::encodeColorAbgr((uint8_t)0, 0, 255, 255);
+const inline auto yellow = dbg::encodeColorAbgr((uint8_t)255, 255, 0, 255);
+const inline auto cyan = dbg::encodeColorAbgr((uint8_t)0, 255, 255, 255);
+
+struct item_t
+{
+  uint32_t color_;
+  std::string name_;
+};
 
 struct list_scene_t : public scene_t
 {

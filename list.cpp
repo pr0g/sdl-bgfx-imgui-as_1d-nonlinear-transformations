@@ -26,10 +26,12 @@ void update_list(list_t& list, const draw_box_fn& draw_box)
   if (list.selected_index_ != -1) {
     void* item = items + list.selected_index_ * list.item_stride_;
     draw_box(list.drag_position_, list.item_size_, item);
+
     const bound_t item_bound = bound_t{
       .top_left_ = as::vec2i(list_position.x, list.drag_position_.y),
       .bottom_right_ = as::vec2i(
         list_position.x + item_size.x, list.drag_position_.y + item_size.y)};
+
     if (const int index_before = list.available_index_ - 1; index_before >= 0) {
       const auto position =
         list.position_

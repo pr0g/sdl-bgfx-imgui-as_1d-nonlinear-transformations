@@ -1,23 +1,14 @@
 #include "list.h"
+#include "scenes/list-scene.h"
 
 #include <catch2/catch_test_macros.hpp>
-#include <thh-bgfx-debug/debug-color.hpp>
 
 TEST_CASE("Verify list interaction")
 {
   auto items = std::vector<item_t>{
-    {.color_ = dbg::encodeColorAbgr((uint8_t)255, 255, 255, 255),
-     .name_ = "Item 1"},
-    {.color_ = dbg::encodeColorAbgr((uint8_t)255, 0, 0, 255),
-     .name_ = "Item 2"},
-    {.color_ = dbg::encodeColorAbgr((uint8_t)0, 255, 0, 255),
-     .name_ = "Item 3"},
-    {.color_ = dbg::encodeColorAbgr((uint8_t)0, 0, 255, 255),
-     .name_ = "Item 4"},
-    {.color_ = dbg::encodeColorAbgr((uint8_t)255, 255, 0, 255),
-     .name_ = "Item 5"},
-    {.color_ = dbg::encodeColorAbgr((uint8_t)0, 255, 255, 255),
-     .name_ = "Item 6"},
+    {.color_ = white, .name_ = "Item 1"},  {.color_ = red, .name_ = "Item 2"},
+    {.color_ = green, .name_ = "Item 3"},  {.color_ = blue, .name_ = "Item 4"},
+    {.color_ = yellow, .name_ = "Item 5"}, {.color_ = cyan, .name_ = "Item 6"},
   };
 
   list_t list;
@@ -27,11 +18,10 @@ TEST_CASE("Verify list interaction")
   list.position_ = as::vec2i(200, 200);
   list.item_size_ = as::vec2i(200, 50);
 
-  // const int32_t
   const int32_t vertical_offset = list.item_size_.y + list.vertical_spacing_;
   const as::vec2i half_item_size = list.item_size_ / 2;
 
-  SECTION("List item can be dragged down")
+  SECTION("List item can be dragged down by one")
   {
     // press center of top of list
     press_list(list, list.position_ + half_item_size);
@@ -42,23 +32,20 @@ TEST_CASE("Verify list interaction")
         const auto* list_item = static_cast<const item_t*>(item);
         // white box has been dragged down to the second position
         if (position.y == 255) {
-          CHECK(
-            list_item->color_
-            == dbg::encodeColorAbgr((uint8_t)255, 255, 255, 255));
+          CHECK(list_item->color_ == white);
           CHECK(list_item->name_ == "Item 1");
         }
         // red box has been pushed up to the first position
         if (position.y == 200) {
-          CHECK(
-            list_item->color_ == dbg::encodeColorAbgr((uint8_t)255, 0, 0, 255));
+          CHECK(list_item->color_ == red);
           CHECK(list_item->name_ == "Item 2");
         }
       });
   }
 
-  SECTION("List item can be dragged up")
+  SECTION("List item can be dragged up by one")
   {
-    // press center of top of list
+    // press center of bottom of list
     press_list(
       list,
       list.position_ + half_item_size + as::vec2i(0, vertical_offset * 5));
@@ -70,16 +57,90 @@ TEST_CASE("Verify list interaction")
         const auto* list_item = static_cast<const item_t*>(item);
         // cyan box has been dragged up to the fifth position
         if (position.y == list.position_.y + vertical_offset * 4) {
-          CHECK(
-            list_item->color_
-            == dbg::encodeColorAbgr((uint8_t)0, 255, 255, 255));
+          CHECK(list_item->color_ == cyan);
           CHECK(list_item->name_ == "Item 6");
         }
         // yellow box has been pushed down to the sixth position
         if (position.y == list.position_.y + vertical_offset * 5) {
-          CHECK(
-            list_item->color_
-            == dbg::encodeColorAbgr((uint8_t)255, 255, 0, 255));
+          CHECK(list_item->color_ == yellow);
+          CHECK(list_item->name_ == "Item 5");
+        }
+      });
+  }
+
+  SECTION("List item can be dragged down multiple")
+  {
+    const auto press_start =
+      list.position_ + half_item_size + as::vec2i(0, vertical_offset * 1);
+    const auto press_delta = vertical_offset * 3;
+    // press center of second list item
+    press_list(list, press_start);
+    // move down to fourth element
+    move_list(list, press_delta);
+    // currently required to handle the list item moving one place at a time in
+    // update
+    update_list(
+      list,
+      [](const as::vec2i& position, const as::vec2i& size, const void* item) {
+      });
+    update_list(
+      list,
+      [](const as::vec2i& position, const as::vec2i& size, const void* item) {
+      });
+    update_list(
+      list,
+      [&list, vertical_offset, press_start, press_delta, half_item_size](
+        const as::vec2i& position, const as::vec2i& size, const void* item) {
+        const auto* list_item = static_cast<const item_t*>(item);
+        // green box has been pushed up to second position
+        if (position.y == list.position_.y + vertical_offset * 1) {
+          CHECK(list_item->color_ == green);
+          CHECK(list_item->name_ == "Item 3");
+        }
+        // red box has been pushed down to fifth position
+        if (position.y == press_start.y - half_item_size.y + press_delta) {
+          CHECK(list_item->color_ == red);
+          CHECK(list_item->name_ == "Item 2");
+        }
+      });
+  }
+
+  SECTION("List item can be dragged up multiple")
+  {
+    const auto press_start =
+      list.position_ + half_item_size + as::vec2i(0, vertical_offset * 5);
+    const auto press_delta = -vertical_offset * 4;
+    // press center of last list item
+    press_list(list, press_start);
+    // move up to second element
+    move_list(list, press_delta);
+    // currently required to handle the list item moving one place at a time in
+    // update
+    update_list(
+      list,
+      [](const as::vec2i& position, const as::vec2i& size, const void* item) {
+      });
+    update_list(
+      list,
+      [](const as::vec2i& position, const as::vec2i& size, const void* item) {
+      });
+    update_list(
+      list,
+      [](const as::vec2i& position, const as::vec2i& size, const void* item) {
+      });
+    update_list(
+      list,
+      [&list, vertical_offset, press_start, press_delta, half_item_size](
+        const as::vec2i& position, const as::vec2i& size, const void* item) {
+        const auto* list_item = static_cast<const item_t*>(item);
+        // cyan box has been moved up to second position
+        if (position.y == press_start.y - half_item_size.y + press_delta) {
+          CHECK(list_item->color_ == cyan);
+          CHECK(list_item->name_ == "Item 6");
+        }
+        // yellow box has been pushed down to sixth position
+        if (position.y == list.position_.y + vertical_offset * 5) {
+          CHECK(list_item->color_ == yellow);
           CHECK(list_item->name_ == "Item 5");
         }
       });

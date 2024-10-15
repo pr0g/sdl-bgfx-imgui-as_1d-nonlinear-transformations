@@ -12,12 +12,6 @@ struct bound_t
   as::vec2i bottom_right_;
 };
 
-struct item_t
-{
-  uint32_t color_;
-  std::string name_;
-};
-
 struct list_t
 {
   as::vec2i position_;

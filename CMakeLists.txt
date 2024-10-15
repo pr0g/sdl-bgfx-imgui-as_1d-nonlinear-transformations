@@ -102,8 +102,10 @@ if(SDL_BGFX_IMGUI_ENABLE_TESTING)
   add_executable(${PROJECT_NAME}-list-test)
   target_sources(${PROJECT_NAME}-list-test PRIVATE list.cpp list.test.cpp)
   target_link_libraries(${PROJECT_NAME}-list-test Catch2::Catch2WithMain as
-                        EasyIterator thh-bgfx-debug)
+                        EasyIterator thh-bgfx-debug as-camera-input-sdl)
   target_compile_features(${PROJECT_NAME}-list-test PRIVATE cxx_std_20)
+  target_include_directories(${PROJECT_NAME}-list-test
+                             PRIVATE ${CMAKE_SOURCE_DIR})
   target_compile_definitions(
     ${PROJECT_NAME}-list-test
     PRIVATE $<$<BOOL:${AS_PRECISION_FLOAT}>:AS_PRECISION_FLOAT>
