@@ -29,11 +29,9 @@
 
 using json = nlohmann::json;
 
-namespace asc
-{
+namespace asc {
 
-Handedness handedness()
-{
+Handedness handedness() {
   return Handedness::Left;
 }
 
@@ -52,8 +50,8 @@ const auto current_time = [] {
   return (double)bx::getHPCounter() / double(bx::getHPFrequency());
 };
 
-void wait_for_update(const int64_t previous, const int target_frames_per_second)
-{
+void wait_for_update(
+  const int64_t previous, const int target_frames_per_second) {
   const double seconds = seconds_elapsed(previous, bx::getHPCounter());
   if (float seconds_per_frame =
         calculate_seconds_per_frame(target_frames_per_second);
@@ -77,8 +75,7 @@ void wait_for_update(const int64_t previous, const int target_frames_per_second)
   }
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {
     printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
     return 1;
@@ -180,11 +177,7 @@ int main(int argc, char** argv)
     dbg::DebugCubes debug_cubes;
 
     // overall mode for app
-    enum class mode_e
-    {
-      waiting_for_scene,
-      running_scene
-    };
+    enum class mode_e { waiting_for_scene, running_scene };
 
     dbg::EmbeddedShaderProgram simple_program;
     simple_program.init(dbg::SimpleEmbeddedShaderArgs);
