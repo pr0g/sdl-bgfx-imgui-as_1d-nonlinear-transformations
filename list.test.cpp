@@ -77,16 +77,6 @@ TEST_CASE("Verify list interaction")
     press_list(list, press_start);
     // move down to fourth element
     move_list(list, press_delta);
-    // currently required to handle the list item moving one place at a time in
-    // update
-    update_list(
-      list,
-      [](const as::vec2i& position, const as::vec2i& size, const void* item) {
-      });
-    update_list(
-      list,
-      [](const as::vec2i& position, const as::vec2i& size, const void* item) {
-      });
     update_list(
       list,
       [&list, vertical_offset, press_start, press_delta, half_item_size](
@@ -114,20 +104,6 @@ TEST_CASE("Verify list interaction")
     press_list(list, press_start);
     // move up to second element
     move_list(list, press_delta);
-    // currently required to handle the list item moving one place at a time in
-    // update
-    update_list(
-      list,
-      [](const as::vec2i& position, const as::vec2i& size, const void* item) {
-      });
-    update_list(
-      list,
-      [](const as::vec2i& position, const as::vec2i& size, const void* item) {
-      });
-    update_list(
-      list,
-      [](const as::vec2i& position, const as::vec2i& size, const void* item) {
-      });
     update_list(
       list,
       [&list, vertical_offset, press_start, press_delta, half_item_size](
