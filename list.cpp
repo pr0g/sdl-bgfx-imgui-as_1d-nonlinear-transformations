@@ -108,14 +108,6 @@ void press_list(list_t& list, const as::vec2i& mouse_position)
   }
 }
 
-void release_list(list_t& list, const reorder_fn& reorder)
-{
-  reorder(list);
-  list.selected_index_ = -1;
-  list.available_index_ = -1;
-  list.drag_position_ = as::vec2i::zero();
-}
-
 void move_list(list_t& list, const int32_t movement_delta)
 {
   if (list.selected_index_ != -1) {

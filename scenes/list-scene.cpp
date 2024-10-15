@@ -84,7 +84,7 @@ void list_scene_t::input(const SDL_Event& current_event)
   if (current_event.type == SDL_MOUSEBUTTONUP) {
     SDL_MouseButtonEvent* mouse_button = (SDL_MouseButtonEvent*)&current_event;
     if (mouse_button->button == SDL_BUTTON_LEFT) {
-      release_list(list_, [](list_t& list) { reorder_list<item_t>(list); });
+      release_list<item_t>(list_);
     }
   }
 

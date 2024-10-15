@@ -132,7 +132,7 @@ TEST_CASE("Verify list interaction")
     press_list(list, press_start);
     move_list(list, press_delta);
     update_list(list, [](const as::vec2i&, const as::vec2i&, const void*) {});
-    release_list(list, [](list_t& list) { reorder_list<item_t>(list); });
+    release_list<item_t>(list);
 
     auto expected_items = std::vector<item_t>{
       {.color_ = white, .name_ = "Item 1"},
