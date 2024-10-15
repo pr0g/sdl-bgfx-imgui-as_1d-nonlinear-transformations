@@ -35,7 +35,7 @@ using reorder_fn = std::function<void(list_t& list)>;
 
 void press_list(list_t& list, const as::vec2i& mouse_position);
 void release_list(list_t& list, const reorder_fn& reorder);
-void move_list(list_t& list, float movement_delta);
+void move_list(list_t& list, int32_t movement_delta);
 
 template<typename Item>
 void reorder_list(list_t& list)

@@ -60,18 +60,9 @@ void list_scene_t::setup(
   screen_dimension_ = as::vec2i(width, height);
 
   items_ = std::vector<item_t>{
-    {.color_ = dbg::encodeColorAbgr((uint8_t)255, 255, 255, 255),
-     .name_ = "Item 1"},
-    {.color_ = dbg::encodeColorAbgr((uint8_t)255, 0, 0, 255),
-     .name_ = "Item 2"},
-    {.color_ = dbg::encodeColorAbgr((uint8_t)0, 255, 0, 255),
-     .name_ = "Item 3"},
-    {.color_ = dbg::encodeColorAbgr((uint8_t)0, 0, 255, 255),
-     .name_ = "Item 4"},
-    {.color_ = dbg::encodeColorAbgr((uint8_t)255, 255, 0, 255),
-     .name_ = "Item 5"},
-    {.color_ = dbg::encodeColorAbgr((uint8_t)0, 255, 255, 255),
-     .name_ = "Item 6"},
+    {.color_ = white, .name_ = "Item 1"},  {.color_ = red, .name_ = "Item 2"},
+    {.color_ = green, .name_ = "Item 3"},  {.color_ = blue, .name_ = "Item 4"},
+    {.color_ = yellow, .name_ = "Item 5"}, {.color_ = cyan, .name_ = "Item 6"},
   };
 
   list_.items_ = items_.data();
@@ -101,7 +92,7 @@ void list_scene_t::input(const SDL_Event& current_event)
     SDL_MouseMotionEvent* mouse_motion = (SDL_MouseMotionEvent*)&current_event;
     const as::vec2i mouse_now = as::vec2i(mouse_motion->x, mouse_motion->y);
     const as::vec2i mouse_delta = mouse_now - mouse_now_;
-    move_list(list_, (float)mouse_delta.y);
+    move_list(list_, mouse_delta.y);
     mouse_now_ = mouse_now;
   }
 }

@@ -5,15 +5,15 @@
 
 TEST_CASE("Verify list interaction")
 {
-  auto items = std::vector<item_t>{
+  auto list_items = std::vector<item_t>{
     {.color_ = white, .name_ = "Item 1"},  {.color_ = red, .name_ = "Item 2"},
     {.color_ = green, .name_ = "Item 3"},  {.color_ = blue, .name_ = "Item 4"},
     {.color_ = yellow, .name_ = "Item 5"}, {.color_ = cyan, .name_ = "Item 6"},
   };
 
   list_t list;
-  list.items_ = items.data();
-  list.item_count_ = items.size();
+  list.items_ = list_items.data();
+  list.item_count_ = list_items.size();
   list.item_stride_ = sizeof(item_t);
   list.position_ = as::vec2i(200, 200);
   list.item_size_ = as::vec2i(200, 50);
@@ -120,5 +120,35 @@ TEST_CASE("Verify list interaction")
           CHECK(list_item->name_ == "Item 5");
         }
       });
+  }
+
+  SECTION("List order updated after release")
+  {
+    // press third item
+    const auto press_start =
+      list.position_ + half_item_size + as::vec2i(0, vertical_offset * 2);
+    // drag down by two
+    const auto press_delta = vertical_offset * 2;
+    press_list(list, press_start);
+    move_list(list, press_delta);
+    update_list(list, [](const as::vec2i&, const as::vec2i&, const void*) {});
+    release_list(list, [](list_t& list) { reorder_list<item_t>(list); });
+
+    auto expected_items = std::vector<item_t>{
+      {.color_ = white, .name_ = "Item 1"},
+      {.color_ = red, .name_ = "Item 2"},
+      {.color_ = blue, .name_ = "Item 4"},
+      {.color_ = yellow, .name_ = "Item 5"},
+      {.color_ = green, .name_ = "Item 3"},
+      {.color_ = cyan, .name_ = "Item 6"},
+    };
+
+    const auto items = static_cast<std::byte*>(list.items_);
+    for (int32_t index = 0; index < list.item_count_; index++) {
+      const void* opaque_item = items + index * list.item_stride_;
+      const auto* item = static_cast<const item_t*>(opaque_item);
+      CHECK(item->name_ == expected_items[index].name_);
+      CHECK(item->color_ == expected_items[index].color_);
+    }
   }
 }

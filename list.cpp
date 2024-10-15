@@ -44,7 +44,8 @@ void update_list(list_t& list, const draw_box_fn& draw_box)
             + next_index * (item_size.y + list.vertical_spacing_))};
     };
 
-    if (const int index_before = list.available_index_ - 1; index_before >= 0) {
+    if (const int32_t index_before = list.available_index_ - 1;
+        index_before >= 0) {
       auto item_before_bound = next_bound(index_before);
       while (item_bound.top_left_.y
              < item_before_bound.bottom_right_.y - (item_size.y / 2)) {
@@ -53,7 +54,7 @@ void update_list(list_t& list, const draw_box_fn& draw_box)
       }
     }
 
-    if (const int index_after = list.available_index_ + 1;
+    if (const int32_t index_after = list.available_index_ + 1;
         index_after < list.item_count_) {
       auto item_after_bound = next_bound(index_after);
       while (item_bound.bottom_right_.y
@@ -64,12 +65,12 @@ void update_list(list_t& list, const draw_box_fn& draw_box)
     }
   }
 
-  for (int index = 0; index < list.item_count_; index++) {
-    void* item = items + index * list.item_stride_;
+  for (int32_t index = 0; index < list.item_count_; index++) {
+    const void* item = items + index * list.item_stride_;
     if (index == list.selected_index_) {
       continue;
     }
-    int offset = 0;
+    int32_t offset = 0;
     if (index >= list.available_index_ && index < list.selected_index_) {
       offset = 1;
     }
@@ -88,7 +89,7 @@ void press_list(list_t& list, const as::vec2i& mouse_position)
 {
   const as::vec2i list_position = list.position_;
   const as::vec2i item_size = list.item_size_;
-  for (int index = 0; index < list.item_count_; index++) {
+  for (int32_t index = 0; index < list.item_count_; index++) {
     const bound_t bound = bound_t{
       .top_left_ = as::vec2i(
         list_position.x,
@@ -115,7 +116,7 @@ void release_list(list_t& list, const reorder_fn& reorder)
   list.drag_position_ = as::vec2i::zero();
 }
 
-void move_list(list_t& list, const float movement_delta)
+void move_list(list_t& list, const int32_t movement_delta)
 {
   if (list.selected_index_ != -1) {
     list.drag_position_.y += movement_delta;
