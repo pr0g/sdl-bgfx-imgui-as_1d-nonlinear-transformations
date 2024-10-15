@@ -16,7 +16,7 @@ void draw_box(
 {
   // top
   debug_draw.debug_lines_screen->addLine(
-    as::vec3_from_vec2(bounds.top_left_),
+    as::vec3_from_vec2(as::vec2_from_vec2i(bounds.top_left_)),
     as::vec3(bounds.bottom_right_.x, bounds.top_left_.y, 0.0f), color);
 
   // bottom
@@ -26,13 +26,13 @@ void draw_box(
 
   // left
   debug_draw.debug_lines_screen->addLine(
-    as::vec3_from_vec2(bounds.top_left_),
+    as::vec3_from_vec2(as::vec2_from_vec2i(bounds.top_left_)),
     as::vec3(bounds.top_left_.x, bounds.bottom_right_.y, 0.0f), color);
 
   // right
   debug_draw.debug_lines_screen->addLine(
     as::vec3(bounds.bottom_right_.x, bounds.top_left_.y, 0.0f),
-    as::vec3_from_vec2(bounds.bottom_right_), color);
+    as::vec3_from_vec2(as::vec2_from_vec2i(bounds.bottom_right_)), color);
 
   ImDrawList* drawList = ImGui::GetBackgroundDrawList();
   drawList->AddText(
@@ -41,7 +41,7 @@ void draw_box(
 }
 
 void draw_box(
-  debug_draw_t& debug_draw, const as::vec2& position, const as::vec2& size,
+  debug_draw_t& debug_draw, const as::vec2i& position, const as::vec2i& size,
   const uint32_t color, const std::string& name)
 {
   draw_box(
@@ -77,8 +77,8 @@ void list_scene_t::setup(
   list_.items_ = items_.data();
   list_.item_count_ = items_.size();
   list_.item_stride_ = sizeof(item_t);
-  list_.position_ = as::vec2(200, 200);
-  list_.item_size_ = as::vec2(200, 50);
+  list_.position_ = as::vec2i(200, 200);
+  list_.item_size_ = as::vec2i(200, 50);
 }
 
 void list_scene_t::input(const SDL_Event& current_event)
@@ -125,8 +125,9 @@ void list_scene_t::update(debug_draw_t& debug_draw, float delta_time)
   ImGui::SetWindowSize(ImGui::GetIO().DisplaySize);
 
   update_list(
-    list_, [&debug_draw](
-             const as::vec2& position, const as::vec2& size, const void* item) {
+    list_,
+    [&debug_draw](
+      const as::vec2i& position, const as::vec2i& size, const void* item) {
       const auto* list_item = static_cast<const item_t*>(item);
       draw_box(debug_draw, position, size, list_item->color_, list_item->name_);
     });

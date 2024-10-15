@@ -8,8 +8,8 @@
 
 struct bound_t
 {
-  as::vec2 top_left_;
-  as::vec2 bottom_right_;
+  as::vec2i top_left_;
+  as::vec2i bottom_right_;
 };
 
 struct item_t
@@ -20,8 +20,8 @@ struct item_t
 
 struct list_t
 {
-  as::vec2 position_;
-  as::vec2 item_size_;
+  as::vec2i position_;
+  as::vec2i item_size_;
   float vertical_spacing_ = 5.0f;
 
   void* items_;
@@ -30,11 +30,11 @@ struct list_t
 
   int32_t selected_index_ = -1;
   int32_t available_index_ = -1;
-  as::vec2 drag_position_;
+  as::vec2i drag_position_;
 };
 
 using draw_box_fn = std::function<void(
-  const as::vec2& position, const as::vec2& size, const void* item)>;
+  const as::vec2i& position, const as::vec2i& size, const void* item)>;
 void update_list(list_t& list, const draw_box_fn& draw_box);
 
 using reorder_fn = std::function<void(list_t& list)>;
