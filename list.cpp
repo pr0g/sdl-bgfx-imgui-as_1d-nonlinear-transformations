@@ -16,6 +16,17 @@ static bool contained(const bound_t& bound, const as::vec2i& point) {
   return false;
 }
 
+static bound_t calculate_bound(const list_t& list, const int32_t index) {
+  return bound_t{
+    as::vec2i(
+      list.position_.x,
+      list.position_.y + index * (list.item_size_.y + list.vertical_spacing_)),
+    as::vec2i(
+      list.position_.x + list.item_size_.x,
+      list.position_.y + list.item_size_.y
+        + index * (list.item_size_.y + list.vertical_spacing_))};
+}
+
 void update_list(list_t& list, const draw_box_fn& draw_box) {
   const auto item_size = list.item_size_;
   const auto list_position = list.position_;
@@ -30,21 +41,9 @@ void update_list(list_t& list, const draw_box_fn& draw_box) {
       .bottom_right_ = as::vec2i(
         list_position.x + item_size.x, list.drag_position_.y + item_size.y)};
 
-    const auto next_bound = [&](const int32_t next_index) {
-      return bound_t{
-        as::vec2i(
-          list_position.x,
-          list_position.y
-            + next_index * (item_size.y + list.vertical_spacing_)),
-        as::vec2i(
-          list_position.x + item_size.x,
-          list_position.y + item_size.y
-            + next_index * (item_size.y + list.vertical_spacing_))};
-    };
-
     if (const int32_t index_before = list.available_index_ - 1;
         index_before >= 0) {
-      auto item_before_bound = next_bound(index_before);
+      auto item_before_bound = calculate_bound(list, index_before);
       while (item_bound.top_left_.y
              < item_before_bound.bottom_right_.y - (item_size.y / 2)) {
         item_before_bound.bottom_right_.y -= item_size.y;
@@ -54,7 +53,7 @@ void update_list(list_t& list, const draw_box_fn& draw_box) {
 
     if (const int32_t index_after = list.available_index_ + 1;
         index_after < list.item_count_) {
-      auto item_after_bound = next_bound(index_after);
+      auto item_after_bound = calculate_bound(list, index_after);
       while (item_bound.bottom_right_.y
              >= item_after_bound.top_left_.y + (item_size.y / 2)) {
         item_after_bound.top_left_.y += item_size.y;
@@ -87,14 +86,7 @@ void press_list(list_t& list, const as::vec2i& mouse_position) {
   const as::vec2i list_position = list.position_;
   const as::vec2i item_size = list.item_size_;
   for (int32_t index = 0; index < list.item_count_; index++) {
-    const bound_t bound = bound_t{
-      .top_left_ = as::vec2i(
-        list_position.x,
-        list_position.y + index * (item_size.y + list.vertical_spacing_)),
-      .bottom_right_ = as::vec2i(
-        list_position.x + item_size.x,
-        list_position.y + item_size.y
-          + index * (item_size.y + list.vertical_spacing_))};
+    const bound_t bound = calculate_bound(list, index);
     if (contained(bound, mouse_position)) {
       list.selected_index_ = index;
       list.available_index_ = index;
