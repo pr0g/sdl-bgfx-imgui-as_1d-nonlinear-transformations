@@ -68,6 +68,13 @@ void list_scene_t::setup(
   vertical_list_.position_ = as::vec2i(200, 200);
   vertical_list_.item_size_ = as::vec2i(200, 50);
   vertical_list_.direction_ = direction_e::vertical;
+
+  horizontal_list_.items_ = items_.data();
+  horizontal_list_.item_count_ = items_.size();
+  horizontal_list_.item_stride_ = sizeof(item_t);
+  horizontal_list_.position_ = as::vec2i(500, 200);
+  horizontal_list_.item_size_ = as::vec2i(50, 100);
+  horizontal_list_.direction_ = direction_e::horizontal;
 }
 
 void list_scene_t::input(const SDL_Event& current_event) {
@@ -75,13 +82,19 @@ void list_scene_t::input(const SDL_Event& current_event) {
     SDL_MouseButtonEvent* mouse_button = (SDL_MouseButtonEvent*)&current_event;
     if (mouse_button->button == SDL_BUTTON_LEFT) {
       press_list(vertical_list_, mouse_now_);
+      press_list(horizontal_list_, mouse_now_);
     }
   }
 
   if (current_event.type == SDL_MOUSEBUTTONUP) {
     SDL_MouseButtonEvent* mouse_button = (SDL_MouseButtonEvent*)&current_event;
     if (mouse_button->button == SDL_BUTTON_LEFT) {
-      release_list<item_t>(vertical_list_);
+      if (vertical_list_.selected_index_ != -1) {
+        release_list<item_t>(vertical_list_);
+      }
+      if (horizontal_list_.selected_index_ != -1) {
+        release_list<item_t>(horizontal_list_);
+      }
     }
   }
 
@@ -90,6 +103,7 @@ void list_scene_t::input(const SDL_Event& current_event) {
     const as::vec2i mouse_now = as::vec2i(mouse_motion->x, mouse_motion->y);
     const as::vec2i mouse_delta = mouse_now - mouse_now_;
     move_list(vertical_list_, mouse_delta.y);
+    move_list(horizontal_list_, mouse_delta.x);
     mouse_now_ = mouse_now;
   }
 }
@@ -111,13 +125,15 @@ void list_scene_t::update(debug_draw_t& debug_draw, float delta_time) {
   ImGui::SetWindowPos(ImVec2(0, 0));
   ImGui::SetWindowSize(ImGui::GetIO().DisplaySize);
 
-  update_list(
-    vertical_list_,
-    [&debug_draw](
-      const as::vec2i& position, const as::vec2i& size, const void* item) {
-      const auto* list_item = static_cast<const item_t*>(item);
-      draw_box(debug_draw, position, size, list_item->color_, list_item->name_);
-    });
+  const auto draw_list_box = [&debug_draw](
+                               const as::vec2i& position, const as::vec2i& size,
+                               const void* item) {
+    const auto* list_item = static_cast<const item_t*>(item);
+    draw_box(debug_draw, position, size, list_item->color_, list_item->name_);
+  };
+
+  update_list(vertical_list_, draw_list_box);
+  update_list(horizontal_list_, draw_list_box);
 
   ImGui::End();
 
