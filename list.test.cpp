@@ -3,7 +3,27 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-TEST_CASE("Verify list interaction") {
+TEST_CASE("Bound calculation") {
+  list_t list;
+  list.spacing_ = 5.0f;
+  list.position_ = as::vec2i(200, 200);
+  list.item_size_ = as::vec2i(200, 50);
+  list.direction_ = direction_e::vertical;
+
+  const bound_t second_item_bound = calculate_bound(list, 1);
+  CHECK(second_item_bound.top_left_.x == 200);
+  CHECK(second_item_bound.top_left_.y == 255);
+  CHECK(second_item_bound.bottom_right_.x == 400);
+  CHECK(second_item_bound.bottom_right_.y == 305);
+
+  const bound_t fourth_item_bound = calculate_bound(list, 3);
+  CHECK(fourth_item_bound.top_left_.x == 200);
+  CHECK(fourth_item_bound.top_left_.y == 365);
+  CHECK(fourth_item_bound.bottom_right_.x == 400);
+  CHECK(fourth_item_bound.bottom_right_.y == 415);
+}
+
+TEST_CASE("List interaction") {
   auto list_items = std::vector<item_t>{
     {.color_ = white, .name_ = "Item 1"},  {.color_ = red, .name_ = "Item 2"},
     {.color_ = green, .name_ = "Item 3"},  {.color_ = blue, .name_ = "Item 4"},
@@ -16,8 +36,9 @@ TEST_CASE("Verify list interaction") {
   list.item_stride_ = sizeof(item_t);
   list.position_ = as::vec2i(200, 200);
   list.item_size_ = as::vec2i(200, 50);
+  list.direction_ = direction_e::vertical;
 
-  const int32_t vertical_offset = list.item_size_.y + list.vertical_spacing_;
+  const int32_t vertical_offset = list.item_size_.y + list.spacing_;
   const as::vec2i half_item_size = list.item_size_ / 2;
 
   SECTION("List item can be dragged down by one") {

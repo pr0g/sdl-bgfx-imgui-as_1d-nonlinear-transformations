@@ -16,15 +16,21 @@ static bool contained(const bound_t& bound, const as::vec2i& point) {
   return false;
 }
 
-static bound_t calculate_bound(const list_t& list, const int32_t index) {
+bound_t calculate_bound(const list_t& list, const int32_t index) {
+  const as::vec2i offset = direction_mask(list.direction_) * index
+                         * (list.item_size_ + as::vec2i(list.spacing_));
   return bound_t{
-    as::vec2i(
-      list.position_.x,
-      list.position_.y + index * (list.item_size_.y + list.vertical_spacing_)),
-    as::vec2i(
-      list.position_.x + list.item_size_.x,
-      list.position_.y + list.item_size_.y
-        + index * (list.item_size_.y + list.vertical_spacing_))};
+    list.position_ + offset, list.position_ + list.item_size_ + offset};
+}
+
+bound_t calculate_drag_bound(const list_t& list) {
+  const as::vec2i masked_drag_position =
+    direction_mask(list.direction_) * list.drag_position_;
+  return bound_t{
+    invert_direction_mask(list.direction_) * list.position_
+      + masked_drag_position,
+    invert_direction_mask(list.direction_) * list.position_ + list.item_size_
+      + masked_drag_position};
 }
 
 void update_list(list_t& list, const draw_box_fn& draw_box) {
@@ -36,15 +42,11 @@ void update_list(list_t& list, const draw_box_fn& draw_box) {
     const void* item = items + list.selected_index_ * list.item_stride_;
     draw_box(list.drag_position_, list.item_size_, item);
 
-    const bound_t item_bound = bound_t{
-      .top_left_ = as::vec2i(list_position.x, list.drag_position_.y),
-      .bottom_right_ = as::vec2i(
-        list_position.x + item_size.x, list.drag_position_.y + item_size.y)};
-
+    const bound_t dragged_item_bound = calculate_drag_bound(list);
     if (const int32_t index_before = list.available_index_ - 1;
         index_before >= 0) {
       auto item_before_bound = calculate_bound(list, index_before);
-      while (item_bound.top_left_.y
+      while (dragged_item_bound.top_left_.y
              < item_before_bound.bottom_right_.y - (item_size.y / 2)) {
         item_before_bound.bottom_right_.y -= item_size.y;
         list.available_index_--;
@@ -54,7 +56,7 @@ void update_list(list_t& list, const draw_box_fn& draw_box) {
     if (const int32_t index_after = list.available_index_ + 1;
         index_after < list.item_count_) {
       auto item_after_bound = calculate_bound(list, index_after);
-      while (item_bound.bottom_right_.y
+      while (dragged_item_bound.bottom_right_.y
              >= item_after_bound.top_left_.y + (item_size.y / 2)) {
         item_after_bound.top_left_.y += item_size.y;
         list.available_index_++;
@@ -76,8 +78,7 @@ void update_list(list_t& list, const draw_box_fn& draw_box) {
     }
     draw_box(
       list_position
-        + as::vec2i(
-          0, (item_size.y + list.vertical_spacing_) * (index + offset)),
+        + as::vec2i(0, (item_size.y + list.spacing_) * (index + offset)),
       item_size, item);
   }
 }
@@ -91,14 +92,13 @@ void press_list(list_t& list, const as::vec2i& mouse_position) {
       list.selected_index_ = index;
       list.available_index_ = index;
       list.drag_position_ =
-        list_position
-        + as::vec2i(0, index * (item_size.y + list.vertical_spacing_));
+        list_position + as::vec2i(0, index * (item_size.y + list.spacing_));
     }
   }
 }
 
 void move_list(list_t& list, const int32_t movement_delta) {
   if (list.selected_index_ != -1) {
-    list.drag_position_.y += movement_delta;
+    list.drag_position_ += direction_mask(list.direction_) * movement_delta;
   }
 }

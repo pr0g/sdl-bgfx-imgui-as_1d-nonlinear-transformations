@@ -2,9 +2,12 @@
 
 #include <as/as-math-ops.hpp>
 
+#include <cassert>
 #include <functional>
 #include <string>
 #include <vector>
+
+enum class direction_e { vertical, horizontal };
 
 struct bound_t {
   as::vec2i top_left_;
@@ -14,7 +17,8 @@ struct bound_t {
 struct list_t {
   as::vec2i position_;
   as::vec2i item_size_;
-  float vertical_spacing_ = 5.0f;
+  float spacing_ = 5.0f;
+  direction_e direction_;
 
   void* items_;
   int32_t item_count_;
@@ -32,6 +36,9 @@ void update_list(list_t& list, const draw_box_fn& draw_box);
 void press_list(list_t& list, const as::vec2i& mouse_position);
 void move_list(list_t& list, int32_t movement_delta);
 
+bound_t calculate_bound(const list_t& list, const int32_t index);
+bound_t calculate_drag_bound(const list_t& list);
+
 template<typename Item>
 void release_list(list_t& list) {
   auto* items = static_cast<Item*>(list.items_);
@@ -46,3 +53,28 @@ void release_list(list_t& list) {
   list.available_index_ = -1;
   list.drag_position_ = as::vec2i::zero();
 }
+
+inline as::vec2i direction_mask(const direction_e direction) {
+  switch (direction) {
+    case direction_e::horizontal:
+      return as::vec2i::axis_x();
+    case direction_e::vertical:
+      return as::vec2i::axis_y();
+    default:
+      assert(false);
+      return as::vec2i::zero();
+  }
+}
+
+inline as::vec2i invert_direction_mask(const direction_e direction) {
+  return as::vec2i::one() - direction_mask(direction);
+}
+
+// 0, 1
+// 1, 0
+
+// 1, 1 - 0, 1
+//        1, 0
+
+// 1, 1 - 1, 0
+//        0, 1
