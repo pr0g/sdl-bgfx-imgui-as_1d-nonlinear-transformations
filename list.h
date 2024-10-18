@@ -34,7 +34,7 @@ using draw_box_fn = std::function<void(
 
 void update_list(list_t& list, const draw_box_fn& draw_box);
 void press_list(list_t& list, const as::vec2i& mouse_position);
-void move_list(list_t& list, int32_t movement_delta);
+void move_list(list_t& list, const as::vec2i& movement_delta);
 
 bound_t calculate_bound(const list_t& list, const int32_t index);
 bound_t calculate_drag_bound(const list_t& list);

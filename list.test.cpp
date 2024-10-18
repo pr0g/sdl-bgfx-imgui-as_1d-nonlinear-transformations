@@ -44,7 +44,7 @@ TEST_CASE("List interaction") {
   SECTION("List item can be dragged down by one") {
     // press center of top of list
     press_list(list, list.position_ + half_item_size);
-    move_list(list, vertical_offset);
+    move_list(list, as::vec2i::axis_y(vertical_offset));
     update_list(
       list,
       [](const as::vec2i& position, const as::vec2i& size, const void* item) {
@@ -67,7 +67,7 @@ TEST_CASE("List interaction") {
     press_list(
       list,
       list.position_ + half_item_size + as::vec2i(0, vertical_offset * 5));
-    move_list(list, -vertical_offset);
+    move_list(list, as::vec2i::axis_y(-vertical_offset));
     update_list(
       list,
       [&list, vertical_offset](
@@ -93,7 +93,7 @@ TEST_CASE("List interaction") {
     // press center of second list item
     press_list(list, press_start);
     // move down to fourth element
-    move_list(list, press_delta);
+    move_list(list, as::vec2i::axis_y(press_delta));
     update_list(
       list,
       [&list, vertical_offset, press_start, press_delta, half_item_size](
@@ -119,7 +119,7 @@ TEST_CASE("List interaction") {
     // press center of last list item
     press_list(list, press_start);
     // move up to second element
-    move_list(list, press_delta);
+    move_list(list, as::vec2i::axis_y(press_delta));
     update_list(
       list,
       [&list, vertical_offset, press_start, press_delta, half_item_size](
@@ -145,7 +145,7 @@ TEST_CASE("List interaction") {
     // drag down by two
     const auto press_delta = vertical_offset * 2;
     press_list(list, press_start);
-    move_list(list, press_delta);
+    move_list(list, as::vec2i::axis_y(press_delta));
     update_list(list, [](const as::vec2i&, const as::vec2i&, const void*) {});
     release_list<item_t>(list);
 

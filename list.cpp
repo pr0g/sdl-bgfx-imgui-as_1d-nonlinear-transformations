@@ -17,8 +17,14 @@ static bool contained(const bound_t& bound, const as::vec2i& point) {
 }
 
 const as::vec2i item_offset(const list_t& list, const int32_t index) {
-  return direction_mask(list.direction_) * index
-       * (list.item_size_ + as::vec2i(list.spacing_));
+  const int32_t columns = 3;
+  const int32_t row = index / columns;
+  const int32_t col = index % columns;
+
+  const int32_t horizontal = (list.item_size_.x + list.spacing_) * col;
+  const int32_t vertical = (list.item_size_.y + list.spacing_) * row;
+
+  return as::vec2i(horizontal, vertical);
 }
 
 bound_t calculate_bound(const list_t& list, const int32_t index) {
@@ -28,13 +34,7 @@ bound_t calculate_bound(const list_t& list, const int32_t index) {
 }
 
 bound_t calculate_drag_bound(const list_t& list) {
-  const as::vec2i masked_drag_position =
-    direction_mask(list.direction_) * list.drag_position_;
-  return bound_t{
-    invert_direction_mask(list.direction_) * list.position_
-      + masked_drag_position,
-    invert_direction_mask(list.direction_) * list.position_ + list.item_size_
-      + masked_drag_position};
+  return bound_t{list.drag_position_, list.drag_position_ + list.item_size_};
 }
 
 struct extent_t {
@@ -42,11 +42,11 @@ struct extent_t {
   int32_t max;
 };
 
-static extent_t item_extents(const list_t& list, const bound_t& bound) {
+static extent_t item_extents(
+  const direction_e direction, const bound_t& bound) {
   return {
-    .min = as::vec_max_elem(bound.top_left_ * direction_mask(list.direction_)),
-    .max =
-      as::vec_max_elem(bound.bottom_right_ * direction_mask(list.direction_))};
+    .min = as::vec_max_elem(bound.top_left_ * direction_mask(direction)),
+    .max = as::vec_max_elem(bound.bottom_right_ * direction_mask(direction))};
 }
 
 static int32_t item_direction_dimension(const list_t& list) {
@@ -58,30 +58,71 @@ void update_list(list_t& list, const draw_box_fn& draw_box) {
   const auto item_dimension = item_direction_dimension(list);
   const auto items = static_cast<std::byte*>(list.items_);
   if (list.selected_index_ != -1) {
-    const void* item = items + list.selected_index_ * list.item_stride_;
-    draw_box(list.drag_position_, item_size, item);
-
     const bound_t dragged_item_bound = calculate_drag_bound(list);
-    const extent_t dragged_item_extent = item_extents(list, dragged_item_bound);
+    const extent_t primary_dragged_item_extent =
+      item_extents(list.direction_, dragged_item_bound);
+    const void* item = items + list.selected_index_ * list.item_stride_;
+    draw_box(
+      dragged_item_bound.top_left_,
+      dragged_item_bound.bottom_right_ - dragged_item_bound.top_left_, item);
 
-    if (const int32_t index_before = list.available_index_ - 1;
-        index_before >= 0) {
-      extent_t item_before_extent =
-        item_extents(list, calculate_bound(list, index_before));
-      while (dragged_item_extent.min
-             < item_before_extent.max - (item_dimension / 2)) {
-        item_before_extent.max -= item_dimension;
+    // if (index_before / 3 < list.available_index_ / 3) {
+    //   list.available_index_ -= 3;
+    // }
+
+    const extent_t secondary_dragged_item_extent =
+      item_extents(direction_e::vertical, dragged_item_bound);
+
+    if (const int32_t secondary_index_before = list.available_index_ - 3;
+        secondary_index_before >= 0) {
+      extent_t secondary_item_before_extent = item_extents(
+        direction_e::vertical, calculate_bound(list, secondary_index_before));
+      if (
+        secondary_dragged_item_extent.min
+        < secondary_item_before_extent.max - (item_dimension / 2)) {
+        // item_before_extent.max -= item_dimension;
+        list.available_index_ -= 3;
+      }
+    }
+
+    if (const int32_t secondary_index_after = list.available_index_ + 3;
+        secondary_index_after < list.item_count_) {
+      extent_t secondary_item_after_extent = item_extents(
+        direction_e::vertical, calculate_bound(list, secondary_index_after));
+      if (
+        secondary_dragged_item_extent.max
+        >= secondary_item_after_extent.min + (item_dimension / 2)) {
+        // item_before_extent.max -= item_dimension;
+        list.available_index_ += 3;
+      }
+    }
+
+    if (const int32_t primary_index_before = list.available_index_ - 1;
+        primary_index_before >= 0
+        && primary_index_before / 3 == list.available_index_ / 3) {
+      extent_t primary_item_before_extent = item_extents(
+        list.direction_, calculate_bound(list, primary_index_before));
+      if (
+        primary_dragged_item_extent.min
+        < primary_item_before_extent.max - (item_dimension / 2)) {
+        // item_before_extent.max -= item_dimension;
         list.available_index_--;
       }
     }
 
-    if (const int32_t index_after = list.available_index_ + 1;
-        index_after < list.item_count_) {
-      extent_t item_after_extent =
-        item_extents(list, calculate_bound(list, index_after));
-      while (dragged_item_extent.max
-             >= item_after_extent.min + (item_dimension / 2)) {
-        item_after_extent.min += item_dimension;
+    // if (index_after / 3 > list.available_index_ / 3) {
+    //   list.available_index_ += 3;
+    // }
+
+    if (const int32_t primary_index_after = list.available_index_ + 1;
+        primary_index_after < list.item_count_
+        && primary_index_after / 3 == list.available_index_ / 3) {
+      extent_t primary_item_after_extent = item_extents(
+        list.direction_, calculate_bound(list, primary_index_after));
+      if (
+        primary_dragged_item_extent.max
+        >= primary_item_after_extent.min + (item_dimension / 2)) {
+        // item_after_extent.min += item_dimension;
         list.available_index_++;
       }
     }
@@ -118,8 +159,8 @@ void press_list(list_t& list, const as::vec2i& mouse_position) {
   }
 }
 
-void move_list(list_t& list, const int32_t movement_delta) {
+void move_list(list_t& list, const as::vec2i& movement_delta) {
   if (list.selected_index_ != -1) {
-    list.drag_position_ += direction_mask(list.direction_) * movement_delta;
+    list.drag_position_ += movement_delta;
   }
 }
