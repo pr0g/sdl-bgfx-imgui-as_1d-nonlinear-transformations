@@ -17,8 +17,9 @@ struct bound_t {
 struct list_t {
   as::vec2i position_;
   as::vec2i item_size_;
-  float spacing_ = 5.0f;
+  int32_t spacing_ = 5;
   direction_e direction_;
+  int32_t wrap_count_ = 1;
 
   void* items_;
   int32_t item_count_;
@@ -54,6 +55,18 @@ void release_list(list_t& list) {
   list.drag_position_ = as::vec2i::zero();
 }
 
+inline direction_e invert_direction(const direction_e direction) {
+  switch (direction) {
+    case direction_e::horizontal:
+      return direction_e::vertical;
+    case direction_e::vertical:
+      return direction_e::horizontal;
+    default:
+      assert(false);
+      return direction_e::vertical;
+  }
+}
+
 inline as::vec2i direction_mask(const direction_e direction) {
   switch (direction) {
     case direction_e::horizontal:
@@ -69,12 +82,3 @@ inline as::vec2i direction_mask(const direction_e direction) {
 inline as::vec2i invert_direction_mask(const direction_e direction) {
   return as::vec2i::one() - direction_mask(direction);
 }
-
-// 0, 1
-// 1, 0
-
-// 1, 1 - 0, 1
-//        1, 0
-
-// 1, 1 - 1, 0
-//        0, 1

@@ -13,6 +13,14 @@ const inline auto green = dbg::encodeColorAbgr((uint8_t)0, 255, 0, 255);
 const inline auto blue = dbg::encodeColorAbgr((uint8_t)0, 0, 255, 255);
 const inline auto yellow = dbg::encodeColorAbgr((uint8_t)255, 255, 0, 255);
 const inline auto cyan = dbg::encodeColorAbgr((uint8_t)0, 255, 255, 255);
+const inline auto light_coral = dbg::encodeColorAbgr((uint8_t)205, 92, 92, 255);
+const inline auto pale_violet_red =
+  dbg::encodeColorAbgr((uint8_t)219, 112, 147, 255);
+const inline auto tomato = dbg::encodeColorAbgr((uint8_t)255, 99, 71, 255);
+const inline auto orange = dbg::encodeColorAbgr((uint8_t)255, 165, 0, 255);
+const inline auto khaki = dbg::encodeColorAbgr((uint8_t)240, 230, 140, 255);
+const inline auto pale_green =
+  dbg::encodeColorAbgr((uint8_t)152, 251, 152, 255);
 
 struct item_t {
   uint32_t color_;
@@ -32,7 +40,7 @@ struct list_scene_t : public scene_t {
   as::mat4 orthographic_projection_;
   asc::Camera camera_;
 
-  // list_t vertical_list_;
+  list_t vertical_list_;
   list_t horizontal_list_;
   std::vector<item_t> items_;
 

@@ -5,10 +5,11 @@
 
 TEST_CASE("Bound calculation") {
   list_t list;
-  list.spacing_ = 5.0f;
+  list.spacing_ = 5;
   list.position_ = as::vec2i(200, 200);
   list.item_size_ = as::vec2i(200, 50);
   list.direction_ = direction_e::vertical;
+  list.wrap_count_ = 0;
 
   const bound_t second_item_bound = calculate_bound(list, 1);
   CHECK(second_item_bound.top_left_.x == 200);
@@ -37,6 +38,7 @@ TEST_CASE("List interaction") {
   list.position_ = as::vec2i(200, 200);
   list.item_size_ = as::vec2i(200, 50);
   list.direction_ = direction_e::vertical;
+  list.wrap_count_ = 0;
 
   const int32_t vertical_offset = list.item_size_.y + list.spacing_;
   const as::vec2i half_item_size = list.item_size_ / 2;
