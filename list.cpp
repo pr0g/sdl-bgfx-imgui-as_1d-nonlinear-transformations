@@ -42,14 +42,14 @@ struct extent_t {
   int32_t max;
 };
 
-extent_t item_extents(const list_t& list, const bound_t& bound) {
+static extent_t item_extents(const list_t& list, const bound_t& bound) {
   return {
     .min = as::vec_max_elem(bound.top_left_ * direction_mask(list.direction_)),
     .max =
       as::vec_max_elem(bound.bottom_right_ * direction_mask(list.direction_))};
 }
 
-int32_t item_direction_dimension(const list_t& list) {
+static int32_t item_direction_dimension(const list_t& list) {
   return as::vec_max_elem(list.item_size_ * direction_mask(list.direction_));
 }
 
