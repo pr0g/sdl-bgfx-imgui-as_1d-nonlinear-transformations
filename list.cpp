@@ -56,12 +56,10 @@ static int32_t item_direction_dimension(const list_t& list) {
 void update_list(list_t& list, const draw_box_fn& draw_box) {
   const auto item_size = list.item_size_;
   const auto item_dimension = item_direction_dimension(list);
-  const auto list_position = list.position_;
-
   const auto items = static_cast<std::byte*>(list.items_);
   if (list.selected_index_ != -1) {
     const void* item = items + list.selected_index_ * list.item_stride_;
-    draw_box(list.drag_position_, list.item_size_, item);
+    draw_box(list.drag_position_, item_size, item);
 
     const bound_t dragged_item_bound = calculate_drag_bound(list);
     const extent_t dragged_item_extent = item_extents(list, dragged_item_bound);
@@ -89,6 +87,7 @@ void update_list(list_t& list, const draw_box_fn& draw_box) {
     }
   }
 
+  const auto list_position = list.position_;
   for (int32_t index = 0; index < list.item_count_; index++) {
     const void* item = items + index * list.item_stride_;
     if (index == list.selected_index_) {
