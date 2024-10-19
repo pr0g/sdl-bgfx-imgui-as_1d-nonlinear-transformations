@@ -37,9 +37,6 @@ void update_list(list_t& list, const draw_box_fn& draw_box);
 void press_list(list_t& list, const as::vec2i& mouse_position);
 void move_list(list_t& list, const as::vec2i& movement_delta);
 
-bound_t calculate_bound(const list_t& list, const int32_t index);
-bound_t calculate_drag_bound(const list_t& list);
-
 template<typename Item>
 void release_list(list_t& list) {
   auto* items = static_cast<Item*>(list.items_);
@@ -54,6 +51,9 @@ void release_list(list_t& list) {
   list.available_index_ = -1;
   list.drag_position_ = as::vec2i::zero();
 }
+
+bound_t calculate_bound(const list_t& list, int32_t index);
+bound_t calculate_drag_bound(const list_t& list);
 
 inline direction_e invert_direction(const direction_e direction) {
   switch (direction) {

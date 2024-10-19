@@ -60,14 +60,11 @@ static int32_t inverted_item_direction_dimension(const list_t& list) {
 }
 
 void update_list(list_t& list, const draw_box_fn& draw_box) {
-  const auto item_size = list.item_size_;
   const auto item_primary_dimension = item_direction_dimension(list);
   const auto item_secondary_dimension = inverted_item_direction_dimension(list);
   const auto items = static_cast<std::byte*>(list.items_);
   if (list.selected_index_ != -1) {
     const bound_t dragged_item_bound = calculate_drag_bound(list);
-    const extent_t primary_dragged_item_extent =
-      item_extents(list.direction_, dragged_item_bound);
     const void* item = items + list.selected_index_ * list.item_stride_;
     draw_box(
       dragged_item_bound.top_left_,
@@ -75,7 +72,6 @@ void update_list(list_t& list, const draw_box_fn& draw_box) {
 
     const extent_t secondary_dragged_item_extent =
       item_extents(invert_direction(list.direction_), dragged_item_bound);
-
     if (const int32_t secondary_index_before =
           list.available_index_ - list.wrap_count_;
         secondary_index_before >= 0) {
@@ -104,6 +100,8 @@ void update_list(list_t& list, const draw_box_fn& draw_box) {
       }
     }
 
+    const extent_t primary_dragged_item_extent =
+      item_extents(list.direction_, dragged_item_bound);
     if (const int32_t primary_index_before = list.available_index_ - 1;
         primary_index_before >= 0
         && primary_index_before / list.wrap_count_
@@ -145,7 +143,7 @@ void update_list(list_t& list, const draw_box_fn& draw_box) {
       offset = -1;
     }
     draw_box(
-      list_position + item_offset(list, index + offset), item_size, item);
+      list_position + item_offset(list, index + offset), list.item_size_, item);
   }
 }
 
