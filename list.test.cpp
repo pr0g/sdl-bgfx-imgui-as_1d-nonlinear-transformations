@@ -287,3 +287,160 @@ TEST_CASE("List interaction horizontal") {
       });
   }
 }
+
+TEST_CASE("List interaction horizontal wrapping") {
+  auto list_items = std::vector<item_t>{
+    {.color_ = white, .name_ = "Item 1"},
+    {.color_ = red, .name_ = "Item 2"},
+    {.color_ = green, .name_ = "Item 3"},
+    {.color_ = blue, .name_ = "Item 4"},
+    {.color_ = yellow, .name_ = "Item 5"},
+    {.color_ = cyan, .name_ = "Item 6"},
+    {.color_ = light_coral, .name_ = "Item 7"},
+    {.color_ = pale_violet_red, .name_ = "Item 8"},
+    {.color_ = tomato, .name_ = "Item 9"},
+    {.color_ = orange, .name_ = "Item 10"},
+    {.color_ = khaki, .name_ = "Item 11"},
+    {.color_ = pale_green, .name_ = "Item 12"},
+  };
+
+  list_t list;
+  list.items_ = list_items.data();
+  list.item_count_ = list_items.size();
+  list.item_stride_ = sizeof(item_t);
+  list.position_ = as::vec2i(100, 100);
+  list.item_size_ = as::vec2i(20, 50);
+  list.direction_ = direction_e::horizontal;
+  list.wrap_count_ = 3;
+
+  const int32_t vertical_offset = list.item_size_.y + list.spacing_;
+  const int32_t horizontal_offset = list.item_size_.x + list.spacing_;
+  const as::vec2i half_item_size = list.item_size_ / 2;
+
+  SECTION("List item can be dragged right and down") {
+    // item 2
+    const auto press_start = list.position_ + half_item_size
+                           + as::vec2i::axis_x(horizontal_offset * 1);
+    const auto press_delta =
+      as::vec2i(horizontal_offset * 1, vertical_offset * 2);
+    press_list(list, press_start);
+    move_list(list, press_delta);
+    update_list(
+      list,
+      [&list, horizontal_offset, press_start, press_delta, half_item_size](
+        const as::vec2i& position, const as::vec2i& size, const void* item) {
+        const auto* list_item = static_cast<const item_t*>(item);
+        if (position == press_start - half_item_size + press_delta) {
+          CHECK(list_item->color_ == red);
+          CHECK(list_item->name_ == "Item 2");
+        }
+        if (position == press_start - half_item_size) {
+          CHECK(list_item->color_ == green);
+          CHECK(list_item->name_ == "Item 3");
+        }
+      });
+  }
+
+  SECTION("List item can be dragged left and up") {
+    // item 11
+    const auto press_start =
+      list.position_ + half_item_size
+      + as::vec2i(horizontal_offset * 1, vertical_offset * 3);
+    const auto press_delta =
+      as::vec2i(-horizontal_offset * 1, -vertical_offset * 3);
+    press_list(list, press_start);
+    move_list(list, press_delta);
+    update_list(
+      list,
+      [&list, horizontal_offset, press_start, press_delta, half_item_size](
+        const as::vec2i& position, const as::vec2i& size, const void* item) {
+        const auto* list_item = static_cast<const item_t*>(item);
+        if (position == press_start - half_item_size + press_delta) {
+          CHECK(list_item->color_ == khaki);
+          CHECK(list_item->name_ == "Item 11");
+        }
+        if (position == press_start - half_item_size) {
+          CHECK(list_item->color_ == orange);
+          CHECK(list_item->name_ == "Item 10");
+        }
+      });
+  }
+}
+
+TEST_CASE("List interaction vertical wrapping") {
+  auto list_items = std::vector<item_t>{
+    {.color_ = white, .name_ = "Item 1"},
+    {.color_ = red, .name_ = "Item 2"},
+    {.color_ = green, .name_ = "Item 3"},
+    {.color_ = blue, .name_ = "Item 4"},
+    {.color_ = yellow, .name_ = "Item 5"},
+    {.color_ = cyan, .name_ = "Item 6"},
+    {.color_ = light_coral, .name_ = "Item 7"},
+    {.color_ = pale_violet_red, .name_ = "Item 8"},
+    {.color_ = tomato, .name_ = "Item 9"},
+    {.color_ = orange, .name_ = "Item 10"},
+    {.color_ = khaki, .name_ = "Item 11"},
+    {.color_ = pale_green, .name_ = "Item 12"},
+  };
+
+  list_t list;
+  list.items_ = list_items.data();
+  list.item_count_ = list_items.size();
+  list.item_stride_ = sizeof(item_t);
+  list.position_ = as::vec2i(100, 100);
+  list.item_size_ = as::vec2i(20, 50);
+  list.direction_ = direction_e::vertical;
+  list.wrap_count_ = 4;
+
+  const int32_t vertical_offset = list.item_size_.y + list.spacing_;
+  const int32_t horizontal_offset = list.item_size_.x + list.spacing_;
+  const as::vec2i half_item_size = list.item_size_ / 2;
+
+  SECTION("List item can be dragged left and down") {
+    // item 5
+    const auto press_start = list.position_ + half_item_size
+                           + as::vec2i::axis_x(horizontal_offset * 1);
+    const auto press_delta =
+      as::vec2i(-horizontal_offset * 1, vertical_offset * 3);
+    press_list(list, press_start);
+    move_list(list, press_delta);
+    update_list(
+      list,
+      [&list, horizontal_offset, press_start, press_delta, half_item_size](
+        const as::vec2i& position, const as::vec2i& size, const void* item) {
+        const auto* list_item = static_cast<const item_t*>(item);
+        if (position == press_start - half_item_size + press_delta) {
+          CHECK(list_item->color_ == yellow);
+          CHECK(list_item->name_ == "Item 5");
+        }
+        if (position == press_start - half_item_size) {
+          CHECK(list_item->color_ == blue);
+          CHECK(list_item->name_ == "Item 4");
+        }
+      });
+  }
+
+  SECTION("List item can be dragged right and up") {
+    // item 4
+    const auto press_start =
+      list.position_ + half_item_size + as::vec2i::axis_y(vertical_offset * 3);
+    const auto press_delta =
+      as::vec2i(horizontal_offset * 2, -vertical_offset * 3);
+    press_list(list, press_start);
+    move_list(list, press_delta);
+    update_list(
+      list,
+      [&list, horizontal_offset, press_start, press_delta, half_item_size](
+        const as::vec2i& position, const as::vec2i& size, const void* item) {
+        const auto* list_item = static_cast<const item_t*>(item);
+        if (position == press_start - half_item_size + press_delta) {
+          CHECK(list_item->color_ == blue);
+          CHECK(list_item->name_ == "Item 4");
+        }
+        if (position == press_start - half_item_size) {
+          CHECK(list_item->color_ == yellow);
+          CHECK(list_item->name_ == "Item 5");
+        }
+      });
+  }
+}

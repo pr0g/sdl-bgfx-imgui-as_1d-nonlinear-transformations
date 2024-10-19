@@ -96,9 +96,9 @@ void update_list(list_t& list, const draw_box_fn& draw_box) {
       extent_t secondary_item_after_extent = item_extents(
         invert_direction(list.direction_),
         calculate_bound(list, secondary_index_after));
-      if (
-        secondary_dragged_item_extent.max
-        >= secondary_item_after_extent.min + (item_secondary_dimension / 2)) {
+      while (secondary_dragged_item_extent.max
+             >= secondary_item_after_extent.min
+                  + (item_secondary_dimension / 2)) {
         secondary_item_after_extent.min += item_secondary_dimension;
         list.available_index_ += list.wrap_count_;
       }
