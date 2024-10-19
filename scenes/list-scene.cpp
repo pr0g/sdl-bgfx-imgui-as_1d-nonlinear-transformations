@@ -76,7 +76,7 @@ void list_scene_t::setup(
   vertical_list_.item_stride_ = sizeof(item_t);
   vertical_list_.position_ = as::vec2i(100, 200);
   vertical_list_.item_size_ = as::vec2i(100, 50);
-  vertical_list_.direction_ = direction_e::vertical;
+  vertical_list_.order_ = order_e::top_to_bottom;
   vertical_list_.wrap_count_ = 3;
 
   horizontal_list_.items_ = items_.data();
@@ -84,7 +84,7 @@ void list_scene_t::setup(
   horizontal_list_.item_stride_ = sizeof(item_t);
   horizontal_list_.position_ = as::vec2i(600, 200);
   horizontal_list_.item_size_ = as::vec2i(50, 100);
-  horizontal_list_.direction_ = direction_e::horizontal;
+  horizontal_list_.order_ = order_e::left_to_right;
   horizontal_list_.wrap_count_ = 4;
 }
 

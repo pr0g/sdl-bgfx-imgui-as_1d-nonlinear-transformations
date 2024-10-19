@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-enum class direction_e { vertical, horizontal };
+enum class order_e { top_to_bottom, left_to_right };
 
 struct bound_t {
   as::vec2i top_left_;
@@ -18,8 +18,8 @@ struct list_t {
   as::vec2i position_;
   as::vec2i item_size_;
   int32_t spacing_ = 5;
-  direction_e direction_;
-  int32_t wrap_count_ = 1;
+  order_e order_;
+  int32_t wrap_count_ = 0;
 
   void* items_;
   int32_t item_count_;
@@ -55,23 +55,25 @@ void release_list(list_t& list) {
 bound_t calculate_bound(const list_t& list, int32_t index);
 bound_t calculate_drag_bound(const list_t& list);
 
-inline direction_e invert_direction(const direction_e direction) {
-  switch (direction) {
-    case direction_e::horizontal:
-      return direction_e::vertical;
-    case direction_e::vertical:
-      return direction_e::horizontal;
+// returns the minor order for the current major order
+inline order_e minor_order(const order_e order) {
+  switch (order) {
+    case order_e::left_to_right:
+      return order_e::top_to_bottom;
+    case order_e::top_to_bottom:
+      return order_e::left_to_right;
     default:
       assert(false);
-      return direction_e::vertical;
+      return order_e::top_to_bottom;
   }
 }
 
-inline as::vec2i direction_mask(const direction_e direction) {
-  switch (direction) {
-    case direction_e::horizontal:
+// returns a vec2 mask for the current major order
+inline as::vec2i order_mask(const order_e order) {
+  switch (order) {
+    case order_e::left_to_right:
       return as::vec2i::axis_x();
-    case direction_e::vertical:
+    case order_e::top_to_bottom:
       return as::vec2i::axis_y();
     default:
       assert(false);
@@ -79,6 +81,7 @@ inline as::vec2i direction_mask(const direction_e direction) {
   }
 }
 
-inline as::vec2i invert_direction_mask(const direction_e direction) {
-  return as::vec2i::one() - direction_mask(direction);
+// returns a vec2 mask for the minor order given the current major order
+inline as::vec2i minor_order_mask(const order_e order) {
+  return as::vec2i::one() - order_mask(order);
 }

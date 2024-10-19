@@ -8,7 +8,7 @@ TEST_CASE("Bound calculation") {
   list.spacing_ = 5;
   list.position_ = as::vec2i(200, 200);
   list.item_size_ = as::vec2i(200, 50);
-  list.direction_ = direction_e::vertical;
+  list.order_ = order_e::top_to_bottom;
   list.wrap_count_ = 0;
 
   const bound_t second_item_bound = calculate_bound(list, 1);
@@ -37,7 +37,7 @@ TEST_CASE("List interaction vertical") {
   list.item_stride_ = sizeof(item_t);
   list.position_ = as::vec2i(200, 200);
   list.item_size_ = as::vec2i(200, 50);
-  list.direction_ = direction_e::vertical;
+  list.order_ = order_e::top_to_bottom;
   list.wrap_count_ = 0;
 
   const int32_t vertical_offset = list.item_size_.y + list.spacing_;
@@ -183,7 +183,7 @@ TEST_CASE("List interaction horizontal") {
   list.item_stride_ = sizeof(item_t);
   list.position_ = as::vec2i(600, 300);
   list.item_size_ = as::vec2i(50, 100);
-  list.direction_ = direction_e::horizontal;
+  list.order_ = order_e::left_to_right;
   list.wrap_count_ = 0;
 
   const int32_t horizontal_offset = list.item_size_.x + list.spacing_;
@@ -310,7 +310,7 @@ TEST_CASE("List interaction horizontal wrapping") {
   list.item_stride_ = sizeof(item_t);
   list.position_ = as::vec2i(100, 100);
   list.item_size_ = as::vec2i(20, 50);
-  list.direction_ = direction_e::horizontal;
+  list.order_ = order_e::left_to_right;
   list.wrap_count_ = 3;
 
   const int32_t vertical_offset = list.item_size_.y + list.spacing_;
@@ -389,7 +389,7 @@ TEST_CASE("List interaction vertical wrapping") {
   list.item_stride_ = sizeof(item_t);
   list.position_ = as::vec2i(100, 100);
   list.item_size_ = as::vec2i(20, 50);
-  list.direction_ = direction_e::vertical;
+  list.order_ = order_e::top_to_bottom;
   list.wrap_count_ = 4;
 
   const int32_t vertical_offset = list.item_size_.y + list.spacing_;
