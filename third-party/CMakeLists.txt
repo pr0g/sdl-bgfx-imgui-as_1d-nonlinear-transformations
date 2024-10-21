@@ -5,7 +5,7 @@ project(third-party)
 
 include(ExternalProject)
 
-option(MC_GOL_APP_BUILD_TESTING "Enable testing" OFF)
+option(SDL_BGFX_IMGUI_ENABLE_TESTING "Enable testing" OFF)
 
 get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
 if(NOT isMultiConfig)
@@ -52,7 +52,7 @@ ExternalProject_Add(
              "$<$<CONFIG:Debug>:-DCMAKE_DEBUG_POSTFIX=d>"
              -DIMGUI_DISABLE_OBSOLETE_FUNCTIONS=ON)
 
-if(MC_GOL_APP_BUILD_TESTING)
+if(SDL_BGFX_IMGUI_ENABLE_TESTING)
   ExternalProject_Add(
     Catch2
     GIT_REPOSITORY https://github.com/catchorg/Catch2.git
