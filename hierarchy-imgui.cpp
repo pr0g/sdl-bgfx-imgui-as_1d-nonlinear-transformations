@@ -6,7 +6,7 @@ namespace hy_ig
 {
 
 void imguiInteractionDrawListHierarchy(
-  const thh::container_t<hy::entity_t>& entities,
+  const thh::handle_vector_t<hy::entity_t>& entities,
   hy::interaction_t& interaction,
   const std::vector<thh::handle_t>& root_handles)
 {
@@ -55,7 +55,7 @@ void imguiInteractionDrawListHierarchy(
 }
 
 void imguiInteractionNormalHierarchy(
-  const thh::container_t<hy::entity_t>& entities,
+  const thh::handle_vector_t<hy::entity_t>& entities,
   hy::interaction_t& interaction,
   const std::vector<thh::handle_t>& root_handles)
 {
@@ -100,7 +100,7 @@ void imguiInteractionNormalHierarchy(
 }
 
 static void imguiOnlyRecursiveHierarchyInternal(
-  const thh::container_t<hy::entity_t>& entities,
+  const thh::handle_vector_t<hy::entity_t>& entities,
   const std::vector<thh::handle_t>& handles)
 {
   for (const auto handle : handles) {
@@ -119,7 +119,7 @@ static void imguiOnlyRecursiveHierarchyInternal(
 }
 
 void imguiOnlyRecursiveHierarchy(
-  const thh::container_t<hy::entity_t>& entities,
+  const thh::handle_vector_t<hy::entity_t>& entities,
   const std::vector<thh::handle_t>& handles)
 {
   ImGui::Begin("Hierarchy Recursive");

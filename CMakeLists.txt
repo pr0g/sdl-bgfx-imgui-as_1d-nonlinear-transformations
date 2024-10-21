@@ -21,11 +21,11 @@ FetchContent_Declare(
 FetchContent_Declare(
   thh-bgfx-debug
   GIT_REPOSITORY https://github.com/pr0g/thh-bgfx-debug
-  GIT_TAG 43ee40ddcd19de3f70728d5aa592e9a5f9999c30)
+  GIT_TAG 15238e3adb87ac3a0590afcdc24510e98326de26)
 FetchContent_Declare(
   hierarchy
   GIT_REPOSITORY https://github.com/pr0g/hierarchy.git
-  GIT_TAG 49703301f6e922733a14666562ef8f954b9974b7)
+  GIT_TAG 9d1dbadb0c9822ae983de2a6196ccce02506d2e3)
 FetchContent_Declare(
   nlohmann-json
   GIT_REPOSITORY https://github.com/nlohmann/json.git

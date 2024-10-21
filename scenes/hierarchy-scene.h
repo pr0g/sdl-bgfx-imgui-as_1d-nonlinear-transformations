@@ -17,7 +17,7 @@ struct imgui_hierarchy_scene_t : public scene_t
 
   bgfx::ViewId main_view_;
 
-  thh::container_t<hy::entity_t> entities;
+  thh::handle_vector_t<hy::entity_t> entities;
   std::vector<thh::handle_t> root_handles;
   hy::interaction_t interaction;
 };
