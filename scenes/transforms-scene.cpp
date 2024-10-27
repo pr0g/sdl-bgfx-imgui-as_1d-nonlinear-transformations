@@ -18,16 +18,14 @@
 #include <thh-bgfx-debug/debug-sphere.hpp>
 
 static float intersectPlane(
-  const as::vec3& origin, const as::vec3& direction, const as::vec4& plane)
-{
+  const as::vec3& origin, const as::vec3& direction, const as::vec4& plane) {
   return -(as::vec_dot(origin, as::vec3_from_vec4(plane)) + plane.w)
        / as::vec_dot(direction, as::vec3_from_vec4(plane));
 }
 
 void transforms_scene_t::setup(
   const bgfx::ViewId main_view, const bgfx::ViewId ortho_view,
-  const uint16_t width, const uint16_t height)
-{
+  const uint16_t width, const uint16_t height) {
   screen_dimension = as::vec2i(width, height);
 
   main_view_ = main_view;
@@ -75,8 +73,7 @@ void transforms_scene_t::setup(
   pivot_camera.pivot_cameras_.addCamera(&pivot_focus_camera);
 }
 
-void transforms_scene_t::input(const SDL_Event& current_event)
-{
+void transforms_scene_t::input(const SDL_Event& current_event) {
   camera_system.handleEvents(asci_sdl::sdlToInput(&current_event));
 
   if (current_event.type == SDL_MOUSEBUTTONDOWN) {
@@ -111,8 +108,7 @@ void transforms_scene_t::input(const SDL_Event& current_event)
 }
 
 void transforms_scene_t::update(
-  debug_draw_t& debug_draw, const float delta_time)
-{
+  debug_draw_t& debug_draw, const float delta_time) {
   int global_x;
   int global_y;
   SDL_GetGlobalMouseState(&global_x, &global_y);
@@ -650,6 +646,65 @@ void transforms_scene_t::update(
     0xff000000);
   // animation end
 
+  ///
+
+  ImGui::Begin("Scaling");
+  static float direction_x = 3.0f;
+  static float direction_y = 1.0f;
+  static float scaling = 4.0f;
+  ImGui::InputFloat("X Direction", &direction_x);
+  ImGui::InputFloat("Y Direction", &direction_y);
+  ImGui::InputFloat("Scale", &scaling);
+  ImGui::End();
+
+  const as::mat4 scale_scene_transform =
+    as::mat4_from_vec3(as::vec3::axis_x(-30.0f));
+  const int32_t circle_count = 30;
+  float rot = 0.0f;
+  const float increment = as::k_tau / static_cast<float>(circle_count - 1);
+  for (size_t i = 1; i < circle_count; ++i) {
+    const auto local_position =
+      as::vec3(std::cos(rot), std::sin(rot), 0.0f) * 10.0f;
+    const auto world_position =
+      scale_scene_transform * as::vec4(local_position, 1.0f);
+    debug_draw.debug_circles->addSolidCircle(
+      as::mat4_from_mat3_vec3(
+        as::mat3_scale(1.2f), as::vec3_from_vec4(world_position)),
+      0xffff0000);
+
+    const as::vec3 scale_direction =
+      as::vec_normalize(as::vec3(direction_x, direction_y, 0.0f));
+    const as::vec2 scale_direction_2d = as::vec2_from_vec3(scale_direction);
+    const as::vec2 scale_direction_right_2d =
+      as::vec2_orthogonal_ccw(scale_direction_2d);
+
+    as::mat3 rotation;
+    as::mat3_row0(rotation, scale_direction);
+    as::mat3_row1(rotation, as::vec3_from_vec2(scale_direction_right_2d));
+    as::mat3_row2(rotation, as::vec3::axis_z());
+
+    as::mat3 inverse_rotation = as::mat_transpose(rotation);
+
+    as::mat3 s = as::mat3_scale(scaling, 1.0f, 1.0f);
+
+    const as::mat3 scaled = s * rotation;
+    const as::mat3 transform = inverse_rotation * s * rotation;
+
+    const auto scaled_position = transform * local_position;
+
+    const auto world_scale_position =
+      scale_scene_transform * as::vec4_translation(scaled_position);
+
+    debug_draw.debug_circles->addSolidCircle(
+      as::mat4_from_mat3_vec3(
+        as::mat3_scale(1.1f), as::vec3_from_vec4(world_scale_position)),
+      0xff0000ff);
+
+    rot += increment;
+  }
+
+  ///
+
   // screen space drawing
   float view_o[16];
   as::mat_to_arr(as::mat4::identity(), view_o);
@@ -818,8 +873,7 @@ void transforms_scene_t::update(
 }
 
 void transforms_scene_t::on_camera_transform_changed(
-  const as::affine& camera_transform, bool internal)
-{
+  const as::affine& camera_transform, bool internal) {
   const auto angles = asci::eulerAngles(camera_transform.rotation);
 
   if (internal) {
