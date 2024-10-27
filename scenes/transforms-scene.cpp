@@ -646,64 +646,57 @@ void transforms_scene_t::update(
     0xff000000);
   // animation end
 
-  ///
+  // scale point mini-scene
+  [&debug_draw]() {
+    /// https://blog.demofox.org/2024/10/15/scaling-points-in-a-specific-direction/
+    ImGui::Begin("Scaling");
+    static float direction[3] = {3.0f, 1.0f, 0.0f};
+    static float scale_factor = 4.0f;
+    ImGui::SliderFloat3("Direction", direction, -10.0f, 10.0f);
+    ImGui::SliderFloat("Scale", &scale_factor, 0.0f, 10.0f);
+    ImGui::End();
 
-  ImGui::Begin("Scaling");
-  static float direction_x = 3.0f;
-  static float direction_y = 1.0f;
-  static float scaling = 4.0f;
-  ImGui::InputFloat("X Direction", &direction_x);
-  ImGui::InputFloat("Y Direction", &direction_y);
-  ImGui::InputFloat("Scale", &scaling);
-  ImGui::End();
+    // scene offset
+    const as::mat4 scale_scene_transform =
+      as::mat4_from_vec3(as::vec3(-22.0f, 5.0f, 0.0f));
 
-  const as::mat4 scale_scene_transform =
-    as::mat4_from_vec3(as::vec3::axis_x(-30.0f));
-  const int32_t circle_count = 30;
-  float rot = 0.0f;
-  const float increment = as::k_tau / static_cast<float>(circle_count - 1);
-  for (size_t i = 1; i < circle_count; ++i) {
-    const auto local_position =
-      as::vec3(std::cos(rot), std::sin(rot), 0.0f) * 10.0f;
-    const auto world_position =
-      scale_scene_transform * as::vec4(local_position, 1.0f);
-    debug_draw.debug_circles->addSolidCircle(
-      as::mat4_from_mat3_vec3(
-        as::mat3_scale(1.2f), as::vec3_from_vec4(world_position)),
-      0xffff0000);
+    float rot = 0.0f;
+    const int32_t circle_count = 100;
+    const float circle_size = 0.2f;
+    const float increment = as::k_tau / static_cast<float>(circle_count - 1);
+    for (size_t i = 1; i < circle_count; ++i) {
+      // define circle
+      const auto local_position =
+        as::vec3(std::cos(rot), std::sin(rot), 0.0f) * 2.0f;
+      const auto world_position =
+        scale_scene_transform * as::vec4(local_position, 1.0f);
 
-    const as::vec3 scale_direction =
-      as::vec_normalize(as::vec3(direction_x, direction_y, 0.0f));
-    const as::vec2 scale_direction_2d = as::vec2_from_vec3(scale_direction);
-    const as::vec2 scale_direction_right_2d =
-      as::vec2_orthogonal_ccw(scale_direction_2d);
+      // show original circle
+      debug_draw.debug_circles->addSolidCircle(
+        as::mat4_from_mat3_vec3(
+          as::mat3_scale(circle_size), as::vec3_from_vec4(world_position)),
+        0xffff0000);
 
-    as::mat3 rotation;
-    as::mat3_row0(rotation, scale_direction);
-    as::mat3_row1(rotation, as::vec3_from_vec2(scale_direction_right_2d));
-    as::mat3_row2(rotation, as::vec3::axis_z());
+      // core scaling operation
+      const as::mat3 rotation = as::mat_transpose(
+        as::orthonormal_basis(as::vec_normalize(as::vec3_from_ptr(direction))));
+      const as::mat3 inverse_rotation = as::mat_transpose(rotation);
+      const as::mat3 scale = as::mat3_scale(scale_factor, 1.0f, 1.0f);
+      const as::mat3 transform = inverse_rotation * scale * rotation;
+      const as::vec4 world_scale_position =
+        scale_scene_transform
+        * as::vec4_translation(transform * local_position);
 
-    as::mat3 inverse_rotation = as::mat_transpose(rotation);
+      // show scaled circle
+      debug_draw.debug_circles->addSolidCircle(
+        as::mat4_from_mat3_vec3(
+          as::mat3_scale(circle_size),
+          as::vec3_from_vec4(world_scale_position)),
+        0xff0000ff);
 
-    as::mat3 s = as::mat3_scale(scaling, 1.0f, 1.0f);
-
-    const as::mat3 scaled = s * rotation;
-    const as::mat3 transform = inverse_rotation * s * rotation;
-
-    const auto scaled_position = transform * local_position;
-
-    const auto world_scale_position =
-      scale_scene_transform * as::vec4_translation(scaled_position);
-
-    debug_draw.debug_circles->addSolidCircle(
-      as::mat4_from_mat3_vec3(
-        as::mat3_scale(1.1f), as::vec3_from_vec4(world_scale_position)),
-      0xff0000ff);
-
-    rot += increment;
-  }
-
-  ///
+      rot += increment;
+    }
+  }();
 
   // screen space drawing
   float view_o[16];
