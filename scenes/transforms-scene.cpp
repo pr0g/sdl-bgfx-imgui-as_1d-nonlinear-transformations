@@ -652,8 +652,8 @@ void transforms_scene_t::update(
     ImGui::Begin("Scaling");
     static float direction[3] = {3.0f, 1.0f, 0.0f};
     static float scale_factor = 4.0f;
-    ImGui::SliderFloat3("Direction", direction, -10.0f, 10.0f);
-    ImGui::SliderFloat("Scale", &scale_factor, 0.0f, 10.0f);
+    ImGui::SliderFloat3("Direction", direction, -1.0f, 1.0f);
+    ImGui::SliderFloat("Scale", &scale_factor, 1.0f, 10.0f);
     ImGui::End();
 
     // scene offset
@@ -691,7 +691,7 @@ void transforms_scene_t::update(
       debug_draw.debug_circles->addSolidCircle(
         as::mat4_from_mat3_vec3(
           as::mat3_scale(circle_size),
-          as::vec3_from_vec4(world_scale_position)),
+          as::vec3_from_vec4(world_scale_position) + as::vec3::axis_z(0.05f)),
         0xff0000ff);
 
       rot += increment;
