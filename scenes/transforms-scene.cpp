@@ -611,6 +611,7 @@ void transforms_scene_t::update(
   };
 
   ImGui::Combo("Interpolation", &item, types, std::size(types));
+  ImGui::End();
 
   const auto horizontal_position =
     as::vec_mix(start, end, interpolations[item](t));
