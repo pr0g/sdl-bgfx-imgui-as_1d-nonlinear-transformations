@@ -158,17 +158,22 @@ void update_list(
     if (
       list_display.items_[index].next_index_
       != list_display.items_[index].current_index_) {
-      // handle current position here if set (use optional?)
-      list_display.items_[index].start_position_ =
-        list.position_
-        + item_offset(list, list_display.items_[index].current_index_);
-      list_display.items_[index].next_position_ =
-        list.position_ + item_offset(list, next_index);
-      list_display.items_[index].t_ = 0.0f;
-      list_display.items_[index].current_index_ = next_index;
-      printf(
-        "swap index: %d, current index: %d, next index: %d\n", index,
-        list_display.items_[index].current_index_, next_index);
+
+      if (!list_display.items_[index].t_.has_value()) {
+        list_display.items_[index].start_position_ =
+          list.position_
+          + item_offset(list, list_display.items_[index].current_index_);
+        list_display.items_[index].t_ = 0.0f;
+        list_display.items_[index].next_position_ =
+          list.position_ + item_offset(list, next_index);
+        list_display.items_[index].current_index_ = next_index;
+        printf("swap index: %d, next index: %d\n", index, next_index);
+      } else {
+        list_display.items_[index].dir_ *= -1.0f;
+        list_display.items_[index].current_index_ = next_index;
+        list_display.items_[index].next_index_ = next_index;
+        printf("interrupt swap index: %d, next index: %d\n", index, next_index);
+      }
     } else {
       if (list_display.items_[index].t_ == 0.0f) {
         list_display.items_[index].current_position_ =
@@ -180,18 +185,23 @@ void update_list(
 
     if (list_display.items_[index].t_.has_value()) {
       const auto t = list_display.items_[index].t_.value();
-      if (!as::real_near(t, 1.0f)) {
+      if (
+        (list_display.items_[index].dir_ > 0.0f && !as::real_near(t, 1.0f))
+        || (list_display.items_[index].dir_ < 0.0f && !as::real_near(t, 0.0f))) {
         list_display.items_[index].current_position_ =
           as::vec2i_from_vec2(as::vec_mix(
             as::vec2_from_vec2i(list_display.items_[index].start_position_),
-            as::vec2_from_vec2i(list_display.items_[index].next_position_), t));
-        list_display.items_[index].t_.value() += delta_time / 1.0f;
+            as::vec2_from_vec2i(list_display.items_[index].next_position_),
+            as::smoother_step(t)));
+        list_display.items_[index].t_.value() +=
+          (delta_time / 1.0f) * list_display.items_[index].dir_;
         list_display.items_[index].t_.value() =
-          std::min(list_display.items_[index].t_.value(), 1.0f);
+          std::clamp(list_display.items_[index].t_.value(), 0.0f, 1.0f);
       } else {
         list_display.items_[index].t_.reset();
         list_display.items_[index].current_index_ =
           list_display.items_[index].next_index_;
+        list_display.items_[index].dir_ = 1.0f;
         printf(
           "swapped index: %d, current/next: %d\n", index,
           list_display.items_[index].next_index_);

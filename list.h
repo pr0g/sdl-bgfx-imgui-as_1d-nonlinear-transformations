@@ -37,6 +37,7 @@ struct item_display_t {
   int32_t current_index_;
   int32_t next_index_;
   std::optional<float> t_;
+  float dir_ = 1.0f;
 };
 
 struct list_display_t {
