@@ -181,19 +181,19 @@ void update_list(
     }
 
     if (list_display.items_[index].t_.has_value()) {
-      const auto t = list_display.items_[index].t_.value();
+      const auto& t = list_display.items_[index].t_.value();
       if (
         (list_display.items_[index].dir_ > 0.0f && !as::real_near(t, 1.0f))
         || (list_display.items_[index].dir_ < 0.0f && !as::real_near(t, 0.0f))) {
+        list_display.items_[index].t_.value() +=
+          (delta_time / 0.3f) * list_display.items_[index].dir_;
+        list_display.items_[index].t_.value() =
+          std::clamp(list_display.items_[index].t_.value(), 0.0f, 1.0f);
         list_display.items_[index].current_position_ =
           as::vec2i_from_vec2(as::vec_mix(
             as::vec2_from_vec2i(list_display.items_[index].start_position_),
             as::vec2_from_vec2i(list_display.items_[index].next_position_),
             as::smoother_step(t)));
-        list_display.items_[index].t_.value() +=
-          (delta_time / 0.3f) * list_display.items_[index].dir_;
-        list_display.items_[index].t_.value() =
-          std::clamp(list_display.items_[index].t_.value(), 0.0f, 1.0f);
       } else {
         list_display.items_[index].t_.reset();
         list_display.items_[index].current_index_ =
