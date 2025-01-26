@@ -158,7 +158,6 @@ void update_list(
     if (
       list_display.items_[index].next_index_
       != list_display.items_[index].current_index_) {
-
       if (!list_display.items_[index].t_.has_value()) {
         list_display.items_[index].start_position_ =
           list.position_
@@ -167,15 +166,13 @@ void update_list(
         list_display.items_[index].next_position_ =
           list.position_ + item_offset(list, next_index);
         list_display.items_[index].current_index_ = next_index;
-        printf("swap index: %d, next index: %d\n", index, next_index);
       } else {
         list_display.items_[index].dir_ *= -1.0f;
         list_display.items_[index].current_index_ = next_index;
         list_display.items_[index].next_index_ = next_index;
-        printf("interrupt swap index: %d, next index: %d\n", index, next_index);
       }
     } else {
-      if (list_display.items_[index].t_ == 0.0f) {
+      if (!list_display.items_[index].t_.has_value()) {
         list_display.items_[index].current_position_ =
           list.position_ + item_offset(list, next_index);
         list_display.items_[index].next_position_ =
@@ -202,9 +199,6 @@ void update_list(
         list_display.items_[index].current_index_ =
           list_display.items_[index].next_index_;
         list_display.items_[index].dir_ = 1.0f;
-        printf(
-          "swapped index: %d, current/next: %d\n", index,
-          list_display.items_[index].next_index_);
       }
     }
 

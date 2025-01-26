@@ -68,8 +68,11 @@ void release_list(list_t& list, list_display_t& list_display) {
   list_display.items_[list.selected_index_].current_index_ =
     list.available_index_;
   list_display.items_[list.selected_index_].next_index_ = list.available_index_;
-  list_display.items_[list.selected_index_].current_position_ =
+  list_display.items_[list.selected_index_].next_position_ =
     list.position_ + item_offset(list, list.available_index_);
+  list_display.items_[list.selected_index_].start_position_ =
+    list.drag_position_;
+  list_display.items_[list.selected_index_].t_ = 0.0f;
   std::rotate(items + begin, items + pivot, items + end);
   std::rotate(
     list_display.items_.begin() + begin, list_display.items_.begin() + pivot,
