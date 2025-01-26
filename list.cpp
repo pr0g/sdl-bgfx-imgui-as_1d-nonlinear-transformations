@@ -191,7 +191,7 @@ void update_list(
             as::vec2_from_vec2i(list_display.items_[index].next_position_),
             as::smoother_step(t)));
         list_display.items_[index].t_.value() +=
-          (delta_time / 0.4f) * list_display.items_[index].dir_;
+          (delta_time / 0.3f) * list_display.items_[index].dir_;
         list_display.items_[index].t_.value() =
           std::clamp(list_display.items_[index].t_.value(), 0.0f, 1.0f);
       } else {
