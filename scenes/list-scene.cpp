@@ -86,6 +86,9 @@ void list_scene_t::setup(
   horizontal_list_.item_size_ = as::vec2i(50, 100);
   horizontal_list_.order_ = order_e::left_to_right;
   horizontal_list_.wrap_count_ = 4;
+
+  init_list(horizontal_list_, horizontal_list_display_);
+  init_list(vertical_list_, vertical_list_display_);
 }
 
 void list_scene_t::input(const SDL_Event& current_event) {
@@ -101,10 +104,10 @@ void list_scene_t::input(const SDL_Event& current_event) {
     SDL_MouseButtonEvent* mouse_button = (SDL_MouseButtonEvent*)&current_event;
     if (mouse_button->button == SDL_BUTTON_LEFT) {
       if (vertical_list_.selected_index_ != -1) {
-        release_list<item_t>(vertical_list_);
+        release_list<item_t>(vertical_list_, vertical_list_display_);
       }
       if (horizontal_list_.selected_index_ != -1) {
-        release_list<item_t>(horizontal_list_);
+        release_list<item_t>(horizontal_list_, horizontal_list_display_);
       }
     }
   }
@@ -143,8 +146,10 @@ void list_scene_t::update(debug_draw_t& debug_draw, float delta_time) {
     draw_box(debug_draw, position, size, list_item->color_, list_item->name_);
   };
 
-  update_list(vertical_list_, draw_list_box);
-  update_list(horizontal_list_, draw_list_box);
+  update_list(
+    vertical_list_, vertical_list_display_, draw_list_box, delta_time);
+  update_list(
+    horizontal_list_, horizontal_list_display_, draw_list_box, delta_time);
 
   ImGui::End();
 

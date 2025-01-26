@@ -41,7 +41,9 @@ struct list_scene_t : public scene_t {
   asc::Camera camera_;
 
   list_t vertical_list_;
+  list_display_t vertical_list_display_;
   list_t horizontal_list_;
+  list_display_t horizontal_list_display_;
   std::vector<item_t> items_;
 
   as::vec2i mouse_now_;

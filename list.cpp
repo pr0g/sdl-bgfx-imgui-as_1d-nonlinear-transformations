@@ -16,7 +16,7 @@ static bool contained(const bound_t& bound, const as::vec2i& point) {
   return false;
 }
 
-const as::vec2i item_offset(const list_t& list, const int32_t index) {
+as::vec2i item_offset(const list_t& list, const int32_t index) {
   const int32_t major_index = index % list.wrap_count_;
   const int32_t minor_index = index / list.wrap_count_;
   const as::vec2i major =
@@ -57,7 +57,21 @@ static int32_t minor_item_order_dimension(const list_t& list) {
   return as::vec_max_elem(list.item_size_ * minor_order_mask(list.order_));
 }
 
-void update_list(list_t& list, const draw_box_fn& draw_box) {
+void init_list(list_t& list, list_display_t& list_display) {
+  for (int32_t index = 0; index < list.item_count_; index++) {
+    const auto position = item_offset(list, index);
+    list_display.items_.push_back(item_display_t{
+      .current_index_ = index,
+      .next_index_ = index,
+      .current_position_ = list.position_ + position,
+      .next_position_ = list.position_ + position,
+      .start_position_ = list.position_ + position});
+  }
+}
+
+void update_list(
+  list_t& list, list_display_t& list_display, const draw_box_fn& draw_box,
+  const float delta_time) {
   const auto items = static_cast<std::byte*>(list.items_);
   if (list.selected_index_ != -1) {
     const void* item = items + list.selected_index_ * list.item_stride_;
@@ -127,6 +141,7 @@ void update_list(list_t& list, const draw_box_fn& draw_box) {
 
   for (int32_t index = 0; index < list.item_count_; index++) {
     const void* item = items + index * list.item_stride_;
+    // don't draw the box currently being dragged
     if (index == list.selected_index_) {
       continue;
     }
@@ -137,9 +152,54 @@ void update_list(list_t& list, const draw_box_fn& draw_box) {
     if (index <= list.available_index_ && index > list.selected_index_) {
       offset = -1;
     }
+
+    const auto next_index = index + offset;
+    list_display.items_[index].next_index_ = next_index;
+    if (
+      list_display.items_[index].next_index_
+      != list_display.items_[index].current_index_) {
+      // handle current position here if set (use optional?)
+      list_display.items_[index].start_position_ =
+        list.position_
+        + item_offset(list, list_display.items_[index].current_index_);
+      list_display.items_[index].next_position_ =
+        list.position_ + item_offset(list, next_index);
+      list_display.items_[index].t_ = 0.0f;
+      list_display.items_[index].current_index_ = next_index;
+      printf(
+        "swap index: %d, current index: %d, next index: %d\n", index,
+        list_display.items_[index].current_index_, next_index);
+    } else {
+      if (list_display.items_[index].t_ == 0.0f) {
+        list_display.items_[index].current_position_ =
+          list.position_ + item_offset(list, next_index);
+        list_display.items_[index].next_position_ =
+          list.position_ + item_offset(list, next_index);
+      }
+    }
+
+    if (list_display.items_[index].t_.has_value()) {
+      const auto t = list_display.items_[index].t_.value();
+      if (!as::real_near(t, 1.0f)) {
+        list_display.items_[index].current_position_ =
+          as::vec2i_from_vec2(as::vec_mix(
+            as::vec2_from_vec2i(list_display.items_[index].start_position_),
+            as::vec2_from_vec2i(list_display.items_[index].next_position_), t));
+        list_display.items_[index].t_.value() += delta_time / 1.0f;
+        list_display.items_[index].t_.value() =
+          std::min(list_display.items_[index].t_.value(), 1.0f);
+      } else {
+        list_display.items_[index].t_.reset();
+        list_display.items_[index].current_index_ =
+          list_display.items_[index].next_index_;
+        printf(
+          "swapped index: %d, current/next: %d\n", index,
+          list_display.items_[index].next_index_);
+      }
+    }
+
     draw_box(
-      list.position_ + item_offset(list, index + offset), list.item_size_,
-      item);
+      list_display.items_[index].current_position_, list.item_size_, item);
   }
 }
 
