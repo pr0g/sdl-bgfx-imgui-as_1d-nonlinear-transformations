@@ -17,6 +17,7 @@ enum class piece_type_e { corner, edge, center };
 struct piece_t {
   as::vec3 translation_;
   as::quat rotation_;
+
   piece_type_e piece_type_;
 };
 

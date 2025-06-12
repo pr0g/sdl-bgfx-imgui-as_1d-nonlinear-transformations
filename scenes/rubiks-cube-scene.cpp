@@ -7,6 +7,8 @@
 #include <thh-bgfx-debug/debug-cube.hpp>
 #include <thh-bgfx-debug/debug-quad.hpp>
 
+const float g_scale = 1.0f;
+
 void rubiks_cube_scene_t::setup(
   const bgfx::ViewId main_view, const bgfx::ViewId ortho_view,
   const uint16_t width, const uint16_t height) {
@@ -28,7 +30,6 @@ void rubiks_cube_scene_t::setup(
   const float total_padding = padding * 2.0f;
   const float half_padding = total_padding * 0.5f;
 
-  const float scale = 1.0f;
   as::index offset = 1;
   // top left corner
   const as::vec3 starting_position = as::vec3(
@@ -88,13 +89,25 @@ void rubiks_cube_scene_t::update(
   bgfx::setViewTransform(main_view_, view, proj);
 
   for (as::index i = 0; i < rubiks_cube_.pieces_.size(); i++) {
-    debug_draw.debug_cubes->addCube(
-      as::mat4_from_vec3(rubiks_cube_.pieces_[i].translation_),
+    const uint32_t color =
       rubiks_cube_.pieces_[i].piece_type_ == piece_type_e::center
         ? dbg::encodeColorAbgr(1.0f, 0.0f, 0.0f, 1.0f)
       : rubiks_cube_.pieces_[i].piece_type_ == piece_type_e::edge
         ? dbg::encodeColorAbgr(0.0f, 1.0f, 0.0f, 1.0f)
-        : dbg::encodeColorAbgr(0.0f, 0.0f, 1.0f, 1.0f));
+        : dbg::encodeColorAbgr(0.0f, 0.0f, 1.0f, 1.0f);
+    debug_draw.debug_cubes->addCube(
+      as::mat4_from_vec3(rubiks_cube_.pieces_[i].translation_), color);
+
+    const as::vec3 sticker_offset =
+      as::vec3(-g_scale * 0.5f, -g_scale * 0.5f, -g_scale * 0.5f);
+
+    const as::mat4 rotation =
+      as::mat4_from_mat3(as::mat3_rotation_y(as::radians(90.0f)));
+
+    debug_draw.debug_quads->addQuad(
+      as::mat4_from_vec3(rubiks_cube_.pieces_[i].translation_) * rotation
+        * as::mat4_from_vec3(sticker_offset),
+      color);
   }
 
   // debug_draw.debug_quads->addQuad(
