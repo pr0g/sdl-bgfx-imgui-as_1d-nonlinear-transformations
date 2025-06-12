@@ -3,6 +3,9 @@
 #include <as-camera-input-sdl/as-camera-input-sdl.hpp>
 #include <as/as-view.hpp>
 
+#include <thh-bgfx-debug/debug-color.hpp>
+#include <thh-bgfx-debug/debug-cube.hpp>
+
 void rubiks_cube_scene_t::setup(
   const bgfx::ViewId main_view, const bgfx::ViewId ortho_view,
   const uint16_t width, const uint16_t height) {
@@ -17,6 +20,7 @@ void rubiks_cube_scene_t::setup(
   cameras.addCamera(&first_person_rotate_camera_);
   cameras.addCamera(&first_person_translate_camera_);
 
+  target_camera_.pivot = as::vec3(0.0f, 0.0f, -10.0f);
   camera_ = target_camera_;
 }
 
@@ -36,4 +40,8 @@ void rubiks_cube_scene_t::update(
   as::mat_to_arr(perspective_projection_, proj);
 
   bgfx::setViewTransform(main_view_, view, proj);
+
+  debug_draw.debug_cubes->addCube(
+    as::mat4_from_vec3(as::vec3::zero()),
+    dbg::encodeColorAbgr(1.0f, 0.0f, 0.0f, 1.0f));
 }
