@@ -7,6 +7,7 @@
 #include "scenes/marching-cube-scene.h"
 #include "scenes/simple-camera-scene.h"
 #include "scenes/transforms-scene.h"
+#include "scenes/rubiks-cube-scene.h"
 
 #include "sdl-imgui/imgui_impl_sdl2.h"
 
@@ -128,7 +129,8 @@ int main(int argc, char** argv) {
     "Simple Camera",
     "Globe Scene",
     "Arcball",
-    "List"};
+    "List",
+    "Rubik's Cube"};
 
   std::unique_ptr<scene_t> scene = nullptr;
   auto scene_builder = [](const int scene_id) -> std::unique_ptr<scene_t> {
@@ -147,6 +149,8 @@ int main(int argc, char** argv) {
         return std::make_unique<arcball_scene_t>();
       case 6:
         return std::make_unique<list_scene_t>();
+      case 7:
+        return std::make_unique<rubiks_cube_scene_t>();
       default:
         return nullptr;
     }

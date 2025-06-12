@@ -58,6 +58,7 @@ target_sources(
           scenes/globe-scene.cpp
           scenes/arcball-scene.cpp
           scenes/list-scene.cpp
+          scenes/rubiks-cube-scene.cpp
           math-utils.cpp)
 
 target_link_libraries(
