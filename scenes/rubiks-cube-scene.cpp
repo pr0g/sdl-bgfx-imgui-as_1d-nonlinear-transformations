@@ -128,6 +128,16 @@ void rubiks_cube_scene_t::setup(
                 .color_ = 0xFFFFFFFF,
                 .rotation_ = as::quat_rotation_x(as::k_half_pi)});
           }
+          // bottom yellow edge faces
+          if (
+            (d == 0 && r == 2 && c == 1) || (d == 2 && r == 2 && c == 1)
+            || (d == 1 && r == 2 && c == 0) || (d == 1 && r == 2 && c == 2)) {
+            piece.stickers_.push_back(
+              sticker_t{
+                .color_ = 0xFF00FFFF,
+                .rotation_ = as::quat_rotation_x(-as::k_half_pi)});
+          }
+          // left green edge faces
           if (
             (d == 1 && c == 0 && r == 0) || (d == 1 && c == 0 && r == 2)
             || (d == 0 && c == 0 && r == 1) || (d == 2 && c == 0 && r == 1)) {
@@ -135,6 +145,33 @@ void rubiks_cube_scene_t::setup(
               sticker_t{
                 .color_ = 0xFF00FF00,
                 .rotation_ = as::quat_rotation_y(as::k_half_pi)});
+          }
+          // right blue edge faces
+          if (
+            (d == 1 && c == 2 && r == 0) || (d == 1 && c == 2 && r == 2)
+            || (d == 0 && c == 2 && r == 1) || (d == 2 && c == 2 && r == 1)) {
+            piece.stickers_.push_back(
+              sticker_t{
+                .color_ = 0xFFFF0000,
+                .rotation_ = as::quat_rotation_y(-as::k_half_pi)});
+          }
+          // front red edge faces
+          if (
+            (d == 0 && r == 0 && c == 1) || (d == 0 && r == 2 && c == 1)
+            || (d == 0 && r == 1 && c == 0) || (d == 0 && r == 1 && c == 2)) {
+            piece.stickers_.push_back(
+              sticker_t{
+                .color_ = dbg::encodeColorAbgr((uint8_t)255, 0, 0, 255),
+                .rotation_ = as::quat::identity()});
+          }
+          // back orange edge faces
+          if (
+            (d == 2 && r == 0 && c == 1) || (d == 2 && r == 2 && c == 1)
+            || (d == 2 && r == 1 && c == 0) || (d == 2 && r == 1 && c == 2)) {
+            piece.stickers_.push_back(
+              sticker_t{
+                .color_ = 0xFF00A5FF,
+                .rotation_ = as::quat_rotation_y(as::k_pi)});
           }
         }
       }
