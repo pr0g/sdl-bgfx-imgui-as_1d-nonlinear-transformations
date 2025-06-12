@@ -29,6 +29,9 @@ struct piece_t {
   std::vector<sticker_t> stickers_;
 };
 
+// 6 centers
+// 12 edges
+// 8 corners
 struct rubiks_cube_t {
   std::array<piece_t, 26> pieces_; // all blocks excluding 'hidden' center
 };
