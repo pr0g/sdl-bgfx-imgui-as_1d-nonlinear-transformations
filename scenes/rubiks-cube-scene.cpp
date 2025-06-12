@@ -53,17 +53,18 @@ void rubiks_cube_scene_t::setup(
           + position_offset + padding_offset;
         piece_t& piece = rubiks_cube_.pieces_[piece_index++];
         piece.translation_ = piece_position;
-        piece.rotation_ = as::quat::identity();
+        // piece.rotation_ = ...;
 
-        if (r == 0) {
-          piece.rotation_ = as::quat_rotation_y(as::radians(45.0f));
-        }
+        // rotation test
+        // if (c == 0) {
+        //   piece.rotation_ = as::quat_rotation_x(as::radians(45.0f));
+        // }
 
         // corner - blue
         // center - red
         // edge - green
 
-        piece.piece_type_ =
+        const auto piece_type =
           (r == 0 || r == 2) && (d == 0 || d == 2) && (c == 0 || c == 2)
             ? piece_type_e::corner
           : ((r == 0 || r == 2) && c == 1 && d == 1)
@@ -71,6 +72,52 @@ void rubiks_cube_scene_t::setup(
               || ((d == 0 || d == 2) && c == 1 && r == 1)
             ? piece_type_e::center
             : piece_type_e::edge;
+        piece.piece_type_ = piece_type;
+
+        if (piece_type == piece_type_e::center) {
+          // front face - red
+          if (d == 0 && c == 1 && r == 1) {
+            piece.stickers_.push_back(
+              sticker_t{
+                .color_ = dbg::encodeColorAbgr((uint8_t)255, 0, 0, 255),
+                .rotation_ = as::quat::identity()});
+          }
+          // back face - orange
+          if (d == 2 && c == 1 && r == 1) {
+            piece.stickers_.push_back(
+              sticker_t{
+                .color_ = 0xFF00A5FF,
+                .rotation_ = as::quat_rotation_y(as::k_pi)});
+          }
+          // left face - green
+          if (d == 1 && c == 0 && r == 1) {
+            piece.stickers_.push_back(
+              sticker_t{
+                .color_ = 0xFF00FF00,
+                .rotation_ = as::quat_rotation_y(as::k_half_pi)});
+          }
+          // right face - blue
+          if (d == 1 && c == 2 && r == 1) {
+            piece.stickers_.push_back(
+              sticker_t{
+                .color_ = 0xFFFF0000,
+                .rotation_ = as::quat_rotation_y(-as::k_half_pi)});
+          }
+          // top face - white
+          if (d == 1 && c == 1 && r == 0) {
+            piece.stickers_.push_back(
+              sticker_t{
+                .color_ = 0xFFFFFFFF,
+                .rotation_ = as::quat_rotation_x(as::k_half_pi)});
+          }
+          // bottom face - yellow
+          if (d == 1 && c == 1 && r == 2) {
+            piece.stickers_.push_back(
+              sticker_t{
+                .color_ = 0xFF00FFFF,
+                .rotation_ = as::quat_rotation_x(-as::k_half_pi)});
+          }
+        }
       }
     }
   }
@@ -109,14 +156,25 @@ void rubiks_cube_scene_t::update(
     const as::vec3 sticker_offset =
       as::vec3(-g_scale * 0.5f, -g_scale * 0.5f, -g_scale * 0.5f);
 
-    const as::mat4 rotation =
-      as::mat4_from_mat3(as::mat3_rotation_y(as::radians(90.0f)));
+    const as::mat4 sticker_rotation = as::mat4::identity();
+    // as::mat4_from_mat3(as::mat3_rotation_y(as::radians(90.0f)));
 
-    debug_draw.debug_quads->addQuad(
-      as::mat4_from_mat3(as::mat3_from_quat(rubiks_cube_.pieces_[i].rotation_))
-        * as::mat4_from_vec3(rubiks_cube_.pieces_[i].translation_) * rotation
-        * as::mat4_from_vec3(sticker_offset),
-      color);
+    // debug_draw.debug_quads->addQuad(
+    //   as::mat4_from_mat3(as::mat3_from_quat(rubiks_cube_.pieces_[i].rotation_))
+    //     * as::mat4_from_vec3(rubiks_cube_.pieces_[i].translation_)
+    //     * sticker_rotation * as::mat4_from_vec3(sticker_offset),
+    //   color);
+
+    for (as::index s = 0; s < rubiks_cube_.pieces_[i].stickers_.size(); s++) {
+      debug_draw.debug_quads->addQuad(
+        as::mat4_from_mat3(
+          as::mat3_from_quat(rubiks_cube_.pieces_[i].rotation_))
+          * as::mat4_from_vec3(rubiks_cube_.pieces_[i].translation_)
+          * as::mat4_from_mat3(
+            as::mat3_from_quat(rubiks_cube_.pieces_[i].stickers_[s].rotation_))
+          * as::mat4_from_vec3(sticker_offset),
+        rubiks_cube_.pieces_[i].stickers_[s].color_);
+    }
   }
 
   // debug_draw.debug_quads->addQuad(

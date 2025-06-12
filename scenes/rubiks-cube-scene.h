@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <vector>
 
 #include "scene.h"
 
@@ -12,13 +13,20 @@
 // would need to have an array of colors depending on face
 // need a way to determine orientation/direction?
 
+struct sticker_t {
+  as::quat rotation_;
+  uint32_t color_;
+};
+
 enum class piece_type_e { corner, edge, center };
 
 struct piece_t {
   as::vec3 translation_;
-  as::quat rotation_;
+  as::quat rotation_ = as::quat::identity();
 
   piece_type_e piece_type_;
+  // 1, 2 or 3 depending on edge, corner or center
+  std::vector<sticker_t> stickers_;
 };
 
 struct rubiks_cube_t {
