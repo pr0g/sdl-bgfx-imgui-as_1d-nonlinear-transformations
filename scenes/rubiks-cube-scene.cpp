@@ -53,6 +53,11 @@ void rubiks_cube_scene_t::setup(
           + position_offset + padding_offset;
         piece_t& piece = rubiks_cube_.pieces_[piece_index++];
         piece.translation_ = piece_position;
+        piece.rotation_ = as::quat::identity();
+
+        if (r == 0) {
+          piece.rotation_ = as::quat_rotation_y(as::radians(45.0f));
+        }
 
         // corner - blue
         // center - red
@@ -95,8 +100,11 @@ void rubiks_cube_scene_t::update(
       : rubiks_cube_.pieces_[i].piece_type_ == piece_type_e::edge
         ? dbg::encodeColorAbgr(0.0f, 1.0f, 0.0f, 1.0f)
         : dbg::encodeColorAbgr(0.0f, 0.0f, 1.0f, 1.0f);
+
     debug_draw.debug_cubes->addCube(
-      as::mat4_from_vec3(rubiks_cube_.pieces_[i].translation_), color);
+      as::mat4_from_mat3(as::mat3_from_quat(rubiks_cube_.pieces_[i].rotation_))
+        * as::mat4_from_vec3(rubiks_cube_.pieces_[i].translation_),
+      color);
 
     const as::vec3 sticker_offset =
       as::vec3(-g_scale * 0.5f, -g_scale * 0.5f, -g_scale * 0.5f);
@@ -105,7 +113,8 @@ void rubiks_cube_scene_t::update(
       as::mat4_from_mat3(as::mat3_rotation_y(as::radians(90.0f)));
 
     debug_draw.debug_quads->addQuad(
-      as::mat4_from_vec3(rubiks_cube_.pieces_[i].translation_) * rotation
+      as::mat4_from_mat3(as::mat3_from_quat(rubiks_cube_.pieces_[i].rotation_))
+        * as::mat4_from_vec3(rubiks_cube_.pieces_[i].translation_) * rotation
         * as::mat4_from_vec3(sticker_offset),
       color);
   }
