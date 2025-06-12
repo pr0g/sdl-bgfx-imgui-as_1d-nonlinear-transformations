@@ -1,10 +1,28 @@
 #pragma once
 
+#include <array>
+
 #include "scene.h"
 
 #include <as-camera-input/as-camera-input.hpp>
 #include <as/as-math-ops.hpp>
 #include <bgfx/bgfx.h>
+
+// tagged union - may be better to use variant
+// would need to have an array of colors depending on face
+// need a way to determine orientation/direction?
+
+enum class piece_type_e { corner, edge, center };
+
+struct piece_t {
+  as::vec3 translation_;
+  as::quat rotation_;
+  piece_type_e piece_type_;
+};
+
+struct rubiks_cube_t {
+  std::array<piece_t, 26> pieces_; // all blocks excluding 'hidden' center
+};
 
 struct rubiks_cube_scene_t : public scene_t {
   void setup(
@@ -26,4 +44,6 @@ struct rubiks_cube_scene_t : public scene_t {
 
   bgfx::ViewId main_view_;
   bgfx::ViewId ortho_view_;
+
+  rubiks_cube_t rubiks_cube_;
 };
