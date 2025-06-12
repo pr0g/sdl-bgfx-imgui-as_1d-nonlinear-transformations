@@ -173,6 +173,43 @@ void rubiks_cube_scene_t::setup(
                 .color_ = 0xFF00A5FF,
                 .rotation_ = as::quat_rotation_y(as::k_pi)});
           }
+        } else if (piece_type == piece_type_e::corner) {
+          // front red corner pieces
+          if (
+            (d == 0 && r == 0 && c == 0) || (d == 0 && r == 0 && c == 2)
+            || (d == 0 && r == 2 && c == 0) || (d == 0 && r == 2 && c == 2)) {
+            piece.stickers_.push_back(
+              sticker_t{
+                .color_ = dbg::encodeColorAbgr((uint8_t)255, 0, 0, 255),
+                .rotation_ = as::quat::identity()});
+          }
+          // back orange corner pieces
+          if (
+            (d == 2 && r == 0 && c == 0) || (d == 2 && r == 0 && c == 2)
+            || (d == 2 && r == 2 && c == 0) || (d == 2 && r == 2 && c == 2)) {
+            piece.stickers_.push_back(
+              sticker_t{
+                .color_ = 0xFF00A5FF,
+                .rotation_ = as::quat_rotation_y(as::k_pi)});
+          }
+          // top white corner pieces
+          if (
+            (d == 0 && r == 0 && c == 0) || (d == 0 && r == 0 && c == 2)
+            || (d == 2 && r == 0 && c == 0) || (d == 2 && r == 0 && c == 2)) {
+            piece.stickers_.push_back(
+              sticker_t{
+                .color_ = 0xFFFFFFFF,
+                .rotation_ = as::quat_rotation_x(as::k_half_pi)});
+          }
+          // bottom yellow corner pieces
+          if (
+            (d == 0 && r == 2 && c == 0) || (d == 0 && r == 2 && c == 2)
+            || (d == 2 && r == 2 && c == 0) || (d == 2 && r == 2 && c == 2)) {
+            piece.stickers_.push_back(
+              sticker_t{
+                .color_ = 0xFF00FFFF,
+                .rotation_ = as::quat_rotation_x(-as::k_half_pi)});
+          }
         }
       }
     }
