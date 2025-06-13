@@ -26,11 +26,11 @@ void rubiks_cube_scene_t::setup(
   target_camera_.pivot = as::vec3(0.0f, 0.0f, -10.0f);
   camera_ = target_camera_;
 
-  const float padding = 1.0f;
+  const float padding = 0.1f;
   const float total_padding = padding * 2.0f;
   const float half_padding = total_padding * 0.5f;
 
-  as::index offset = 1;
+  const as::index offset = 1;
   // top left corner
   const as::vec3 starting_position = as::vec3(
     static_cast<float>(-offset), static_cast<float>(offset),
@@ -80,8 +80,7 @@ void rubiks_cube_scene_t::setup(
           if (d == 0 && c == 1 && r == 1) {
             piece.stickers_.push_back(
               sticker_t{
-                .color_ = dbg::encodeColorAbgr((uint8_t)255, 0, 0, 255),
-                .rotation_ = as::quat::identity()});
+                .color_ = 0xFF0000FF, .rotation_ = as::quat::identity()});
           }
           // back face - orange
           if (d == 2 && c == 1 && r == 1) {
@@ -161,8 +160,7 @@ void rubiks_cube_scene_t::setup(
             || (d == 0 && r == 1 && c == 0) || (d == 0 && r == 1 && c == 2)) {
             piece.stickers_.push_back(
               sticker_t{
-                .color_ = dbg::encodeColorAbgr((uint8_t)255, 0, 0, 255),
-                .rotation_ = as::quat::identity()});
+                .color_ = 0xFF0000FF, .rotation_ = as::quat::identity()});
           }
           // back orange edge faces
           if (
@@ -180,8 +178,7 @@ void rubiks_cube_scene_t::setup(
             || (d == 0 && r == 2 && c == 0) || (d == 0 && r == 2 && c == 2)) {
             piece.stickers_.push_back(
               sticker_t{
-                .color_ = dbg::encodeColorAbgr((uint8_t)255, 0, 0, 255),
-                .rotation_ = as::quat::identity()});
+                .color_ = 0xFF0000FF, .rotation_ = as::quat::identity()});
           }
           // back orange corner pieces
           if (
@@ -212,8 +209,8 @@ void rubiks_cube_scene_t::setup(
           }
           // left green corner pieces
           if (
-            (d == 0 && c == 0 && r == 0) || (d == 0 && c == 0 && r == 2)
-            || (d == 2 && c == 0 && r == 0) || (d == 2 && c == 0 && r == 2)) {
+            (d == 0 && r == 0 && c == 0) || (d == 0 && r == 2 && c == 0)
+            || (d == 2 && r == 0 && c == 0) || (d == 2 && r == 2 && c == 0)) {
             piece.stickers_.push_back(
               sticker_t{
                 .color_ = 0xFF00FF00,
@@ -221,8 +218,8 @@ void rubiks_cube_scene_t::setup(
           }
           // right blue edge faces
           if (
-            (d == 0 && c == 2 && r == 0) || (d == 0 && c == 2 && r == 2)
-            || (d == 2 && c == 2 && r == 0) || (d == 2 && c == 2 && r == 2)) {
+            (d == 0 && r == 0 && c == 2) || (d == 0 && r == 2 && c == 2)
+            || (d == 2 && r == 0 && c == 2) || (d == 2 && r == 2 && c == 2)) {
             piece.stickers_.push_back(
               sticker_t{
                 .color_ = 0xFFFF0000,
