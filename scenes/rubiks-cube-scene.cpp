@@ -210,6 +210,24 @@ void rubiks_cube_scene_t::setup(
                 .color_ = 0xFF00FFFF,
                 .rotation_ = as::quat_rotation_x(-as::k_half_pi)});
           }
+          // left green corner pieces
+          if (
+            (d == 0 && c == 0 && r == 0) || (d == 0 && c == 0 && r == 2)
+            || (d == 2 && c == 0 && r == 0) || (d == 2 && c == 0 && r == 2)) {
+            piece.stickers_.push_back(
+              sticker_t{
+                .color_ = 0xFF00FF00,
+                .rotation_ = as::quat_rotation_y(as::k_half_pi)});
+          }
+          // right blue edge faces
+          if (
+            (d == 0 && c == 2 && r == 0) || (d == 0 && c == 2 && r == 2)
+            || (d == 2 && c == 2 && r == 0) || (d == 2 && c == 2 && r == 2)) {
+            piece.stickers_.push_back(
+              sticker_t{
+                .color_ = 0xFFFF0000,
+                .rotation_ = as::quat_rotation_y(-as::k_half_pi)});
+          }
         }
       }
     }
