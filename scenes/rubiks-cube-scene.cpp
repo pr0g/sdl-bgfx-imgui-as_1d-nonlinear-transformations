@@ -45,19 +45,32 @@ std::array<as::index, 9> side_slots_indices(const side_e side) {
   }
 }
 
-void rotate(rubiks_cube_t& rubiks_cube, const side_e side) {
-  const auto slot_indices = side_slots_indices(side);
+void rotate(
+  rubiks_cube_t& rubiks_cube, const side_e side, const as::quat& rotation) {
 
+  const auto slots = side_slots_indices(side);
   const auto offsets_cw =
     std::array<as::index, 9>{6, 2, -2, 4, 0, -4, 2, -2, -6};
 
-  const std::array<as::index, 27> slots_before = rubiks_cube.slots_;
-  for (const auto i : slot_indices) {
-    auto& piece = rubiks_cube.pieces_[i];
-    piece.rotation_ = as::quat_rotation_y(as::radians(90.0f)) * piece.rotation_;
-    const as::index index_to_move = slots_before[i];
-    const as::index next_slot_index = i + offsets_cw[i];
-    rubiks_cube.slots_[next_slot_index] = index_to_move;
+  std::array<as::index, 9> current_indices;
+  for (as::index i = 0; i < current_indices.size(); i++) {
+    current_indices[i] = rubiks_cube.slots_[slots[i]];
+  }
+
+  std::array<as::index, 9> next_indices;
+  for (as::index i = 0; i < next_indices.size(); i++) {
+    next_indices[i + offsets_cw[i]] = current_indices[i];
+  }
+
+  // const std::array<as::index, 27> slots_before = rubiks_cube.slots_;
+  // for (const auto i : slot_indices) {
+  for (const auto [i, slot_index] : ei::enumerate(slots)) {
+    auto& piece = rubiks_cube.pieces_[slots[i]];
+    piece.rotation_ = rotation * piece.rotation_;
+    // need to account for differences when slots aren't contiguous
+    // const as::index index_to_move = slots_before[slot_index];
+    // const as::index next_slot_index = i + offsets_cw[i];
+    rubiks_cube.slots_[slots[i]] = next_indices[i];
   }
 }
 
@@ -283,23 +296,6 @@ void rubiks_cube_scene_t::setup(
     rubiks_cube_.slots_.begin(), rubiks_cube_.slots_.end(),
     static_cast<as::index>(0));
 
-  // rotation test
-
-  // {
-  //   const auto pieces = side_slots_indices(side_e::up);
-
-  //   const auto offsets_cw =
-  //     std::array<as::index, 9>{6, 2, -2, 4, 0, -4, 2, -2, -6};
-
-  //   const std::array<as::index, 27> slots_before = rubiks_cube_.slots_;
-  //   for (const auto i : pieces) {
-  //     auto& piece = rubiks_cube_.pieces_[i];
-  //     piece.rotation_ = as::quat_rotation_y(as::radians(90.0f));
-  //     const as::index ii = slots_before[i];
-  //     const as::index iii = i + offsets_cw[i];
-  //     rubiks_cube_.slots_[iii] = ii;
-  //   }
-  // }
   // {
   //   const auto pieces = side_slots_indices(side_e::left);
 
@@ -332,15 +328,31 @@ void rubiks_cube_scene_t::update(
   debug_draw_t& debug_draw, const float delta_time) {
   ImGui::Begin("Rubik's Cube");
   ImGui::Text(
-    "0 [%ld], 1 [%ld], 2 [%ld]\n"
-    "3 [%ld], 4 [%ld], 4 [%ld]\n"
-    "6 [%ld], 7 [%ld], 8 [%ld]",
+    " 0 [%2ld],  1 [%2ld],  2 [%2ld]\n"
+    " 3 [%2ld],  4 [%2ld],  4 [%2ld]\n"
+    " 6 [%2ld],  7 [%2ld],  8 [%2ld]\n"
+    " 9 [%2ld], 10 [%2ld], 11 [%2ld]\n"
+    "12 [%2ld], 13 [%2ld], 14 [%2ld]\n"
+    "15 [%2ld], 16 [%2ld], 17 [%2ld]\n"
+    "18 [%2ld], 19 [%2ld], 20 [%2ld]\n"
+    "21 [%2ld], 22 [%2ld], 23 [%2ld]\n"
+    "24 [%2ld], 25 [%2ld], 26 [%2ld]\n",
     rubiks_cube_.slots_[0], rubiks_cube_.slots_[1], rubiks_cube_.slots_[2],
     rubiks_cube_.slots_[3], rubiks_cube_.slots_[4], rubiks_cube_.slots_[5],
-    rubiks_cube_.slots_[6], rubiks_cube_.slots_[7], rubiks_cube_.slots_[8]);
+    rubiks_cube_.slots_[6], rubiks_cube_.slots_[7], rubiks_cube_.slots_[8],
+    rubiks_cube_.slots_[9], rubiks_cube_.slots_[10], rubiks_cube_.slots_[11],
+    rubiks_cube_.slots_[12], rubiks_cube_.slots_[13], rubiks_cube_.slots_[14],
+    rubiks_cube_.slots_[15], rubiks_cube_.slots_[16], rubiks_cube_.slots_[17],
+    rubiks_cube_.slots_[18], rubiks_cube_.slots_[19], rubiks_cube_.slots_[20],
+    rubiks_cube_.slots_[21], rubiks_cube_.slots_[22], rubiks_cube_.slots_[23],
+    rubiks_cube_.slots_[24], rubiks_cube_.slots_[25], rubiks_cube_.slots_[26]);
 
-  if (ImGui::Button("rotate test")) {
-    rotate(rubiks_cube_, side_e::up);
+  if (ImGui::Button("rotate test up")) {
+    rotate(rubiks_cube_, side_e::up, as::quat_rotation_y(as::radians(90.0f)));
+  }
+
+  if (ImGui::Button("rotate test left")) {
+    rotate(rubiks_cube_, side_e::left, as::quat_rotation_x(as::radians(90.0f)));
   }
 
   ImGui::End();
