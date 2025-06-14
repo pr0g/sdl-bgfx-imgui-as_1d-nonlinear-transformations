@@ -107,10 +107,10 @@ void rubiks_cube_scene_t::setup(
   const as::vec3 starting_position = as::vec3(
     static_cast<float>(-offset), static_cast<float>(offset),
     static_cast<float>(-offset));
-  as::index piece_index = 0;
   for (as::index r = 0; r < 3; r++) {
     for (as::index d = 0; d < 3; d++) {
       for (as::index c = 0; c < 3; c++) {
+        const as::index index = (r * 3 * 3) + (d * 3) + c;
         const as::vec3 position_offset = as::vec3(
           static_cast<float>(c), static_cast<float>(-r), static_cast<float>(d));
         const as::vec3 padding_offset = position_offset * padding;
@@ -119,10 +119,10 @@ void rubiks_cube_scene_t::setup(
           starting_position
           + as::vec3(-half_padding, half_padding, -half_padding)
           + position_offset + padding_offset;
-        piece_t& piece = rubiks_cube_.pieces_[piece_index];
+        piece_t& piece = rubiks_cube_.pieces_[index];
         piece.translation_ = piece_position;
         piece.rotation_ = as::quat::identity();
-        piece.index_ = piece_index++;
+        piece.index_ = index;
 
         const auto piece_type =
           ((r == 1) && (c == 1) && (d == 1))
