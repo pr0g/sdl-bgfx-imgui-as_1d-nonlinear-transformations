@@ -115,14 +115,14 @@ void rubiks_cube_scene_t::setup(
           static_cast<float>(c), static_cast<float>(-r), static_cast<float>(d));
         const as::vec3 padding_offset = position_offset * padding;
 
-        const as::vec3 piece_position =
+        piece_t& piece = rubiks_cube_.pieces_[index];
+        piece.translation_ =
           starting_position
           + as::vec3(-half_padding, half_padding, -half_padding)
           + position_offset + padding_offset;
-        piece_t& piece = rubiks_cube_.pieces_[index];
-        piece.translation_ = piece_position;
         piece.rotation_ = as::quat::identity();
-        piece.index_ = index;
+
+        rubiks_cube_.slots_[index] = index;
 
         const auto piece_type =
           ((r == 1) && (c == 1) && (d == 1))
@@ -290,10 +290,6 @@ void rubiks_cube_scene_t::setup(
       }
     }
   }
-
-  std::iota(
-    rubiks_cube_.slots_.begin(), rubiks_cube_.slots_.end(),
-    static_cast<as::index>(0));
 
   // for (as::index r = 0; r < 3; r++) {
   //   for (as::index d = 0; d < 3; d++) {

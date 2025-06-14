@@ -36,18 +36,17 @@ enum class piece_type_e { corner, edge, center, core };
 struct piece_t {
   as::vec3 translation_;
   as::quat rotation_ = as::quat::identity();
-  as::index index_; // debug
-
   piece_type_e piece_type_;
-  // 1, 2 or 3 depending on edge, corner or center
+  // size is 1, 2 or 3 depending on edge, corner or center
   std::vector<sticker_t> stickers_;
 };
 
 // 6 centers
 // 12 edges
 // 8 corners
+// 1 core (hidden)
 struct rubiks_cube_t {
-  std::array<piece_t, 27> pieces_; // all blocks excluding 'hidden' center
+  std::array<piece_t, 27> pieces_;
   std::array<as::index, 27> slots_;
 };
 
