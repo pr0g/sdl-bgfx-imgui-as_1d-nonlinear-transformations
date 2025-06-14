@@ -13,16 +13,30 @@
 // would need to have an array of colors depending on face
 // need a way to determine orientation/direction?
 
+enum class side_e {
+  front,
+  back,
+  up,
+  down,
+  left,
+  right,
+  middle_lr,
+  equator_ud,
+  standing_fb
+};
+std::array<as::index, 9> side(side_e side);
+
 struct sticker_t {
   as::quat rotation_;
   uint32_t color_;
 };
 
-enum class piece_type_e { corner, edge, center };
+enum class piece_type_e { corner, edge, center, core };
 
 struct piece_t {
   as::vec3 translation_;
   as::quat rotation_ = as::quat::identity();
+  as::index index_; // debug
 
   piece_type_e piece_type_;
   // 1, 2 or 3 depending on edge, corner or center
@@ -33,7 +47,8 @@ struct piece_t {
 // 12 edges
 // 8 corners
 struct rubiks_cube_t {
-  std::array<piece_t, 26> pieces_; // all blocks excluding 'hidden' center
+  std::array<piece_t, 27> pieces_; // all blocks excluding 'hidden' center
+  std::array<as::index, 27> slots_;
 };
 
 struct rubiks_cube_scene_t : public scene_t {
