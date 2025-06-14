@@ -61,7 +61,7 @@ void rotate(
     next_indices[i + offsets_cw[i]] = current_indices[i];
   }
 
-  for (const auto [i, slot_index] : ei::enumerate(slots)) {
+  for (as::index i = 0; i < slots.size(); i++) {
     auto& piece = rubiks_cube.pieces_[slots[i]];
     piece.rotation_ = rotation * piece.rotation_;
     rubiks_cube.slots_[slots[i]] = next_indices[i];
@@ -90,7 +90,7 @@ void rubiks_cube_scene_t::setup(
   const float half_padding = total_padding * 0.5f;
 
   const as::index offset = 1;
-  // top left corner
+  // up left corner
   const as::vec3 starting_position = as::vec3(
     static_cast<float>(-offset), static_cast<float>(offset),
     static_cast<float>(-offset));
@@ -159,14 +159,14 @@ void rubiks_cube_scene_t::setup(
                 .color_ = 0xFFFF0000,
                 .rotation_ = as::quat_rotation_y(-as::k_half_pi)});
           }
-          // top face - white
+          // up face - white
           if (d == 1 && c == 1 && r == 0) {
             piece.stickers_.push_back(
               sticker_t{
                 .color_ = 0xFFFFFFFF,
                 .rotation_ = as::quat_rotation_x(as::k_half_pi)});
           }
-          // bottom face - yellow
+          // down face - yellow
           if (d == 1 && c == 1 && r == 2) {
             piece.stickers_.push_back(
               sticker_t{
@@ -174,7 +174,7 @@ void rubiks_cube_scene_t::setup(
                 .rotation_ = as::quat_rotation_x(-as::k_half_pi)});
           }
         } else if (piece_type == piece_type_e::edge) {
-          // top white edge faces
+          // up white edge faces
           if (
             (d == 0 && r == 0 && c == 1) || (d == 2 && r == 0 && c == 1)
             || (d == 1 && r == 0 && c == 0) || (d == 1 && r == 0 && c == 2)) {
@@ -183,7 +183,7 @@ void rubiks_cube_scene_t::setup(
                 .color_ = 0xFFFFFFFF,
                 .rotation_ = as::quat_rotation_x(as::k_half_pi)});
           }
-          // bottom yellow edge faces
+          // down yellow edge faces
           if (
             (d == 0 && r == 2 && c == 1) || (d == 2 && r == 2 && c == 1)
             || (d == 1 && r == 2 && c == 0) || (d == 1 && r == 2 && c == 2)) {
@@ -245,7 +245,7 @@ void rubiks_cube_scene_t::setup(
                 .color_ = 0xFF00A5FF,
                 .rotation_ = as::quat_rotation_y(as::k_pi)});
           }
-          // top white corner pieces
+          // up white corner pieces
           if (
             (d == 0 && r == 0 && c == 0) || (d == 0 && r == 0 && c == 2)
             || (d == 2 && r == 0 && c == 0) || (d == 2 && r == 0 && c == 2)) {
@@ -254,7 +254,7 @@ void rubiks_cube_scene_t::setup(
                 .color_ = 0xFFFFFFFF,
                 .rotation_ = as::quat_rotation_x(as::k_half_pi)});
           }
-          // bottom yellow corner pieces
+          // down yellow corner pieces
           if (
             (d == 0 && r == 2 && c == 0) || (d == 0 && r == 2 && c == 2)
             || (d == 2 && r == 2 && c == 0) || (d == 2 && r == 2 && c == 2)) {
@@ -321,13 +321,50 @@ void rubiks_cube_scene_t::update(
     rubiks_cube_.slots_[21], rubiks_cube_.slots_[22], rubiks_cube_.slots_[23],
     rubiks_cube_.slots_[24], rubiks_cube_.slots_[25], rubiks_cube_.slots_[26]);
 
-  if (ImGui::Button("rotate test up")) {
+  if (ImGui::Button("Rotate Up")) {
     rotate(rubiks_cube_, side_e::up, as::quat_rotation_y(as::radians(90.0f)));
   }
 
-  if (ImGui::Button("rotate test left")) {
+  if (ImGui::Button("Rotate Equator")) {
+    rotate(
+      rubiks_cube_, side_e::equator_ud,
+      as::quat_rotation_y(as::radians(90.0f)));
+  }
+
+  if (ImGui::Button("Rotate Down")) {
+    rotate(
+      rubiks_cube_, side_e::down, as::quat_rotation_y(-as::radians(90.0f)));
+  }
+
+  if (ImGui::Button("Rotate Left")) {
     rotate(
       rubiks_cube_, side_e::left, as::quat_rotation_x(-as::radians(90.0f)));
+  }
+
+  if (ImGui::Button("Rotate Middle")) {
+    rotate(
+      rubiks_cube_, side_e::middle_lr,
+      as::quat_rotation_x(-as::radians(90.0f)));
+  }
+
+  if (ImGui::Button("Rotate Right")) {
+    rotate(
+      rubiks_cube_, side_e::right, as::quat_rotation_x(as::radians(90.0f)));
+  }
+
+  if (ImGui::Button("Rotate Front")) {
+    rotate(
+      rubiks_cube_, side_e::front, as::quat_rotation_z(-as::radians(90.0f)));
+  }
+
+  if (ImGui::Button("Rotate Standing")) {
+    rotate(
+      rubiks_cube_, side_e::standing_fb,
+      as::quat_rotation_z(as::radians(90.0f)));
+  }
+
+  if (ImGui::Button("Rotate Back")) {
+    rotate(rubiks_cube_, side_e::back, as::quat_rotation_z(as::radians(90.0f)));
   }
 
   ImGui::End();
