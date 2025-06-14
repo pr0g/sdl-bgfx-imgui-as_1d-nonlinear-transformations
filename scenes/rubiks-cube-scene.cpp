@@ -47,7 +47,6 @@ std::array<as::index, 9> side_slots_indices(const side_e side) {
 
 void rotate(
   rubiks_cube_t& rubiks_cube, const side_e side, const as::quat& rotation) {
-
   const auto slots = side_slots_indices(side);
   const auto offsets_cw =
     std::array<as::index, 9>{6, 2, -2, 4, 0, -4, 2, -2, -6};
@@ -62,14 +61,9 @@ void rotate(
     next_indices[i + offsets_cw[i]] = current_indices[i];
   }
 
-  // const std::array<as::index, 27> slots_before = rubiks_cube.slots_;
-  // for (const auto i : slot_indices) {
   for (const auto [i, slot_index] : ei::enumerate(slots)) {
     auto& piece = rubiks_cube.pieces_[slots[i]];
     piece.rotation_ = rotation * piece.rotation_;
-    // need to account for differences when slots aren't contiguous
-    // const as::index index_to_move = slots_before[slot_index];
-    // const as::index next_slot_index = i + offsets_cw[i];
     rubiks_cube.slots_[slots[i]] = next_indices[i];
   }
 }
@@ -295,32 +289,12 @@ void rubiks_cube_scene_t::setup(
   std::iota(
     rubiks_cube_.slots_.begin(), rubiks_cube_.slots_.end(),
     static_cast<as::index>(0));
-
-  // {
-  //   const auto pieces = side_slots_indices(side_e::left);
-
-  //   const auto offsets_cw =
-  //     std::array<as::index, 9>{6, 2, -2, 4, 0, -4, 2, -2, -6};
-
-  //   const std::array<as::index, 27> slots_before = rubiks_cube_.slots_;
-  //   for (const auto [i, piece_index] : ei::enumerate(pieces)) {
-  //     const auto lookup = rubiks_cube_.slots_[piece_index];
-  //     auto& piece = rubiks_cube_.pieces_[lookup];
-  //     piece.rotation_ = as::quat_rotation_x(as::radians(90.0f));
-  //     const as::index ii = slots_before[piece_index];
-  //     const as::index iii = piece_index + offsets_cw[i];
-  //     rubiks_cube_.slots_[iii] = ii;
-  //   }
-  // }
-
-  // rotate(rubiks_cube_, side_e::up);
 }
 
 void rubiks_cube_scene_t::input(const SDL_Event& current_event) {
   if (ImGui::GetIO().WantCaptureMouse) {
     return;
   }
-
   camera_system_.handleEvents(asci_sdl::sdlToInput(&current_event));
 }
 
@@ -352,7 +326,8 @@ void rubiks_cube_scene_t::update(
   }
 
   if (ImGui::Button("rotate test left")) {
-    rotate(rubiks_cube_, side_e::left, as::quat_rotation_x(as::radians(90.0f)));
+    rotate(
+      rubiks_cube_, side_e::left, as::quat_rotation_x(-as::radians(90.0f)));
   }
 
   ImGui::End();
