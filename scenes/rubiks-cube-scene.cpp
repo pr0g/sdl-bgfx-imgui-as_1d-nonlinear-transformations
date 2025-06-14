@@ -61,7 +61,7 @@ void rotate(
   }
 
   for (as::index i = 0; i < slots.size(); i++) {
-    auto& piece = rubiks_cube.pieces_[slots[i]];
+    auto& piece = rubiks_cube.pieces_[current_indices[i]];
     piece.rotation_ = rotation * piece.rotation_;
     rubiks_cube.slots_[slots[i]] = next_indices[i];
   }
@@ -121,6 +121,7 @@ void rubiks_cube_scene_t::setup(
           + as::vec3(-half_padding, half_padding, -half_padding)
           + position_offset + padding_offset;
         piece.rotation_ = as::quat::identity();
+        piece.index_ = index;
 
         rubiks_cube_.slots_[index] = index;
 
@@ -290,31 +291,6 @@ void rubiks_cube_scene_t::setup(
       }
     }
   }
-
-  // for (as::index r = 0; r < 3; r++) {
-  //   for (as::index d = 0; d < 3; d++) {
-  //     for (as::index c = 0; c < 3; c++) {
-  //       const as::index index = (r * 3 * 3) + (d * 3) + c;
-  //       piece_t& piece = rubiks_cube_.pieces_[index];
-  //       if (r == 0) {
-  //         piece.rotation_ = as::quat_rotation_y(as::k_half_pi);
-  //       }
-  //     }
-  //   }
-  // }
-
-  // for (as::index r = 0; r < 3; r++) {
-  //   for (as::index d = 0; d < 3; d++) {
-  //     for (as::index c = 0; c < 3; c++) {
-  //       const as::index index = (r * 3 * 3) + (d * 3) + c;
-  //       piece_t& piece = rubiks_cube_.pieces_[index];
-  //       if (r == 0 && c == 0) {
-  //         piece.rotation_ =
-  //           piece.rotation_ * as::quat_rotation_x(as::k_half_pi);
-  //       }
-  //     }
-  //   }
-  // }
 }
 
 void rubiks_cube_scene_t::input(const SDL_Event& current_event) {
@@ -375,14 +351,14 @@ void rubiks_cube_scene_t::update(
 
   if (ImGui::Button("Rotate Down CW")) {
     rotate_cw(
-      rubiks_cube_, side_e::down, as::quat_rotation_y(-as::radians(90.0f)));
+      rubiks_cube_, side_e::down, as::quat_rotation_y(as::radians(90.0f)));
   }
 
   ImGui::SameLine();
 
   if (ImGui::Button("Rotate Down CCW")) {
     rotate_ccw(
-      rubiks_cube_, side_e::down, as::quat_rotation_y(as::radians(90.0f)));
+      rubiks_cube_, side_e::down, as::quat_rotation_y(-as::radians(90.0f)));
   }
 
   if (ImGui::Button("Rotate Left CW")) {
@@ -412,26 +388,26 @@ void rubiks_cube_scene_t::update(
 
   if (ImGui::Button("Rotate Right CW")) {
     rotate_cw(
-      rubiks_cube_, side_e::right, as::quat_rotation_x(as::radians(90.0f)));
+      rubiks_cube_, side_e::right, as::quat_rotation_x(-as::radians(90.0f)));
   }
 
   ImGui::SameLine();
 
   if (ImGui::Button("Rotate Right CCW")) {
     rotate_ccw(
-      rubiks_cube_, side_e::right, as::quat_rotation_x(-as::radians(90.0f)));
+      rubiks_cube_, side_e::right, as::quat_rotation_x(as::radians(90.0f)));
   }
 
   if (ImGui::Button("Rotate Front CW")) {
     rotate_cw(
-      rubiks_cube_, side_e::front, as::quat_rotation_z(-as::radians(90.0f)));
+      rubiks_cube_, side_e::front, as::quat_rotation_z(as::radians(90.0f)));
   }
 
   ImGui::SameLine();
 
   if (ImGui::Button("Rotate Front CCW")) {
     rotate_ccw(
-      rubiks_cube_, side_e::front, as::quat_rotation_z(as::radians(90.0f)));
+      rubiks_cube_, side_e::front, as::quat_rotation_z(-as::radians(90.0f)));
   }
 
   if (ImGui::Button("Rotate Standing CW")) {
