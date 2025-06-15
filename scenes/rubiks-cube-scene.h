@@ -84,6 +84,6 @@ struct rubiks_cube_scene_t : public scene_t {
 
   rubiks_cube_t rubiks_cube_;
 
-  bool draw_cubes_ = true;
+  bool draw_cubes_ = false;
   bool draw_stickers = true;
 };

@@ -310,6 +310,9 @@ void rubiks_cube_scene_t::input(const SDL_Event& current_event) {
 void rubiks_cube_scene_t::update(
   debug_draw_t& debug_draw, const float delta_time) {
   ImGui::Begin("Rubik's Cube");
+
+  ImGui::Text("Slot/Index Mapping");
+  ImGui::Separator();
   ImGui::Text(
     " 0 [%2ld],  1 [%2ld],  2 [%2ld]\n"
     " 3 [%2ld],  4 [%2ld],  4 [%2ld]\n"
@@ -330,43 +333,33 @@ void rubiks_cube_scene_t::update(
     rubiks_cube_.slots_[21], rubiks_cube_.slots_[22], rubiks_cube_.slots_[23],
     rubiks_cube_.slots_[24], rubiks_cube_.slots_[25], rubiks_cube_.slots_[26]);
 
+  ImGui::Separator();
+
+  if (ImGui::Button("F")) {
+    rotate_backwards(
+      rubiks_cube_, side_e::front, as::quat_rotation_z(-as::radians(90.0f)));
+  }
+
+  ImGui::SameLine();
+
+  if (ImGui::Button("R")) {
+    rotate_backwards(
+      rubiks_cube_, side_e::right, as::quat_rotation_x(as::radians(90.0f)));
+  }
+
+  ImGui::SameLine();
+
   if (ImGui::Button("U")) {
     rotate_forwards(
       rubiks_cube_, side_e::up, as::quat_rotation_y(as::radians(90.0f)));
   }
 
-  ImGui::SameLine();
-
-  if (ImGui::Button("U'")) {
-    rotate_backwards(
-      rubiks_cube_, side_e::up, as::quat_rotation_y(-as::radians(90.0f)));
-  }
-
-  if (ImGui::Button("E")) {
+  if (ImGui::Button("B")) {
     rotate_forwards(
-      rubiks_cube_, side_e::equator_ud,
-      as::quat_rotation_y(as::radians(90.0f)));
+      rubiks_cube_, side_e::back, as::quat_rotation_z(as::radians(90.0f)));
   }
 
   ImGui::SameLine();
-
-  if (ImGui::Button("E'")) {
-    rotate_backwards(
-      rubiks_cube_, side_e::equator_ud,
-      as::quat_rotation_y(-as::radians(90.0f)));
-  }
-
-  if (ImGui::Button("D")) {
-    rotate_backwards(
-      rubiks_cube_, side_e::down, as::quat_rotation_y(-as::radians(90.0f)));
-  }
-
-  ImGui::SameLine();
-
-  if (ImGui::Button("D'")) {
-    rotate_forwards(
-      rubiks_cube_, side_e::down, as::quat_rotation_y(as::radians(90.0f)));
-  }
 
   if (ImGui::Button("L")) {
     rotate_forwards(
@@ -375,9 +368,9 @@ void rubiks_cube_scene_t::update(
 
   ImGui::SameLine();
 
-  if (ImGui::Button("L'")) {
+  if (ImGui::Button("D")) {
     rotate_backwards(
-      rubiks_cube_, side_e::left, as::quat_rotation_x(as::radians(90.0f)));
+      rubiks_cube_, side_e::down, as::quat_rotation_y(-as::radians(90.0f)));
   }
 
   if (ImGui::Button("M")) {
@@ -388,14 +381,25 @@ void rubiks_cube_scene_t::update(
 
   ImGui::SameLine();
 
-  if (ImGui::Button("M'")) {
+  if (ImGui::Button("E")) {
     rotate_backwards(
-      rubiks_cube_, side_e::middle_lr, as::quat_rotation_x(as::radians(90.0f)));
+      rubiks_cube_, side_e::equator_ud,
+      as::quat_rotation_y(-as::radians(90.0f)));
   }
 
-  if (ImGui::Button("R")) {
+  ImGui::SameLine();
+
+  if (ImGui::Button("S")) {
     rotate_backwards(
-      rubiks_cube_, side_e::right, as::quat_rotation_x(as::radians(90.0f)));
+      rubiks_cube_, side_e::standing_fb,
+      as::quat_rotation_z(-as::radians(90.0f)));
+  }
+
+  ImGui::Separator();
+
+  if (ImGui::Button("F'")) {
+    rotate_forwards(
+      rubiks_cube_, side_e::front, as::quat_rotation_z(as::radians(90.0f)));
   }
 
   ImGui::SameLine();
@@ -405,22 +409,43 @@ void rubiks_cube_scene_t::update(
       rubiks_cube_, side_e::right, as::quat_rotation_x(-as::radians(90.0f)));
   }
 
-  if (ImGui::Button("F")) {
+  ImGui::SameLine();
+
+  if (ImGui::Button("U'")) {
     rotate_backwards(
-      rubiks_cube_, side_e::front, as::quat_rotation_z(-as::radians(90.0f)));
+      rubiks_cube_, side_e::up, as::quat_rotation_y(-as::radians(90.0f)));
+  }
+
+  if (ImGui::Button("B'")) {
+    rotate_backwards(
+      rubiks_cube_, side_e::back, as::quat_rotation_z(-as::radians(90.0f)));
   }
 
   ImGui::SameLine();
 
-  if (ImGui::Button("F'")) {
-    rotate_forwards(
-      rubiks_cube_, side_e::front, as::quat_rotation_z(as::radians(90.0f)));
+  if (ImGui::Button("L'")) {
+    rotate_backwards(
+      rubiks_cube_, side_e::left, as::quat_rotation_x(as::radians(90.0f)));
   }
 
-  if (ImGui::Button("S")) {
+  ImGui::SameLine();
+
+  if (ImGui::Button("D'")) {
+    rotate_forwards(
+      rubiks_cube_, side_e::down, as::quat_rotation_y(as::radians(90.0f)));
+  }
+
+  if (ImGui::Button("M'")) {
     rotate_backwards(
-      rubiks_cube_, side_e::standing_fb,
-      as::quat_rotation_z(-as::radians(90.0f)));
+      rubiks_cube_, side_e::middle_lr, as::quat_rotation_x(as::radians(90.0f)));
+  }
+
+  ImGui::SameLine();
+
+  if (ImGui::Button("E'")) {
+    rotate_forwards(
+      rubiks_cube_, side_e::equator_ud,
+      as::quat_rotation_y(as::radians(90.0f)));
   }
 
   ImGui::SameLine();
@@ -431,17 +456,7 @@ void rubiks_cube_scene_t::update(
       as::quat_rotation_z(as::radians(90.0f)));
   }
 
-  if (ImGui::Button("B")) {
-    rotate_forwards(
-      rubiks_cube_, side_e::back, as::quat_rotation_z(as::radians(90.0f)));
-  }
-
-  ImGui::SameLine();
-
-  if (ImGui::Button("B'")) {
-    rotate_backwards(
-      rubiks_cube_, side_e::back, as::quat_rotation_z(-as::radians(90.0f)));
-  }
+  ImGui::Separator();
 
   ImGui::Checkbox("Draw Cubes", &draw_cubes_);
   ImGui::Checkbox("Draw Stickers", &draw_stickers);
