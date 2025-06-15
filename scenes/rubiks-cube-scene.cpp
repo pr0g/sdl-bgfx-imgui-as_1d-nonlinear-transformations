@@ -1,4 +1,5 @@
 #include "rubiks-cube-scene.h"
+#include "1d-nonlinear-transformations.h"
 
 #include <numeric>
 
@@ -48,6 +49,11 @@ std::array<as::index, 9> side_slots_indices(const side_e side) {
 void rotate(
   rubiks_cube_t& rubiks_cube, const side_e side, const as::quat& rotation,
   const std::array<as::index, 9> offsets) {
+  if (rubiks_cube.animation_.has_value()) {
+    // noop if currently rotating
+    return;
+  }
+
   const auto slots = side_slots_indices(side);
 
   std::array<as::index, 9> current_indices;
@@ -455,16 +461,20 @@ void rubiks_cube_scene_t::update(
   bgfx::setViewTransform(main_view_, view, proj);
 
   if (rubiks_cube_.animation_.has_value()) {
-    for (const auto [i, piece_index] :
-         ei::enumerate(rubiks_cube_.animation_->indices_)) {
-      auto& piece = rubiks_cube_.pieces_[piece_index];
-      piece.rotation_ = as::quat_slerp(
-        rubiks_cube_.animation_->frames_[i].from_,
-        rubiks_cube_.animation_->frames_[i].to_,
-        as::smooth_step(std::min(rubiks_cube_.animation_->t_, 1.0f)));
-    }
-    rubiks_cube_.animation_->t_ += delta_time / 0.5f;
+    const auto animate_blocks = [](rubiks_cube_t& rubiks_cube) {
+      for (const auto [i, piece_index] :
+           ei::enumerate(rubiks_cube.animation_->indices_)) {
+        auto& piece = rubiks_cube.pieces_[piece_index];
+        piece.rotation_ = as::quat_slerp(
+          rubiks_cube.animation_->frames_[i].from_,
+          rubiks_cube.animation_->frames_[i].to_,
+          nlt::smoothStop3(std::min(rubiks_cube.animation_->t_, 1.0f)));
+      }
+    };
+    animate_blocks(rubiks_cube_);
+    rubiks_cube_.animation_->t_ += delta_time / 0.25f;
     if (rubiks_cube_.animation_->t_ >= 1.0f) {
+      animate_blocks(rubiks_cube_);
       rubiks_cube_.animation_.reset();
     }
   }

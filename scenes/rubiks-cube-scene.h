@@ -1,13 +1,13 @@
 #pragma once
 
-#include <array>
-#include <vector>
-
 #include "scene.h"
 
 #include <as-camera-input/as-camera-input.hpp>
 #include <as/as-math-ops.hpp>
 #include <bgfx/bgfx.h>
+
+#include <array>
+#include <vector>
 
 // tagged union - may be better to use variant
 // would need to have an array of colors depending on face
