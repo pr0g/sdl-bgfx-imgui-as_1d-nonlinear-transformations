@@ -129,7 +129,6 @@ void rubiks_cube_scene_t::setup(
           + as::vec3(-half_padding, half_padding, -half_padding)
           + position_offset + padding_offset;
         piece.rotation_ = as::quat::identity();
-        piece.index_ = index;
 
         rubiks_cube_.slots_[index] = index;
 

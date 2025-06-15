@@ -37,7 +37,6 @@ struct piece_t {
   as::vec3 translation_;
   as::quat rotation_ = as::quat::identity();
   piece_type_e piece_type_;
-  as::index index_ = 0;
   // size is 1, 2 or 3 depending on edge, corner or center
   std::vector<sticker_t> stickers_;
 };
