@@ -76,15 +76,17 @@ void rotate(
   }
 }
 
-void rotate_cw(
+void rotate_forwards(
   rubiks_cube_t& rubiks_cube, const side_e side, const as::quat& rotation) {
+  // cw when looking from front (identity) always (not relative)
   const auto offsets_cw =
     std::array<as::index, 9>{6, 2, -2, 4, 0, -4, 2, -2, -6};
   rotate(rubiks_cube, side, rotation, offsets_cw);
 }
 
-void rotate_ccw(
+void rotate_backwards(
   rubiks_cube_t& rubiks_cube, const side_e side, const as::quat& rotation) {
+  // ccw when looking from front (identity) always (not relative)
   const auto offsets_ccw =
     std::array<as::index, 9>{2, 4, 6, -2, 0, 2, -6, -4, -2};
   rotate(rubiks_cube, side, rotation, offsets_ccw);
@@ -335,19 +337,19 @@ void rubiks_cube_scene_t::update(
     rubiks_cube_.slots_[24], rubiks_cube_.slots_[25], rubiks_cube_.slots_[26]);
 
   if (ImGui::Button("Rotate Up CW")) {
-    rotate_cw(
+    rotate_forwards(
       rubiks_cube_, side_e::up, as::quat_rotation_y(as::radians(90.0f)));
   }
 
   ImGui::SameLine();
 
   if (ImGui::Button("Rotate Up CCW")) {
-    rotate_ccw(
+    rotate_backwards(
       rubiks_cube_, side_e::up, as::quat_rotation_y(-as::radians(90.0f)));
   }
 
   if (ImGui::Button("Rotate Equator CW")) {
-    rotate_cw(
+    rotate_forwards(
       rubiks_cube_, side_e::equator_ud,
       as::quat_rotation_y(as::radians(90.0f)));
   }
@@ -355,37 +357,37 @@ void rubiks_cube_scene_t::update(
   ImGui::SameLine();
 
   if (ImGui::Button("Rotate Equator CCW")) {
-    rotate_ccw(
+    rotate_backwards(
       rubiks_cube_, side_e::equator_ud,
       as::quat_rotation_y(-as::radians(90.0f)));
   }
 
   if (ImGui::Button("Rotate Down CW")) {
-    rotate_cw(
-      rubiks_cube_, side_e::down, as::quat_rotation_y(as::radians(90.0f)));
+    rotate_backwards(
+      rubiks_cube_, side_e::down, as::quat_rotation_y(-as::radians(90.0f)));
   }
 
   ImGui::SameLine();
 
   if (ImGui::Button("Rotate Down CCW")) {
-    rotate_ccw(
-      rubiks_cube_, side_e::down, as::quat_rotation_y(-as::radians(90.0f)));
+    rotate_forwards(
+      rubiks_cube_, side_e::down, as::quat_rotation_y(as::radians(90.0f)));
   }
 
   if (ImGui::Button("Rotate Left CW")) {
-    rotate_cw(
+    rotate_forwards(
       rubiks_cube_, side_e::left, as::quat_rotation_x(-as::radians(90.0f)));
   }
 
   ImGui::SameLine();
 
   if (ImGui::Button("Rotate Left CCW")) {
-    rotate_ccw(
+    rotate_backwards(
       rubiks_cube_, side_e::left, as::quat_rotation_x(as::radians(90.0f)));
   }
 
   if (ImGui::Button("Rotate Middle CW")) {
-    rotate_cw(
+    rotate_forwards(
       rubiks_cube_, side_e::middle_lr,
       as::quat_rotation_x(-as::radians(90.0f)));
   }
@@ -393,57 +395,57 @@ void rubiks_cube_scene_t::update(
   ImGui::SameLine();
 
   if (ImGui::Button("Rotate Middle CCW")) {
-    rotate_ccw(
+    rotate_backwards(
       rubiks_cube_, side_e::middle_lr, as::quat_rotation_x(as::radians(90.0f)));
   }
 
   if (ImGui::Button("Rotate Right CW")) {
-    rotate_cw(
-      rubiks_cube_, side_e::right, as::quat_rotation_x(-as::radians(90.0f)));
+    rotate_backwards(
+      rubiks_cube_, side_e::right, as::quat_rotation_x(as::radians(90.0f)));
   }
 
   ImGui::SameLine();
 
   if (ImGui::Button("Rotate Right CCW")) {
-    rotate_ccw(
-      rubiks_cube_, side_e::right, as::quat_rotation_x(as::radians(90.0f)));
+    rotate_forwards(
+      rubiks_cube_, side_e::right, as::quat_rotation_x(-as::radians(90.0f)));
   }
 
   if (ImGui::Button("Rotate Front CW")) {
-    rotate_cw(
-      rubiks_cube_, side_e::front, as::quat_rotation_z(as::radians(90.0f)));
+    rotate_backwards(
+      rubiks_cube_, side_e::front, as::quat_rotation_z(-as::radians(90.0f)));
   }
 
   ImGui::SameLine();
 
   if (ImGui::Button("Rotate Front CCW")) {
-    rotate_ccw(
-      rubiks_cube_, side_e::front, as::quat_rotation_z(-as::radians(90.0f)));
+    rotate_forwards(
+      rubiks_cube_, side_e::front, as::quat_rotation_z(as::radians(90.0f)));
   }
 
   if (ImGui::Button("Rotate Standing CW")) {
-    rotate_cw(
+    rotate_backwards(
       rubiks_cube_, side_e::standing_fb,
-      as::quat_rotation_z(as::radians(90.0f)));
+      as::quat_rotation_z(-as::radians(90.0f)));
   }
 
   ImGui::SameLine();
 
   if (ImGui::Button("Rotate Standing CCW")) {
-    rotate_ccw(
+    rotate_forwards(
       rubiks_cube_, side_e::standing_fb,
-      as::quat_rotation_z(-as::radians(90.0f)));
+      as::quat_rotation_z(as::radians(90.0f)));
   }
 
   if (ImGui::Button("Rotate Back CW")) {
-    rotate_cw(
+    rotate_forwards(
       rubiks_cube_, side_e::back, as::quat_rotation_z(as::radians(90.0f)));
   }
 
   ImGui::SameLine();
 
   if (ImGui::Button("Rotate Back CCW")) {
-    rotate_ccw(
+    rotate_backwards(
       rubiks_cube_, side_e::back, as::quat_rotation_z(-as::radians(90.0f)));
   }
 
