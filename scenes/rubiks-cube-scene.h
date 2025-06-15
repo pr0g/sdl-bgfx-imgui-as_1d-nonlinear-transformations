@@ -42,6 +42,17 @@ struct piece_t {
   std::vector<sticker_t> stickers_;
 };
 
+struct frame_t {
+  as::quat from_;
+  as::quat to_;
+};
+
+struct animation_t {
+  std::array<as::index, 9> indices_;
+  std::array<frame_t, 9> frames_;
+  float t_ = 0.0f;
+};
+
 // 6 centers
 // 12 edges
 // 8 corners
@@ -49,6 +60,7 @@ struct piece_t {
 struct rubiks_cube_t {
   std::array<piece_t, 27> pieces_;
   std::array<as::index, 27> slots_;
+  std::optional<animation_t> animation_;
 };
 
 struct rubiks_cube_scene_t : public scene_t {

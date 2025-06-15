@@ -60,10 +60,13 @@ void rotate(
     next_indices[i + offsets[i]] = current_indices[i];
   }
 
+  rubiks_cube.animation_ = animation_t{.indices_ = current_indices, .t_ = 0.0f};
+
   for (as::index i = 0; i < slots.size(); i++) {
     auto& piece = rubiks_cube.pieces_[current_indices[i]];
-    piece.rotation_ = rotation * piece.rotation_;
     rubiks_cube.slots_[slots[i]] = next_indices[i];
+    rubiks_cube.animation_->frames_[i].from_ = piece.rotation_;
+    rubiks_cube.animation_->frames_[i].to_ = rotation * piece.rotation_;
   }
 }
 
@@ -448,6 +451,21 @@ void rubiks_cube_scene_t::update(
   as::mat_to_arr(perspective_projection_, proj);
 
   bgfx::setViewTransform(main_view_, view, proj);
+
+  if (rubiks_cube_.animation_.has_value()) {
+    for (const auto [i, piece_index] :
+         ei::enumerate(rubiks_cube_.animation_->indices_)) {
+      auto& piece = rubiks_cube_.pieces_[piece_index];
+      piece.rotation_ = as::quat_slerp(
+        rubiks_cube_.animation_->frames_[i].from_,
+        rubiks_cube_.animation_->frames_[i].to_,
+        as::smooth_step(std::min(rubiks_cube_.animation_->t_, 1.0f)));
+    }
+    rubiks_cube_.animation_->t_ += delta_time / 0.5f;
+    if (rubiks_cube_.animation_->t_ >= 1.0f) {
+      rubiks_cube_.animation_.reset();
+    }
+  }
 
   for (as::index i = 0; i < rubiks_cube_.pieces_.size(); i++) {
     const uint32_t color =
