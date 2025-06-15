@@ -98,7 +98,7 @@ void rubiks_cube_scene_t::setup(
   target_camera_.pivot = as::vec3(0.0f, 0.0f, -10.0f);
   camera_ = target_camera_;
 
-  const float padding = 1.0f;
+  const float padding = 0.1f;
   const float total_padding = padding * 2.0f;
   const float half_padding = total_padding * 0.5f;
 
