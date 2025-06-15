@@ -106,7 +106,7 @@ void rubiks_cube_scene_t::setup(
   target_camera_.yaw = as::radians(45.0f);
   camera_ = target_camera_;
 
-  const float padding = 0.1f;
+  const float padding = 0.0f;
   const float total_padding = padding * 2.0f;
   const float half_padding = total_padding * 0.5f;
 
@@ -502,6 +502,7 @@ void rubiks_cube_scene_t::update(
       const as::vec3 sticker_offset =
         as::vec3(-g_scale * 0.5f, -g_scale * 0.5f, -g_scale * 0.5f);
       for (as::index s = 0; s < rubiks_cube_.pieces_[i].stickers_.size(); s++) {
+        // coloured sticker
         debug_draw.debug_quads->addQuad(
           as::mat4_from_mat3(
             as::mat3_from_quat(rubiks_cube_.pieces_[i].rotation_))
@@ -509,8 +510,21 @@ void rubiks_cube_scene_t::update(
             * as::mat4_from_mat3(
               as::mat3_from_quat(
                 rubiks_cube_.pieces_[i].stickers_[s].rotation_))
+            * as::mat4_from_mat3(as::mat3_scale(0.9f, 0.9f, 1.0f))
             * as::mat4_from_vec3(sticker_offset),
           rubiks_cube_.pieces_[i].stickers_[s].color_);
+
+        // black backing
+        debug_draw.debug_quads->addQuad(
+          as::mat4_from_mat3(
+            as::mat3_from_quat(rubiks_cube_.pieces_[i].rotation_))
+            * as::mat4_from_vec3(rubiks_cube_.pieces_[i].translation_)
+            * as::mat4_from_mat3(
+              as::mat3_from_quat(
+                rubiks_cube_.pieces_[i].stickers_[s].rotation_))
+            * as::mat4_from_mat3(as::mat3_scale(1.0f, 1.0f, 0.99f))
+            * as::mat4_from_vec3(sticker_offset),
+          0xff000000);
       }
     }
   }
