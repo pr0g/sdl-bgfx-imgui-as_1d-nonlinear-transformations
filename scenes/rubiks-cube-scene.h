@@ -9,10 +9,6 @@
 #include <array>
 #include <vector>
 
-// tagged union - may be better to use variant
-// would need to have an array of colors depending on face
-// need a way to determine orientation/direction?
-
 enum class side_e {
   front,
   back,
@@ -20,9 +16,9 @@ enum class side_e {
   down,
   left,
   right,
-  middle_lr,
-  equator_ud,
-  standing_fb
+  middle,
+  equator,
+  standing
 };
 std::array<as::index, 9> side(side_e side);
 
@@ -41,14 +37,14 @@ struct piece_t {
   std::vector<sticker_t> stickers_;
 };
 
-struct frame_t {
+struct transition_t {
   as::quat from_;
   as::quat to_;
 };
 
 struct animation_t {
   std::array<as::index, 9> indices_;
-  std::array<frame_t, 9> frames_;
+  std::array<transition_t, 9> transitions_;
   float t_ = 0.0f;
 };
 

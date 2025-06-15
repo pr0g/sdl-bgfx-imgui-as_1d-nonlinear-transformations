@@ -41,19 +41,19 @@ std::array<as::index, 9> side_slots(const side_e side) {
   switch (side) {
     case side_e::up:
       return std::array<as::index, 9>{0, 1, 2, 3, 4, 5, 6, 7, 8};
-    case side_e::equator_ud:
+    case side_e::equator:
       return std::array<as::index, 9>{9, 10, 11, 12, 13, 14, 15, 16, 17};
     case side_e::down:
       return std::array<as::index, 9>{18, 19, 20, 21, 22, 23, 24, 25, 26};
     case side_e::left:
       return std::array<as::index, 9>{0, 3, 6, 9, 12, 15, 18, 21, 24};
-    case side_e::middle_lr:
+    case side_e::middle:
       return std::array<as::index, 9>{1, 4, 7, 10, 13, 16, 19, 22, 25};
     case side_e::right:
       return std::array<as::index, 9>{2, 5, 8, 11, 14, 17, 20, 23, 26};
     case side_e::front:
       return std::array<as::index, 9>{0, 1, 2, 9, 10, 11, 18, 19, 20};
-    case side_e::standing_fb:
+    case side_e::standing:
       return std::array<as::index, 9>{3, 4, 5, 12, 13, 14, 21, 22, 23};
     case side_e::back:
       return std::array<as::index, 9>{6, 7, 8, 15, 16, 17, 24, 25, 26};
@@ -87,8 +87,8 @@ void rotate(
   for (as::index i = 0; i < slots.size(); i++) {
     auto& piece = rubiks_cube.pieces_[current_indices[i]];
     rubiks_cube.slots_[slots[i]] = next_indices[i];
-    rubiks_cube.animation_->frames_[i].from_ = piece.rotation_;
-    rubiks_cube.animation_->frames_[i].to_ = rotation * piece.rotation_;
+    rubiks_cube.animation_->transitions_[i].from_ = piece.rotation_;
+    rubiks_cube.animation_->transitions_[i].to_ = rotation * piece.rotation_;
   }
 }
 
@@ -331,6 +331,70 @@ void rubiks_cube_scene_t::setup(
     rotate_strides(
       rubiks_cube_, side_e::front, as::quat_rotation_z(as::radians(90.0f)));
   };
+  moves_[move_e::r] = [this] {
+    rotate_steps(
+      rubiks_cube_, side_e::right, as::quat_rotation_x(as::radians(90.0f)));
+  };
+  moves_[move_e::r_p] = [this] {
+    rotate_strides(
+      rubiks_cube_, side_e::right, as::quat_rotation_x(-as::radians(90.0f)));
+  };
+  moves_[move_e::u] = [this] {
+    rotate_strides(
+      rubiks_cube_, side_e::up, as::quat_rotation_y(as::radians(90.0f)));
+  };
+  moves_[move_e::u_p] = [this] {
+    rotate_steps(
+      rubiks_cube_, side_e::up, as::quat_rotation_y(-as::radians(90.0f)));
+  };
+  moves_[move_e::b] = [this] {
+    rotate_strides(
+      rubiks_cube_, side_e::back, as::quat_rotation_z(as::radians(90.0f)));
+  };
+  moves_[move_e::b_p] = [this] {
+    rotate_steps(
+      rubiks_cube_, side_e::back, as::quat_rotation_z(-as::radians(90.0f)));
+  };
+  moves_[move_e::l] = [this] {
+    rotate_strides(
+      rubiks_cube_, side_e::left, as::quat_rotation_x(-as::radians(90.0f)));
+  };
+  moves_[move_e::l_p] = [this] {
+    rotate_steps(
+      rubiks_cube_, side_e::left, as::quat_rotation_x(as::radians(90.0f)));
+  };
+  moves_[move_e::d] = [this] {
+    rotate_steps(
+      rubiks_cube_, side_e::down, as::quat_rotation_y(-as::radians(90.0f)));
+  };
+  moves_[move_e::d_p] = [this] {
+    rotate_strides(
+      rubiks_cube_, side_e::down, as::quat_rotation_y(as::radians(90.0f)));
+  };
+  moves_[move_e::m] = [this] {
+    rotate_strides(
+      rubiks_cube_, side_e::middle, as::quat_rotation_x(-as::radians(90.0f)));
+  };
+  moves_[move_e::m_p] = [this] {
+    rotate_steps(
+      rubiks_cube_, side_e::middle, as::quat_rotation_x(as::radians(90.0f)));
+  };
+  moves_[move_e::e] = [this] {
+    rotate_steps(
+      rubiks_cube_, side_e::equator, as::quat_rotation_y(-as::radians(90.0f)));
+  };
+  moves_[move_e::e_p] = [this] {
+    rotate_strides(
+      rubiks_cube_, side_e::equator, as::quat_rotation_y(as::radians(90.0f)));
+  };
+  moves_[move_e::s] = [this] {
+    rotate_steps(
+      rubiks_cube_, side_e::standing, as::quat_rotation_z(-as::radians(90.0f)));
+  };
+  moves_[move_e::s_p] = [this] {
+    rotate_strides(
+      rubiks_cube_, side_e::standing, as::quat_rotation_z(as::radians(90.0f)));
+  };
 }
 
 void rubiks_cube_scene_t::input(const SDL_Event& current_event) {
@@ -375,56 +439,45 @@ void rubiks_cube_scene_t::update(
   ImGui::SameLine();
 
   if (ImGui::Button("R")) {
-    rotate_steps(
-      rubiks_cube_, side_e::right, as::quat_rotation_x(as::radians(90.0f)));
+    moves_[move_e::r]();
   }
 
   ImGui::SameLine();
 
   if (ImGui::Button("U")) {
-    rotate_strides(
-      rubiks_cube_, side_e::up, as::quat_rotation_y(as::radians(90.0f)));
+    moves_[move_e::u]();
   }
 
   if (ImGui::Button("B")) {
-    rotate_strides(
-      rubiks_cube_, side_e::back, as::quat_rotation_z(as::radians(90.0f)));
+    moves_[move_e::b]();
   }
 
   ImGui::SameLine();
 
   if (ImGui::Button("L")) {
-    rotate_strides(
-      rubiks_cube_, side_e::left, as::quat_rotation_x(-as::radians(90.0f)));
+    moves_[move_e::l]();
   }
 
   ImGui::SameLine();
 
   if (ImGui::Button("D")) {
-    rotate_steps(
-      rubiks_cube_, side_e::down, as::quat_rotation_y(-as::radians(90.0f)));
+    moves_[move_e::d]();
   }
 
   if (ImGui::Button("M")) {
-    rotate_strides(
-      rubiks_cube_, side_e::middle_lr,
-      as::quat_rotation_x(-as::radians(90.0f)));
+    moves_[move_e::m]();
   }
 
   ImGui::SameLine();
 
   if (ImGui::Button("E")) {
-    rotate_steps(
-      rubiks_cube_, side_e::equator_ud,
-      as::quat_rotation_y(-as::radians(90.0f)));
+    moves_[move_e::e]();
   }
 
   ImGui::SameLine();
 
   if (ImGui::Button("S")) {
-    rotate_steps(
-      rubiks_cube_, side_e::standing_fb,
-      as::quat_rotation_z(-as::radians(90.0f)));
+    moves_[move_e::s]();
   }
 
   ImGui::Separator();
@@ -436,55 +489,45 @@ void rubiks_cube_scene_t::update(
   ImGui::SameLine();
 
   if (ImGui::Button("R'")) {
-    rotate_strides(
-      rubiks_cube_, side_e::right, as::quat_rotation_x(-as::radians(90.0f)));
+    moves_[move_e::r_p]();
   }
 
   ImGui::SameLine();
 
   if (ImGui::Button("U'")) {
-    rotate_steps(
-      rubiks_cube_, side_e::up, as::quat_rotation_y(-as::radians(90.0f)));
+    moves_[move_e::u_p]();
   }
 
   if (ImGui::Button("B'")) {
-    rotate_steps(
-      rubiks_cube_, side_e::back, as::quat_rotation_z(-as::radians(90.0f)));
+    moves_[move_e::b_p]();
   }
 
   ImGui::SameLine();
 
   if (ImGui::Button("L'")) {
-    rotate_steps(
-      rubiks_cube_, side_e::left, as::quat_rotation_x(as::radians(90.0f)));
+    moves_[move_e::l_p]();
   }
 
   ImGui::SameLine();
 
   if (ImGui::Button("D'")) {
-    rotate_strides(
-      rubiks_cube_, side_e::down, as::quat_rotation_y(as::radians(90.0f)));
+    moves_[move_e::d_p]();
   }
 
   if (ImGui::Button("M'")) {
-    rotate_steps(
-      rubiks_cube_, side_e::middle_lr, as::quat_rotation_x(as::radians(90.0f)));
+    moves_[move_e::m_p]();
   }
 
   ImGui::SameLine();
 
   if (ImGui::Button("E'")) {
-    rotate_strides(
-      rubiks_cube_, side_e::equator_ud,
-      as::quat_rotation_y(as::radians(90.0f)));
+    moves_[move_e::e_p]();
   }
 
   ImGui::SameLine();
 
   if (ImGui::Button("S'")) {
-    rotate_strides(
-      rubiks_cube_, side_e::standing_fb,
-      as::quat_rotation_z(as::radians(90.0f)));
+    moves_[move_e::s_p]();
   }
 
   ImGui::Separator();
@@ -517,8 +560,8 @@ void rubiks_cube_scene_t::update(
            ei::enumerate(rubiks_cube.animation_->indices_)) {
         auto& piece = rubiks_cube.pieces_[piece_index];
         piece.rotation_ = as::quat_slerp(
-          rubiks_cube.animation_->frames_[i].from_,
-          rubiks_cube.animation_->frames_[i].to_,
+          rubiks_cube.animation_->transitions_[i].from_,
+          rubiks_cube.animation_->transitions_[i].to_,
           nlt::smoothStop3(std::min(rubiks_cube.animation_->t_, 1.0f)));
       }
     };
