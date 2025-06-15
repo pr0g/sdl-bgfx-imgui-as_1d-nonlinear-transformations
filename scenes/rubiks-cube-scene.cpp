@@ -99,6 +99,8 @@ void rubiks_cube_scene_t::setup(
   cameras.addCamera(&orbit_dolly_camera_);
 
   target_camera_.offset = as::vec3(0.0f, 0.0f, -10.0f);
+  target_camera_.pitch = as::radians(30.0f);
+  target_camera_.yaw = as::radians(45.0f);
   camera_ = target_camera_;
 
   const float padding = 0.1f;
