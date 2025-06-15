@@ -65,9 +65,8 @@ struct rubiks_cube_scene_t : public scene_t {
   asc::Camera camera_;
   asc::Camera target_camera_;
   asci::CameraSystem camera_system_;
-  asci::RotateCameraInput first_person_rotate_camera_{asci::MouseButton::Left};
-  asci::TranslateCameraInput first_person_translate_camera_{
-    asci::lookTranslation, asci::translatePivot};
+  asci::RotateCameraInput orbit_rotate_camera_{asci::MouseButton::Left};
+  asci::PivotDollyScrollCameraInput orbit_dolly_camera_{};
 
   bgfx::ViewId main_view_;
   bgfx::ViewId ortho_view_;

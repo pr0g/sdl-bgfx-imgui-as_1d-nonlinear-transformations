@@ -92,10 +92,10 @@ void rubiks_cube_scene_t::setup(
     as::radians(60.0f), float(width) / float(height), 0.01f, 1000.0f);
 
   asci::Cameras& cameras = camera_system_.cameras_;
-  cameras.addCamera(&first_person_rotate_camera_);
-  cameras.addCamera(&first_person_translate_camera_);
+  cameras.addCamera(&orbit_rotate_camera_);
+  cameras.addCamera(&orbit_dolly_camera_);
 
-  target_camera_.pivot = as::vec3(0.0f, 0.0f, -10.0f);
+  target_camera_.offset = as::vec3(0.0f, 0.0f, -10.0f);
   camera_ = target_camera_;
 
   const float padding = 0.1f;
