@@ -1,7 +1,7 @@
 #include "rubiks-cube-scene.h"
 #include "1d-nonlinear-transformations.h"
 
-#include <numeric>
+#include <random>
 
 #include <as-camera-input-sdl/as-camera-input-sdl.hpp>
 #include <as/as-view.hpp>
@@ -15,27 +15,6 @@
 namespace ei = easy_iterator;
 
 const float g_scale = 1.0f;
-
-enum move_e {
-  f = 0,
-  f_p,
-  r,
-  r_p,
-  u,
-  u_p,
-  b,
-  b_p,
-  l,
-  l_p,
-  d,
-  d_p,
-  m,
-  m_p,
-  e,
-  e_p,
-  s,
-  s_p
-};
 
 std::array<as::index, 9> side_slots(const side_e side) {
   switch (side) {
@@ -538,7 +517,15 @@ void rubiks_cube_scene_t::update(
   ImGui::Separator();
 
   if (ImGui::Button("Shuffle")) {
-    shuffling_ = true;
+    shuffle_moves_.resize(20);
+    std::random_device random_device;
+    std::default_random_engine random_engine(random_device());
+    std::uniform_int_distribution<int> uniform_dist(0, 17);
+    std::generate(
+      shuffle_moves_.begin(), shuffle_moves_.end(),
+      [&uniform_dist, &random_engine] {
+        return static_cast<move_e>(uniform_dist(random_engine));
+      });
   }
 
   ImGui::End();
@@ -553,6 +540,12 @@ void rubiks_cube_scene_t::update(
   as::mat_to_arr(perspective_projection_, proj);
 
   bgfx::setViewTransform(main_view_, view, proj);
+
+  if (!shuffle_moves_.empty() && !rubiks_cube_.animation_.has_value()) {
+    const auto move = shuffle_moves_.back();
+    shuffle_moves_.pop_back();
+    moves_[move]();
+  }
 
   if (rubiks_cube_.animation_.has_value()) {
     const auto animate_blocks = [](rubiks_cube_t& rubiks_cube) {

@@ -9,6 +9,27 @@
 #include <array>
 #include <vector>
 
+enum move_e {
+  f = 0,
+  f_p,
+  r,
+  r_p,
+  u,
+  u_p,
+  b,
+  b_p,
+  l,
+  l_p,
+  d,
+  d_p,
+  m,
+  m_p,
+  e,
+  e_p,
+  s,
+  s_p
+};
+
 enum class side_e {
   front,
   back,
@@ -81,8 +102,8 @@ struct rubiks_cube_scene_t : public scene_t {
   rubiks_cube_t rubiks_cube_;
 
   std::array<std::function<void()>, 18> moves_;
+  std::vector<move_e> shuffle_moves_;
 
   bool draw_cubes_ = false;
   bool draw_stickers_ = true;
-  bool shuffling_ = false;
 };
