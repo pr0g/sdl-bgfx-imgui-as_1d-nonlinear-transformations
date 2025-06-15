@@ -444,6 +444,9 @@ void rubiks_cube_scene_t::update(
       rubiks_cube_, side_e::back, as::quat_rotation_z(-as::radians(90.0f)));
   }
 
+  ImGui::Checkbox("Draw Cubes", &draw_cubes_);
+  ImGui::Checkbox("Draw Stickers", &draw_stickers);
+
   ImGui::End();
 
   target_camera_ = camera_system_.stepCamera(target_camera_, delta_time);
@@ -487,23 +490,28 @@ void rubiks_cube_scene_t::update(
         ? dbg::encodeColorAbgr(0.0f, 1.0f, 0.0f, 1.0f)
         : dbg::encodeColorAbgr(0.0f, 0.0f, 1.0f, 1.0f);
 
-    debug_draw.debug_cubes->addCube(
-      as::mat4_from_mat3(as::mat3_from_quat(rubiks_cube_.pieces_[i].rotation_))
-        * as::mat4_from_vec3(rubiks_cube_.pieces_[i].translation_),
-      color);
-
-    const as::vec3 sticker_offset =
-      as::vec3(-g_scale * 0.5f, -g_scale * 0.5f, -g_scale * 0.5f);
-
-    for (as::index s = 0; s < rubiks_cube_.pieces_[i].stickers_.size(); s++) {
-      debug_draw.debug_quads->addQuad(
+    if (draw_cubes_) {
+      debug_draw.debug_cubes->addCube(
         as::mat4_from_mat3(
           as::mat3_from_quat(rubiks_cube_.pieces_[i].rotation_))
-          * as::mat4_from_vec3(rubiks_cube_.pieces_[i].translation_)
-          * as::mat4_from_mat3(
-            as::mat3_from_quat(rubiks_cube_.pieces_[i].stickers_[s].rotation_))
-          * as::mat4_from_vec3(sticker_offset),
-        rubiks_cube_.pieces_[i].stickers_[s].color_);
+          * as::mat4_from_vec3(rubiks_cube_.pieces_[i].translation_),
+        color);
+    }
+
+    if (draw_stickers) {
+      const as::vec3 sticker_offset =
+        as::vec3(-g_scale * 0.5f, -g_scale * 0.5f, -g_scale * 0.5f);
+      for (as::index s = 0; s < rubiks_cube_.pieces_[i].stickers_.size(); s++) {
+        debug_draw.debug_quads->addQuad(
+          as::mat4_from_mat3(
+            as::mat3_from_quat(rubiks_cube_.pieces_[i].rotation_))
+            * as::mat4_from_vec3(rubiks_cube_.pieces_[i].translation_)
+            * as::mat4_from_mat3(
+              as::mat3_from_quat(
+                rubiks_cube_.pieces_[i].stickers_[s].rotation_))
+            * as::mat4_from_vec3(sticker_offset),
+          rubiks_cube_.pieces_[i].stickers_[s].color_);
+      }
     }
   }
 }

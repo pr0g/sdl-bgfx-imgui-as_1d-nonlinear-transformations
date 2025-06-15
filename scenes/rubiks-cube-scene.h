@@ -84,4 +84,7 @@ struct rubiks_cube_scene_t : public scene_t {
   bgfx::ViewId ortho_view_;
 
   rubiks_cube_t rubiks_cube_;
+
+  bool draw_cubes_ = true;
+  bool draw_stickers = true;
 };
