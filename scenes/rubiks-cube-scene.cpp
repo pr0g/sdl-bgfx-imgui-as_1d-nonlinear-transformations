@@ -16,12 +16,7 @@ namespace ei = easy_iterator;
 
 const float g_scale = 1.0f;
 
-// debug
-// corner - blue
-// center - red
-// edge - green
-
-std::array<as::index, 9> side_slots_indices(const side_e side) {
+std::array<as::index, 9> side_slots(const side_e side) {
   switch (side) {
     case side_e::up:
       return std::array<as::index, 9>{0, 1, 2, 3, 4, 5, 6, 7, 8};
@@ -54,7 +49,7 @@ void rotate(
     return;
   }
 
-  const auto slots = side_slots_indices(side);
+  const auto slots = side_slots(side);
 
   std::array<as::index, 9> current_indices;
   for (as::index i = 0; i < current_indices.size(); i++) {
@@ -482,6 +477,7 @@ void rubiks_cube_scene_t::update(
   }
 
   for (as::index i = 0; i < rubiks_cube_.pieces_.size(); i++) {
+    // debug: core - black, corner - blue, center - red, edge - green
     const uint32_t color =
       rubiks_cube_.pieces_[i].piece_type_ == piece_type_e::core
         ? dbg::encodeColorAbgr(0.0f, 0.0f, 0.0f, 1.0f)
