@@ -16,6 +16,27 @@ namespace ei = easy_iterator;
 
 const float g_scale = 1.0f;
 
+enum move_e {
+  f = 0,
+  f_p,
+  r,
+  r_p,
+  u,
+  u_p,
+  b,
+  b_p,
+  l,
+  l_p,
+  d,
+  d_p,
+  m,
+  m_p,
+  e,
+  e_p,
+  s,
+  s_p
+};
+
 std::array<as::index, 9> side_slots(const side_e side) {
   switch (side) {
     case side_e::up:
@@ -301,6 +322,15 @@ void rubiks_cube_scene_t::setup(
       }
     }
   }
+
+  moves_[move_e::f] = [this] {
+    rotate_steps(
+      rubiks_cube_, side_e::front, as::quat_rotation_z(-as::radians(90.0f)));
+  };
+  moves_[move_e::f_p] = [this] {
+    rotate_strides(
+      rubiks_cube_, side_e::front, as::quat_rotation_z(as::radians(90.0f)));
+  };
 }
 
 void rubiks_cube_scene_t::input(const SDL_Event& current_event) {
@@ -339,8 +369,7 @@ void rubiks_cube_scene_t::update(
   ImGui::Separator();
 
   if (ImGui::Button("F")) {
-    rotate_steps(
-      rubiks_cube_, side_e::front, as::quat_rotation_z(-as::radians(90.0f)));
+    moves_[move_e::f]();
   }
 
   ImGui::SameLine();
@@ -401,8 +430,7 @@ void rubiks_cube_scene_t::update(
   ImGui::Separator();
 
   if (ImGui::Button("F'")) {
-    rotate_strides(
-      rubiks_cube_, side_e::front, as::quat_rotation_z(as::radians(90.0f)));
+    moves_[move_e::f_p]();
   }
 
   ImGui::SameLine();
@@ -462,7 +490,13 @@ void rubiks_cube_scene_t::update(
   ImGui::Separator();
 
   ImGui::Checkbox("Draw Cubes", &draw_cubes_);
-  ImGui::Checkbox("Draw Stickers", &draw_stickers);
+  ImGui::Checkbox("Draw Stickers", &draw_stickers_);
+
+  ImGui::Separator();
+
+  if (ImGui::Button("Shuffle")) {
+    shuffling_ = true;
+  }
 
   ImGui::End();
 
@@ -515,7 +549,7 @@ void rubiks_cube_scene_t::update(
         color);
     }
 
-    if (draw_stickers) {
+    if (draw_stickers_) {
       const as::vec3 sticker_offset =
         as::vec3(-g_scale * 0.5f, -g_scale * 0.5f, -g_scale * 0.5f);
       for (as::index s = 0; s < rubiks_cube_.pieces_[i].stickers_.size(); s++) {

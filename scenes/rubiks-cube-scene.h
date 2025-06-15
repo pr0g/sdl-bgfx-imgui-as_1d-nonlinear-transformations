@@ -84,6 +84,9 @@ struct rubiks_cube_scene_t : public scene_t {
 
   rubiks_cube_t rubiks_cube_;
 
+  std::array<std::function<void()>, 18> moves_;
+
   bool draw_cubes_ = false;
-  bool draw_stickers = true;
+  bool draw_stickers_ = true;
+  bool shuffling_ = false;
 };
