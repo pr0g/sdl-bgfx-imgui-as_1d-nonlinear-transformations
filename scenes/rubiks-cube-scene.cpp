@@ -330,19 +330,19 @@ void rubiks_cube_scene_t::update(
     rubiks_cube_.slots_[21], rubiks_cube_.slots_[22], rubiks_cube_.slots_[23],
     rubiks_cube_.slots_[24], rubiks_cube_.slots_[25], rubiks_cube_.slots_[26]);
 
-  if (ImGui::Button("Rotate Up CW")) {
+  if (ImGui::Button("U")) {
     rotate_forwards(
       rubiks_cube_, side_e::up, as::quat_rotation_y(as::radians(90.0f)));
   }
 
   ImGui::SameLine();
 
-  if (ImGui::Button("Rotate Up CCW")) {
+  if (ImGui::Button("U'")) {
     rotate_backwards(
       rubiks_cube_, side_e::up, as::quat_rotation_y(-as::radians(90.0f)));
   }
 
-  if (ImGui::Button("Rotate Equator CW")) {
+  if (ImGui::Button("E")) {
     rotate_forwards(
       rubiks_cube_, side_e::equator_ud,
       as::quat_rotation_y(as::radians(90.0f)));
@@ -350,37 +350,37 @@ void rubiks_cube_scene_t::update(
 
   ImGui::SameLine();
 
-  if (ImGui::Button("Rotate Equator CCW")) {
+  if (ImGui::Button("E'")) {
     rotate_backwards(
       rubiks_cube_, side_e::equator_ud,
       as::quat_rotation_y(-as::radians(90.0f)));
   }
 
-  if (ImGui::Button("Rotate Down CW")) {
+  if (ImGui::Button("D")) {
     rotate_backwards(
       rubiks_cube_, side_e::down, as::quat_rotation_y(-as::radians(90.0f)));
   }
 
   ImGui::SameLine();
 
-  if (ImGui::Button("Rotate Down CCW")) {
+  if (ImGui::Button("D'")) {
     rotate_forwards(
       rubiks_cube_, side_e::down, as::quat_rotation_y(as::radians(90.0f)));
   }
 
-  if (ImGui::Button("Rotate Left CW")) {
+  if (ImGui::Button("L")) {
     rotate_forwards(
       rubiks_cube_, side_e::left, as::quat_rotation_x(-as::radians(90.0f)));
   }
 
   ImGui::SameLine();
 
-  if (ImGui::Button("Rotate Left CCW")) {
+  if (ImGui::Button("L'")) {
     rotate_backwards(
       rubiks_cube_, side_e::left, as::quat_rotation_x(as::radians(90.0f)));
   }
 
-  if (ImGui::Button("Rotate Middle CW")) {
+  if (ImGui::Button("M")) {
     rotate_forwards(
       rubiks_cube_, side_e::middle_lr,
       as::quat_rotation_x(-as::radians(90.0f)));
@@ -388,36 +388,36 @@ void rubiks_cube_scene_t::update(
 
   ImGui::SameLine();
 
-  if (ImGui::Button("Rotate Middle CCW")) {
+  if (ImGui::Button("M'")) {
     rotate_backwards(
       rubiks_cube_, side_e::middle_lr, as::quat_rotation_x(as::radians(90.0f)));
   }
 
-  if (ImGui::Button("Rotate Right CW")) {
+  if (ImGui::Button("R")) {
     rotate_backwards(
       rubiks_cube_, side_e::right, as::quat_rotation_x(as::radians(90.0f)));
   }
 
   ImGui::SameLine();
 
-  if (ImGui::Button("Rotate Right CCW")) {
+  if (ImGui::Button("R'")) {
     rotate_forwards(
       rubiks_cube_, side_e::right, as::quat_rotation_x(-as::radians(90.0f)));
   }
 
-  if (ImGui::Button("Rotate Front CW")) {
+  if (ImGui::Button("F")) {
     rotate_backwards(
       rubiks_cube_, side_e::front, as::quat_rotation_z(-as::radians(90.0f)));
   }
 
   ImGui::SameLine();
 
-  if (ImGui::Button("Rotate Front CCW")) {
+  if (ImGui::Button("F'")) {
     rotate_forwards(
       rubiks_cube_, side_e::front, as::quat_rotation_z(as::radians(90.0f)));
   }
 
-  if (ImGui::Button("Rotate Standing CW")) {
+  if (ImGui::Button("S")) {
     rotate_backwards(
       rubiks_cube_, side_e::standing_fb,
       as::quat_rotation_z(-as::radians(90.0f)));
@@ -425,20 +425,20 @@ void rubiks_cube_scene_t::update(
 
   ImGui::SameLine();
 
-  if (ImGui::Button("Rotate Standing CCW")) {
+  if (ImGui::Button("S'")) {
     rotate_forwards(
       rubiks_cube_, side_e::standing_fb,
       as::quat_rotation_z(as::radians(90.0f)));
   }
 
-  if (ImGui::Button("Rotate Back CW")) {
+  if (ImGui::Button("B")) {
     rotate_forwards(
       rubiks_cube_, side_e::back, as::quat_rotation_z(as::radians(90.0f)));
   }
 
   ImGui::SameLine();
 
-  if (ImGui::Button("Rotate Back CCW")) {
+  if (ImGui::Button("B'")) {
     rotate_backwards(
       rubiks_cube_, side_e::back, as::quat_rotation_z(-as::radians(90.0f)));
   }
