@@ -526,6 +526,20 @@ void rubiks_cube_scene_t::update(
       [&uniform_dist, &random_engine] {
         return static_cast<move_e>(uniform_dist(random_engine));
       });
+
+// alternate shuffle approach
+#if 0
+    std::random_device random_device;
+    std::default_random_engine random_engine(random_device());
+    std::vector<int> shuffle_moves;
+    shuffle_moves.resize(18);
+    std::iota(shuffle_moves.begin(), shuffle_moves.end(), 0);
+    std::shuffle(shuffle_moves.begin(), shuffle_moves.end(), random_engine);
+    shuffle_moves_.resize(18);
+    std::transform(
+      shuffle_moves.begin(), shuffle_moves.end(), shuffle_moves_.begin(),
+      [](const int move) { return static_cast<move_e>(move); });
+#endif
   }
 
   ImGui::End();
