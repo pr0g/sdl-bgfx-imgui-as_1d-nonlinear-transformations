@@ -307,126 +307,125 @@ void rubiks_cube_scene_t::setup(
       opposite_moves_.push_back(move_e::f_p);
     }
     rotate_steps(
-      rubiks_cube_, side_e::front, as::quat_rotation_z(-as::radians(90.0f)));
+      rubiks_cube_, side_e::front, as::quat_rotation_z(-as::k_half_pi));
   };
   moves_[move_e::f_p] = [this] {
     if (!reverse_ && !rubiks_cube_.animation_.has_value()) {
       opposite_moves_.push_back(move_e::f);
     }
     rotate_strides(
-      rubiks_cube_, side_e::front, as::quat_rotation_z(as::radians(90.0f)));
+      rubiks_cube_, side_e::front, as::quat_rotation_z(as::k_half_pi));
   };
   moves_[move_e::r] = [this] {
     if (!reverse_ && !rubiks_cube_.animation_.has_value()) {
       opposite_moves_.push_back(move_e::r_p);
     }
     rotate_steps(
-      rubiks_cube_, side_e::right, as::quat_rotation_x(as::radians(90.0f)));
+      rubiks_cube_, side_e::right, as::quat_rotation_x(as::k_half_pi));
   };
   moves_[move_e::r_p] = [this] {
     if (!reverse_ && !rubiks_cube_.animation_.has_value()) {
       opposite_moves_.push_back(move_e::r);
     }
     rotate_strides(
-      rubiks_cube_, side_e::right, as::quat_rotation_x(-as::radians(90.0f)));
+      rubiks_cube_, side_e::right, as::quat_rotation_x(-as::k_half_pi));
   };
   moves_[move_e::u] = [this] {
     if (!reverse_ && !rubiks_cube_.animation_.has_value()) {
       opposite_moves_.push_back(move_e::u_p);
     }
     rotate_strides(
-      rubiks_cube_, side_e::up, as::quat_rotation_y(as::radians(90.0f)));
+      rubiks_cube_, side_e::up, as::quat_rotation_y(as::k_half_pi));
   };
   moves_[move_e::u_p] = [this] {
     if (!reverse_ && !rubiks_cube_.animation_.has_value()) {
       opposite_moves_.push_back(move_e::u);
     }
-    rotate_steps(
-      rubiks_cube_, side_e::up, as::quat_rotation_y(-as::radians(90.0f)));
+    rotate_steps(rubiks_cube_, side_e::up, as::quat_rotation_y(-as::k_half_pi));
   };
   moves_[move_e::b] = [this] {
     if (!reverse_ && !rubiks_cube_.animation_.has_value()) {
       opposite_moves_.push_back(move_e::b_p);
     }
     rotate_strides(
-      rubiks_cube_, side_e::back, as::quat_rotation_z(as::radians(90.0f)));
+      rubiks_cube_, side_e::back, as::quat_rotation_z(as::k_half_pi));
   };
   moves_[move_e::b_p] = [this] {
     if (!reverse_ && !rubiks_cube_.animation_.has_value()) {
       opposite_moves_.push_back(move_e::b);
     }
     rotate_steps(
-      rubiks_cube_, side_e::back, as::quat_rotation_z(-as::radians(90.0f)));
+      rubiks_cube_, side_e::back, as::quat_rotation_z(-as::k_half_pi));
   };
   moves_[move_e::l] = [this] {
     if (!reverse_ && !rubiks_cube_.animation_.has_value()) {
       opposite_moves_.push_back(move_e::l_p);
     }
     rotate_strides(
-      rubiks_cube_, side_e::left, as::quat_rotation_x(-as::radians(90.0f)));
+      rubiks_cube_, side_e::left, as::quat_rotation_x(-as::k_half_pi));
   };
   moves_[move_e::l_p] = [this] {
     if (!reverse_ && !rubiks_cube_.animation_.has_value()) {
       opposite_moves_.push_back(move_e::l);
     }
     rotate_steps(
-      rubiks_cube_, side_e::left, as::quat_rotation_x(as::radians(90.0f)));
+      rubiks_cube_, side_e::left, as::quat_rotation_x(as::k_half_pi));
   };
   moves_[move_e::d] = [this] {
     if (!reverse_ && !rubiks_cube_.animation_.has_value()) {
       opposite_moves_.push_back(move_e::d_p);
     }
     rotate_steps(
-      rubiks_cube_, side_e::down, as::quat_rotation_y(-as::radians(90.0f)));
+      rubiks_cube_, side_e::down, as::quat_rotation_y(-as::k_half_pi));
   };
   moves_[move_e::d_p] = [this] {
     if (!reverse_ && !rubiks_cube_.animation_.has_value()) {
       opposite_moves_.push_back(move_e::d);
     }
     rotate_strides(
-      rubiks_cube_, side_e::down, as::quat_rotation_y(as::radians(90.0f)));
+      rubiks_cube_, side_e::down, as::quat_rotation_y(as::k_half_pi));
   };
   moves_[move_e::m] = [this] {
     if (!reverse_ && !rubiks_cube_.animation_.has_value()) {
       opposite_moves_.push_back(move_e::m_p);
     }
     rotate_strides(
-      rubiks_cube_, side_e::middle, as::quat_rotation_x(-as::radians(90.0f)));
+      rubiks_cube_, side_e::middle, as::quat_rotation_x(-as::k_half_pi));
   };
   moves_[move_e::m_p] = [this] {
     if (!reverse_ && !rubiks_cube_.animation_.has_value()) {
       opposite_moves_.push_back(move_e::m);
     }
     rotate_steps(
-      rubiks_cube_, side_e::middle, as::quat_rotation_x(as::radians(90.0f)));
+      rubiks_cube_, side_e::middle, as::quat_rotation_x(as::k_half_pi));
   };
   moves_[move_e::e] = [this] {
     if (!reverse_ && !rubiks_cube_.animation_.has_value()) {
       opposite_moves_.push_back(move_e::e_p);
     }
     rotate_steps(
-      rubiks_cube_, side_e::equator, as::quat_rotation_y(-as::radians(90.0f)));
+      rubiks_cube_, side_e::equator, as::quat_rotation_y(-as::k_half_pi));
   };
   moves_[move_e::e_p] = [this] {
     if (!reverse_ && !rubiks_cube_.animation_.has_value()) {
       opposite_moves_.push_back(move_e::e);
     }
     rotate_strides(
-      rubiks_cube_, side_e::equator, as::quat_rotation_y(as::radians(90.0f)));
+      rubiks_cube_, side_e::equator, as::quat_rotation_y(as::k_half_pi));
   };
   moves_[move_e::s] = [this] {
     if (!reverse_ && !rubiks_cube_.animation_.has_value()) {
       opposite_moves_.push_back(move_e::s_p);
     }
     rotate_steps(
-      rubiks_cube_, side_e::standing, as::quat_rotation_z(-as::radians(90.0f)));
+      rubiks_cube_, side_e::standing, as::quat_rotation_z(-as::k_half_pi));
   };
   moves_[move_e::s_p] = [this] {
     if (!reverse_ && !rubiks_cube_.animation_.has_value()) {
       opposite_moves_.push_back(move_e::s);
     }
     rotate_strides(
-      rubiks_cube_, side_e::standing, as::quat_rotation_z(as::radians(90.0f)));
+      rubiks_cube_, side_e::standing, as::quat_rotation_z(as::k_half_pi));
   };
 }
 
