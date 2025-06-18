@@ -9,6 +9,10 @@
 #include <array>
 #include <vector>
 
+constexpr as::index g_move_count = 18;
+
+// important - the order of move_e and side_e are coupled and must
+// remain in the same order (f, r, u, b, l, d, m, e, s)
 enum move_e {
   f = 0,
   f_p,
@@ -30,17 +34,21 @@ enum move_e {
   s_p
 };
 
+// important - the order of move_e and side_e are coupled and must
+// remain in the same order (f, r, u, b, l, d, m, e, s)
 enum class side_e {
   front,
-  back,
-  up,
-  down,
-  left,
   right,
+  up,
+  back,
+  left,
+  down,
   middle,
   equator,
   standing
 };
+
+// return cube indices (slots) for a given side
 std::array<as::index, 9> side(side_e side);
 
 struct sticker_t {
@@ -58,11 +66,13 @@ struct piece_t {
   std::vector<sticker_t> stickers_;
 };
 
+// type to hold the begin and end orientation of a cube
 struct transition_t {
   as::quat from_;
   as::quat to_;
 };
 
+// side (or move) animation
 struct animation_t {
   std::array<as::index, 9> indices_;
   std::array<transition_t, 9> transitions_;
@@ -101,7 +111,7 @@ struct rubiks_cube_scene_t : public scene_t {
 
   rubiks_cube_t rubiks_cube_;
 
-  std::array<std::function<void()>, 18> moves_;
+  std::array<std::function<void()>, g_move_count> moves_;
   std::vector<move_e> shuffle_moves_;
   std::vector<move_e> opposite_moves_;
 

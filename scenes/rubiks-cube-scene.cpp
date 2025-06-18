@@ -302,131 +302,87 @@ void rubiks_cube_scene_t::setup(
     }
   }
 
-  moves_[move_e::f] = [this] {
-    if (!reverse_ && !rubiks_cube_.animation_.has_value()) {
-      opposite_moves_.push_back(move_e::f_p);
-    }
-    rotate_steps(
-      rubiks_cube_, side_e::front, as::quat_rotation_z(-as::k_half_pi));
+  const auto opposite_move = [](const move_e move) {
+    const auto move_i = static_cast<int>(move);
+    return static_cast<move_e>(move % 2 == 0 ? move + 1 : move - 1);
   };
-  moves_[move_e::f_p] = [this] {
-    if (!reverse_ && !rubiks_cube_.animation_.has_value()) {
-      opposite_moves_.push_back(move_e::f);
-    }
-    rotate_strides(
-      rubiks_cube_, side_e::front, as::quat_rotation_z(as::k_half_pi));
+
+  // for a given move, return the matching side
+  const auto side = [](const move_e move) {
+    const auto move_i = static_cast<int>(move);
+    return static_cast<side_e>(move_i / 2);
   };
-  moves_[move_e::r] = [this] {
-    if (!reverse_ && !rubiks_cube_.animation_.has_value()) {
-      opposite_moves_.push_back(move_e::r_p);
-    }
-    rotate_steps(
-      rubiks_cube_, side_e::right, as::quat_rotation_x(as::k_half_pi));
+
+  struct move_t {
+    move_e move_;
+    as::quat rotation_;
+    void (*rotate_)(rubiks_cube_t&, side_e, const as::quat&);
   };
-  moves_[move_e::r_p] = [this] {
-    if (!reverse_ && !rubiks_cube_.animation_.has_value()) {
-      opposite_moves_.push_back(move_e::r);
-    }
-    rotate_strides(
-      rubiks_cube_, side_e::right, as::quat_rotation_x(-as::k_half_pi));
-  };
-  moves_[move_e::u] = [this] {
-    if (!reverse_ && !rubiks_cube_.animation_.has_value()) {
-      opposite_moves_.push_back(move_e::u_p);
-    }
-    rotate_strides(
-      rubiks_cube_, side_e::up, as::quat_rotation_y(as::k_half_pi));
-  };
-  moves_[move_e::u_p] = [this] {
-    if (!reverse_ && !rubiks_cube_.animation_.has_value()) {
-      opposite_moves_.push_back(move_e::u);
-    }
-    rotate_steps(rubiks_cube_, side_e::up, as::quat_rotation_y(-as::k_half_pi));
-  };
-  moves_[move_e::b] = [this] {
-    if (!reverse_ && !rubiks_cube_.animation_.has_value()) {
-      opposite_moves_.push_back(move_e::b_p);
-    }
-    rotate_strides(
-      rubiks_cube_, side_e::back, as::quat_rotation_z(as::k_half_pi));
-  };
-  moves_[move_e::b_p] = [this] {
-    if (!reverse_ && !rubiks_cube_.animation_.has_value()) {
-      opposite_moves_.push_back(move_e::b);
-    }
-    rotate_steps(
-      rubiks_cube_, side_e::back, as::quat_rotation_z(-as::k_half_pi));
-  };
-  moves_[move_e::l] = [this] {
-    if (!reverse_ && !rubiks_cube_.animation_.has_value()) {
-      opposite_moves_.push_back(move_e::l_p);
-    }
-    rotate_strides(
-      rubiks_cube_, side_e::left, as::quat_rotation_x(-as::k_half_pi));
-  };
-  moves_[move_e::l_p] = [this] {
-    if (!reverse_ && !rubiks_cube_.animation_.has_value()) {
-      opposite_moves_.push_back(move_e::l);
-    }
-    rotate_steps(
-      rubiks_cube_, side_e::left, as::quat_rotation_x(as::k_half_pi));
-  };
-  moves_[move_e::d] = [this] {
-    if (!reverse_ && !rubiks_cube_.animation_.has_value()) {
-      opposite_moves_.push_back(move_e::d_p);
-    }
-    rotate_steps(
-      rubiks_cube_, side_e::down, as::quat_rotation_y(-as::k_half_pi));
-  };
-  moves_[move_e::d_p] = [this] {
-    if (!reverse_ && !rubiks_cube_.animation_.has_value()) {
-      opposite_moves_.push_back(move_e::d);
-    }
-    rotate_strides(
-      rubiks_cube_, side_e::down, as::quat_rotation_y(as::k_half_pi));
-  };
-  moves_[move_e::m] = [this] {
-    if (!reverse_ && !rubiks_cube_.animation_.has_value()) {
-      opposite_moves_.push_back(move_e::m_p);
-    }
-    rotate_strides(
-      rubiks_cube_, side_e::middle, as::quat_rotation_x(-as::k_half_pi));
-  };
-  moves_[move_e::m_p] = [this] {
-    if (!reverse_ && !rubiks_cube_.animation_.has_value()) {
-      opposite_moves_.push_back(move_e::m);
-    }
-    rotate_steps(
-      rubiks_cube_, side_e::middle, as::quat_rotation_x(as::k_half_pi));
-  };
-  moves_[move_e::e] = [this] {
-    if (!reverse_ && !rubiks_cube_.animation_.has_value()) {
-      opposite_moves_.push_back(move_e::e_p);
-    }
-    rotate_steps(
-      rubiks_cube_, side_e::equator, as::quat_rotation_y(-as::k_half_pi));
-  };
-  moves_[move_e::e_p] = [this] {
-    if (!reverse_ && !rubiks_cube_.animation_.has_value()) {
-      opposite_moves_.push_back(move_e::e);
-    }
-    rotate_strides(
-      rubiks_cube_, side_e::equator, as::quat_rotation_y(as::k_half_pi));
-  };
-  moves_[move_e::s] = [this] {
-    if (!reverse_ && !rubiks_cube_.animation_.has_value()) {
-      opposite_moves_.push_back(move_e::s_p);
-    }
-    rotate_steps(
-      rubiks_cube_, side_e::standing, as::quat_rotation_z(-as::k_half_pi));
-  };
-  moves_[move_e::s_p] = [this] {
-    if (!reverse_ && !rubiks_cube_.animation_.has_value()) {
-      opposite_moves_.push_back(move_e::s);
-    }
-    rotate_strides(
-      rubiks_cube_, side_e::standing, as::quat_rotation_z(as::k_half_pi));
-  };
+
+  std::array<move_t, g_move_count> moves = {
+    {{.move_ = move_e::f,
+      .rotation_ = as::quat_rotation_z(-as::k_half_pi),
+      .rotate_ = rotate_steps},
+     {.move_ = move_e::f_p,
+      .rotation_ = as::quat_rotation_z(as::k_half_pi),
+      .rotate_ = rotate_strides},
+     {.move_ = move_e::r,
+      .rotation_ = as::quat_rotation_x(as::k_half_pi),
+      .rotate_ = rotate_steps},
+     {.move_ = move_e::r_p,
+      .rotation_ = as::quat_rotation_x(-as::k_half_pi),
+      .rotate_ = rotate_strides},
+     {.move_ = move_e::u,
+      .rotation_ = as::quat_rotation_y(as::k_half_pi),
+      .rotate_ = rotate_strides},
+     {.move_ = move_e::u_p,
+      .rotation_ = as::quat_rotation_y(-as::k_half_pi),
+      .rotate_ = rotate_steps},
+     {.move_ = move_e::b,
+      .rotation_ = as::quat_rotation_z(as::k_half_pi),
+      .rotate_ = rotate_strides},
+     {.move_ = move_e::b_p,
+      .rotation_ = as::quat_rotation_z(-as::k_half_pi),
+      .rotate_ = rotate_steps},
+     {.move_ = move_e::l,
+      .rotation_ = as::quat_rotation_x(-as::k_half_pi),
+      .rotate_ = rotate_strides},
+     {.move_ = move_e::l_p,
+      .rotation_ = as::quat_rotation_x(as::k_half_pi),
+      .rotate_ = rotate_steps},
+     {.move_ = move_e::d,
+      .rotation_ = as::quat_rotation_y(-as::k_half_pi),
+      .rotate_ = rotate_steps},
+     {.move_ = move_e::d_p,
+      .rotation_ = as::quat_rotation_y(as::k_half_pi),
+      .rotate_ = rotate_strides},
+     {.move_ = move_e::m,
+      .rotation_ = as::quat_rotation_x(-as::k_half_pi),
+      .rotate_ = rotate_strides},
+     {.move_ = move_e::m_p,
+      .rotation_ = as::quat_rotation_x(as::k_half_pi),
+      .rotate_ = rotate_steps},
+     {.move_ = move_e::e,
+      .rotation_ = as::quat_rotation_y(-as::k_half_pi),
+      .rotate_ = rotate_steps},
+     {.move_ = move_e::e_p,
+      .rotation_ = as::quat_rotation_y(as::k_half_pi),
+      .rotate_ = rotate_strides},
+     {.move_ = move_e::s,
+      .rotation_ = as::quat_rotation_z(-as::k_half_pi),
+      .rotate_ = rotate_steps},
+     {.move_ = move_e::s_p,
+      .rotation_ = as::quat_rotation_z(as::k_half_pi),
+      .rotate_ = rotate_strides}}};
+
+  for (const auto& move : moves) {
+    moves_[move.move_] = [this, move, opposite_move, side] {
+      if (!reverse_ && !rubiks_cube_.animation_.has_value()) {
+        opposite_moves_.push_back(opposite_move(move.move_));
+      }
+      move.rotate_(rubiks_cube_, side(move.move_), move.rotation_);
+    };
+  }
 }
 
 void rubiks_cube_scene_t::input(const SDL_Event& current_event) {
@@ -585,10 +541,10 @@ void rubiks_cube_scene_t::update(
     std::random_device random_device;
     std::default_random_engine random_engine(random_device());
     std::vector<int> shuffle_moves;
-    shuffle_moves.resize(18);
+    shuffle_moves.resize(g_move_count);
     std::iota(shuffle_moves.begin(), shuffle_moves.end(), 0);
     std::shuffle(shuffle_moves.begin(), shuffle_moves.end(), random_engine);
-    shuffle_moves_.resize(18);
+    shuffle_moves_.resize(g_move_count);
     std::transform(
       shuffle_moves.begin(), shuffle_moves.end(), shuffle_moves_.begin(),
       [](const int move) { return static_cast<move_e>(move); });
