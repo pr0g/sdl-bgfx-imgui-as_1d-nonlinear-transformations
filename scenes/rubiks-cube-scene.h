@@ -103,7 +103,9 @@ struct rubiks_cube_scene_t : public scene_t {
 
   std::array<std::function<void()>, 18> moves_;
   std::vector<move_e> shuffle_moves_;
+  std::vector<move_e> opposite_moves_;
 
   bool draw_cubes_ = false;
   bool draw_stickers_ = true;
+  bool reverse_ = false;
 };
