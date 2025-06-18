@@ -557,6 +557,16 @@ void rubiks_cube_scene_t::update(
     }
   }
 
+  ImGui::Separator();
+
+  const auto solved = std::all_of(
+    rubiks_cube_.slots_.begin(), rubiks_cube_.slots_.end(),
+    [this, i = 0](as::index index) mutable { return index == i++; });
+
+  ImGui::Text(
+    "%s", solved && !rubiks_cube_.animation_.has_value() ? "SOLVED!"
+                                                         : "Not solved...");
+
   ImGui::End();
 
   target_camera_ = camera_system_.stepCamera(target_camera_, delta_time);
