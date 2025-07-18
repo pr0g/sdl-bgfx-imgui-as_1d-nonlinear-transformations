@@ -59,6 +59,7 @@ target_sources(
           scenes/arcball-scene.cpp
           scenes/list-scene.cpp
           scenes/rubiks-cube-scene.cpp
+          scenes/csg-scene.cpp
           math-utils.cpp)
 
 target_link_libraries(
