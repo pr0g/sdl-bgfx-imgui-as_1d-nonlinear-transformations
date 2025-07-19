@@ -34,9 +34,19 @@ FetchContent_Declare(
   as
   GIT_REPOSITORY https://github.com/pr0g/as.git
   GIT_TAG 9355e7572b354cdce950cedd131acd68a910804c)
+FetchContent_Declare(
+  bec
+  GIT_REPOSITORY https://github.com/pr0g/bit-field-enum-class.git
+  GIT_TAG e68e6e1ce87335c14b005e410c68160ec8ea8aa6)
 
-FetchContent_MakeAvailable(as-camera-input-sdl as EasyIterator thh-bgfx-debug
-                           hierarchy nlohmann-json)
+FetchContent_MakeAvailable(
+  as-camera-input-sdl
+  as
+  EasyIterator
+  thh-bgfx-debug
+  hierarchy
+  nlohmann-json
+  bec)
 
 add_executable(${PROJECT_NAME})
 target_sources(
@@ -72,7 +82,8 @@ target_link_libraries(
           thh-bgfx-debug
           hierarchy
           nlohmann_json::nlohmann_json
-          as)
+          as
+          bec)
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR})
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
