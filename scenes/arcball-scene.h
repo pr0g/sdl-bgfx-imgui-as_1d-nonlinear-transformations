@@ -24,7 +24,7 @@ struct arcball_scene_t : public scene_t
     uint16_t height) override;
   void input(const SDL_Event& current_event) override;
   void update(debug_draw_t& debug_draw, float delta_time) override;
-  void teardown() override {}
+  void teardown() override;
 
   std::vector<PosNormalVertex> ship_vertices_;
   std::vector<uint16_t> ship_indices_;

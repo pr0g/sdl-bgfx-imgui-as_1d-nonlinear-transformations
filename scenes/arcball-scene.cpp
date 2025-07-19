@@ -11,15 +11,13 @@
 
 static const float g_start_height = 5.0f;
 
-float aspect(const as::vec2i& screen_dimension)
-{
+static float aspect(const as::vec2i& screen_dimension) {
   return (float)screen_dimension.x / (float)screen_dimension.y;
 }
 
 void arcball_scene_t::setup(
   const bgfx::ViewId main_view, const bgfx::ViewId ortho_view,
-  const uint16_t width, const uint16_t height)
-{
+  const uint16_t width, const uint16_t height) {
   pos_norm_vert_layout_.begin()
     .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
     .add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float, true)
@@ -81,8 +79,9 @@ void arcball_scene_t::setup(
     bgfx::makeRef(
       ship_vertices_.data(), ship_vertices_.size() * sizeof(PosNormalVertex)),
     pos_norm_vert_layout_);
-  ship_norm_ibh_ = bgfx::createIndexBuffer(bgfx::makeRef(
-    ship_indices_.data(), ship_indices_.size() * sizeof(uint16_t)));
+  ship_norm_ibh_ = bgfx::createIndexBuffer(
+    bgfx::makeRef(
+      ship_indices_.data(), ship_indices_.size() * sizeof(uint16_t)));
 
   program_norm_ =
     createShaderProgram(
@@ -106,15 +105,13 @@ void arcball_scene_t::setup(
 }
 
 static as::vec2 ndc_from_screen(
-  const as::vec2i& screen, const as::vec2i& dimension)
-{
+  const as::vec2i& screen, const as::vec2i& dimension) {
   return as::vec2(
     (2.0f * screen.x / dimension.x - 1.0f) * aspect(dimension),
     2.0f * screen.y / dimension.y - 1.0f);
 }
 
-void arcball_scene_t::input(const SDL_Event& current_event)
-{
+void arcball_scene_t::input(const SDL_Event& current_event) {
   if (ImGui::GetIO().WantCaptureMouse) {
     return;
   }
@@ -160,8 +157,7 @@ void arcball_scene_t::input(const SDL_Event& current_event)
 }
 
 static as::vec3 mouse_on_sphere(
-  const as::vec2& mouse, const as::vec2& center, const float radius)
-{
+  const as::vec2& mouse, const as::vec2& center, const float radius) {
   auto ball_mouse = as::vec3((mouse - center) / radius, 0.0f);
   auto mag = as::vec_dot(ball_mouse, ball_mouse);
   if (mag > 1.0f) {
@@ -175,8 +171,7 @@ static as::vec3 mouse_on_sphere(
 }
 
 // halve arc between unit vectors v0 and v1
-as::vec3 bisect(const as::vec3& v0, const as::vec3& v1)
-{
+as::vec3 bisect(const as::vec3& v0, const as::vec3& v1) {
   const as::vec3 v = v0 + v1;
   if (const float length = as::vec_length_sq(v); length < 1.0e-5f) {
     return as::vec3(0.0f, 0.0f, 1.0f);
@@ -187,8 +182,7 @@ as::vec3 bisect(const as::vec3& v0, const as::vec3& v1)
 
 static void draw_arc(
   dbg::DebugLines& debug_lines_screen, const as::vec3& from, const as::vec3& to,
-  const as::vec2& position, const uint32_t color)
-{
+  const as::vec2& position, const uint32_t color) {
   const int segment_count = 16;
   as::vec3 pts[segment_count + 1];
   pts[0] = from;
@@ -210,8 +204,7 @@ static void draw_arc(
 
 static void draw_half_arc(
   dbg::DebugLines& debug_lines_screen, const as::vec3& n,
-  const as::vec2& position, const uint32_t color)
-{
+  const as::vec2& position, const uint32_t color) {
   as::vec3 p, m;
   p.z = 0.0f;
   if (n.z != 1.0f) {
@@ -234,8 +227,7 @@ static void draw_half_arc(
 static void draw_constraints(
   dbg::DebugLines& debug_lines_screen, const as::mat3& now,
   const std::optional<as::index> axis_index, const as::vec2& position,
-  const bool dragging)
-{
+  const bool dragging) {
   for (as::index i = 0; i < as::mat3::dim(); i++) {
     draw_half_arc(
       debug_lines_screen, as::mat_col(now, i), position,
@@ -249,8 +241,7 @@ static void draw_constraints(
 }
 
 static as::vec3 constrain_to_axis(
-  const as::vec3& unconstrained, const as::vec3& axis)
-{
+  const as::vec3& unconstrained, const as::vec3& axis) {
   as::vec3 point_on_plane =
     unconstrained - (axis * as::vec_dot(axis, unconstrained));
   const float length_sq = as::vec_length_sq(point_on_plane);
@@ -267,8 +258,7 @@ static as::vec3 constrain_to_axis(
 }
 
 static as::index nearest_constraint_axis(
-  const as::vec3& unconstrained, const as::mat3& axes)
-{
+  const as::vec3& unconstrained, const as::mat3& axes) {
   float max = -1.0f;
   as::index nearest = 0;
   for (as::index i = 0; i < as::mat3::dim(); ++i) {
@@ -283,8 +273,7 @@ static as::index nearest_constraint_axis(
   return nearest;
 }
 
-void arcball_scene_t::update(debug_draw_t& debug_draw, const float delta_time)
-{
+void arcball_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
   ImGui::Begin("Arcball");
   float position_imgui[2];
   as::vec_to_arr(sphere_position_, position_imgui);
@@ -400,4 +389,12 @@ void arcball_scene_t::update(debug_draw_t& debug_draw, const float delta_time)
     axis_index_,
     as::vec2(sphere_position_.x, -sphere_position_.y) * 1.0f / sphere_radius_,
     dragging_);
+}
+
+void arcball_scene_t::teardown() {
+  bgfx::destroy(u_light_pos_);
+  bgfx::destroy(u_camera_pos_);
+  bgfx::destroy(program_norm_);
+  bgfx::destroy(ship_norm_ibh_);
+  bgfx::destroy(ship_norm_vbh_);
 }

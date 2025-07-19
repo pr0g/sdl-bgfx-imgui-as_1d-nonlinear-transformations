@@ -6,14 +6,12 @@
 #include <optional>
 #include <string>
 
-struct PosColorVertex
-{
+struct PosColorVertex {
   as::vec3 position_;
   uint32_t abgr_;
 };
 
-struct PosNormalVertex
-{
+struct PosNormalVertex {
   as::vec3 position_;
   as::vec3 normal_;
 };
