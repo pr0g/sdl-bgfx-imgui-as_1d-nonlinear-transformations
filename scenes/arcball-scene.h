@@ -17,8 +17,7 @@
 // the original license can be found here
 // https://github.com/erich666/GraphicsGems/blob/master/LICENSE.md
 
-struct arcball_scene_t : public scene_t
-{
+struct arcball_scene_t : public scene_t {
   void setup(
     bgfx::ViewId main_view, bgfx::ViewId ortho_view, uint16_t width,
     uint16_t height) override;
@@ -36,7 +35,9 @@ struct arcball_scene_t : public scene_t
 
   bgfx::UniformHandle u_light_pos_;
   bgfx::UniformHandle u_camera_pos_;
+  bgfx::UniformHandle u_model_color_;
   as::vec3 light_pos_{0.0f, 8.0f, 8.0f};
+  as::vec3 model_color_{0.0f, 0.9f, 0.0f};
 
   as::vec2i screen_dimension_;
   as::mat4 perspective_projection_;

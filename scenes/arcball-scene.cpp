@@ -95,6 +95,8 @@ void arcball_scene_t::setup(
   u_light_pos_ = bgfx::createUniform("u_lightPos", bgfx::UniformType::Vec4, 1);
   u_camera_pos_ =
     bgfx::createUniform("u_cameraPos", bgfx::UniformType::Vec4, 1);
+  u_model_color_ =
+    bgfx::createUniform("u_modelColor", bgfx::UniformType::Vec4, 1);
 
   asci::Cameras& cameras = camera_system_.cameras_;
   cameras.addCamera(&first_person_rotate_camera_);
@@ -345,6 +347,7 @@ void arcball_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
 
   bgfx::setUniform(u_light_pos_, (void*)&light_pos_, 1);
   bgfx::setUniform(u_camera_pos_, (void*)&camera_.pivot, 1);
+  bgfx::setUniform(u_model_color_, (void*)&model_color_, 1);
 
   bgfx::setVertexBuffer(0, ship_norm_vbh_);
   bgfx::setIndexBuffer(ship_norm_ibh_);
@@ -394,6 +397,7 @@ void arcball_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
 void arcball_scene_t::teardown() {
   bgfx::destroy(u_light_pos_);
   bgfx::destroy(u_camera_pos_);
+  bgfx::destroy(u_model_color_);
   bgfx::destroy(program_norm_);
   bgfx::destroy(ship_norm_ibh_);
   bgfx::destroy(ship_norm_vbh_);
