@@ -362,7 +362,9 @@ void csg_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
 
   bgfx::setVertexBuffer(0, csg_norm_vbh_);
   bgfx::setIndexBuffer(csg_norm_ibh_);
-  bgfx::setState(BGFX_STATE_DEFAULT | BGFX_STATE_CULL_CCW);
+  bgfx::setState(
+    BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z
+    | BGFX_STATE_DEPTH_TEST_LESS | BGFX_STATE_MSAA | BGFX_STATE_CULL_CCW);
   bgfx::submit(main_view_, program_norm_);
 }
 
