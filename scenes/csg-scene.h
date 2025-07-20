@@ -105,8 +105,6 @@ struct csg_scene_t : public scene_t {
   bgfx::ViewId main_view_;
   bgfx::ViewId ortho_view_;
 
-  csg_t cube_;
-
   std::vector<PosNormalVertex> csg_vertices_;
   std::vector<uint16_t> csg_indices_;
 

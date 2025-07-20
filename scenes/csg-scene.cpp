@@ -53,11 +53,11 @@ void csg_split_polygon_by_plane(
 
   using bec::operator|=;
   using bec::operator|;
-  polygon_type_e polygon_type;
+  polygon_type_e polygon_type = polygon_type_e::coplanar;
   std::vector<polygon_type_e> types;
   for (const auto vertex : polygon.vertices) {
     const float t = as::vec_dot(plane.normal, vertex.pos) - plane.w;
-    const polygon_type_e type = (t < g_plane_epsilon) ? polygon_type_e::back
+    const polygon_type_e type = (t < -g_plane_epsilon) ? polygon_type_e::back
                               : (t > g_plane_epsilon)
                                 ? polygon_type_e::front
                                 : polygon_type_e::coplanar;
@@ -179,8 +179,9 @@ void csg_build_node(csg_node_t& node, const csg_polygons_t& polygons) {
   if (polygons.empty()) {
     return;
   }
-  csg_node_t csg_node;
-  csg_node.plane = polygons[0].plane;
+  if (!node.plane.has_value()) {
+    node.plane = polygons[0].plane;
+  }
   csg_polygons_t front;
   csg_polygons_t back;
   for (int i = 0; i < polygons.size(); i++) {
@@ -279,11 +280,15 @@ void csg_scene_t::setup(
     .add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float, true)
     .end();
 
-  cube_ = csg_cube(as::vec3f::zero(), as::vec3f(0.5f, 0.5f, 0.5f));
+  const auto csg_cube_1 =
+    csg_cube(as::vec3f::zero(), as::vec3f(0.5f, 1.5f, 0.5f));
+  const auto csg_cube_2 =
+    csg_cube(as::vec3f::zero(), as::vec3f(2.5f, 0.5f, 0.5f));
+  const auto cube_union = csg_union(csg_cube_1, csg_cube_2);
 
   std::unordered_map<csg_vertex_t, int, csg_vertex_hash_t, csg_vertex_equals_t>
     indexer;
-  for (const csg_polygon_t& polygon : cube_.polygons) {
+  for (const csg_polygon_t& polygon : cube_union.polygons) {
     std::vector<int> indices;
     for (const csg_vertex_t vertex : polygon.vertices) {
       if (const auto index = indexer.find(vertex); index == indexer.end()) {
@@ -301,8 +306,6 @@ void csg_scene_t::setup(
       csg_indices_.push_back(indices[i]);
     }
   }
-  // csg_indices_.resize(csg_vertices_.size());
-  // std::iota(csg_indices_.begin(), csg_indices_.end(), (uint16_t)0);
 
   csg_norm_vbh_ = bgfx::createVertexBuffer(
     bgfx::makeRef(
