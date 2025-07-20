@@ -20,7 +20,7 @@ struct CellPositions;
 } // namespace mc
 
 template<class T>
-inline void hashCombine(std::size_t& seed, const T& v)
+inline void hash_combine(std::size_t& seed, const T& v)
 {
   std::hash<T> hasher;
   seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
@@ -35,9 +35,9 @@ struct hash<as::vec3>
   std::size_t operator()(const as::vec3& vec) const
   {
     size_t seed = 0;
-    hashCombine(seed, vec.x);
-    hashCombine(seed, vec.y);
-    hashCombine(seed, vec.z);
+    hash_combine(seed, vec.x);
+    hash_combine(seed, vec.y);
+    hash_combine(seed, vec.z);
     return seed;
   }
 };

@@ -10,6 +10,34 @@
 #include <thh-bgfx-debug/debug-cube.hpp>
 #include <thh-bgfx-debug/debug-quad.hpp>
 
+namespace ei = easy_iterator;
+
+template<class T>
+void hash_combine(std::size_t& seed, const T& v) {
+  std::hash<T> hasher;
+  seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+}
+
+struct csg_vertex_hash_t {
+  std::size_t operator()(const csg_vertex_t& vertex) const noexcept {
+    size_t seed = 0;
+    hash_combine(seed, vertex.pos.x);
+    hash_combine(seed, vertex.pos.y);
+    hash_combine(seed, vertex.pos.z);
+    hash_combine(seed, vertex.normal.x);
+    hash_combine(seed, vertex.normal.y);
+    hash_combine(seed, vertex.normal.z);
+    return seed;
+  }
+};
+
+struct csg_vertex_equals_t {
+  bool operator()(
+    const csg_vertex_t& lhs, const csg_vertex_t& rhs) const noexcept {
+    return lhs.pos == rhs.pos && lhs.normal == rhs.normal;
+  }
+};
+
 static constexpr float g_plane_epsilon = 1e-5f;
 
 enum class polygon_type_e { coplanar, front, back, spanning };
@@ -217,9 +245,9 @@ csg_t csg_cube(const as::vec3f& center, const as::vec3f& radius) {
         info.first.begin(), info.first.end(), std::back_inserter(vertices),
         [&center, &radius, &info](const int i) {
           const auto pos = as::vec3f(
-            center.x + radius.x * (2.0f * (i & 1) - 1.0f),
-            center.y + radius.y * (2.0f * (i & 2) - 1.0f),
-            center.z + radius.z * (2.0f * (i & 4) - 1.0f));
+            center.x + radius.x * (2.0f * !!(i & 1) - 1.0f),
+            center.y + radius.y * (2.0f * !!(i & 2) - 1.0f),
+            center.z + radius.z * (2.0f * !!(i & 4) - 1.0f));
           return csg_vertex_t{.pos = pos, .normal = info.second};
         });
       return csg_polygon_from_vertices(vertices);
@@ -246,7 +274,57 @@ void csg_scene_t::setup(
   target_camera_.yaw = as::radians(45.0f);
   camera_ = target_camera_;
 
+  pos_norm_vert_layout_.begin()
+    .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+    .add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float, true)
+    .end();
+
   cube_ = csg_cube(as::vec3f::zero(), as::vec3f(0.5f, 0.5f, 0.5f));
+
+  std::unordered_map<csg_vertex_t, int, csg_vertex_hash_t, csg_vertex_equals_t>
+    indexer;
+  for (const csg_polygon_t& polygon : cube_.polygons) {
+    std::vector<int> indices;
+    for (const csg_vertex_t vertex : polygon.vertices) {
+      if (const auto index = indexer.find(vertex); index == indexer.end()) {
+        indices.push_back(indexer.size());
+        indexer.insert({vertex, indexer.size()});
+        csg_vertices_.push_back(
+          PosNormalVertex{.position_ = vertex.pos, .normal_ = vertex.normal});
+      } else {
+        indices.push_back(index->second);
+      }
+    }
+    for (int i = 2; i < indices.size(); i++) {
+      csg_indices_.push_back(indices[0]);
+      csg_indices_.push_back(indices[i - 1]);
+      csg_indices_.push_back(indices[i]);
+    }
+  }
+  // csg_indices_.resize(csg_vertices_.size());
+  // std::iota(csg_indices_.begin(), csg_indices_.end(), (uint16_t)0);
+
+  csg_norm_vbh_ = bgfx::createVertexBuffer(
+    bgfx::makeRef(
+      csg_vertices_.data(), csg_vertices_.size() * sizeof(PosNormalVertex)),
+    pos_norm_vert_layout_);
+  csg_norm_ibh_ = bgfx::createIndexBuffer(
+    bgfx::makeRef(csg_indices_.data(), csg_indices_.size() * sizeof(uint16_t)));
+
+  program_norm_ =
+    createShaderProgram(
+      "shader/basic-lighting/v_basic.bin", "shader/basic-lighting/f_basic.bin")
+      .value_or(bgfx::ProgramHandle(BGFX_INVALID_HANDLE));
+
+  if (!isValid(program_norm_)) {
+    std::terminate();
+  }
+
+  u_light_pos_ = bgfx::createUniform("u_lightPos", bgfx::UniformType::Vec4, 1);
+  u_camera_pos_ =
+    bgfx::createUniform("u_cameraPos", bgfx::UniformType::Vec4, 1);
+  u_model_color_ =
+    bgfx::createUniform("u_modelColor", bgfx::UniformType::Vec4, 1);
 }
 
 void csg_scene_t::input(const SDL_Event& current_event) {
@@ -257,4 +335,39 @@ void csg_scene_t::input(const SDL_Event& current_event) {
 }
 
 void csg_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
+  target_camera_ = camera_system_.stepCamera(target_camera_, delta_time);
+  camera_ = asci::smoothCamera(
+    camera_, target_camera_, asci::SmoothProps{}, delta_time);
+
+  float view[16];
+  as::mat_to_arr(as::mat4_from_affine(camera_.view()), view);
+  float proj[16];
+  as::mat_to_arr(perspective_projection_, proj);
+
+  bgfx::setViewTransform(main_view_, view, proj);
+
+  const auto offset = as::mat4::identity();
+
+  float model[16];
+  as::mat_to_arr(offset, model);
+
+  bgfx::setTransform(model);
+
+  bgfx::setUniform(u_light_pos_, (void*)&light_pos_, 1);
+  bgfx::setUniform(u_camera_pos_, (void*)&camera_.pivot, 1);
+  bgfx::setUniform(u_model_color_, (void*)&model_color_, 1);
+
+  bgfx::setVertexBuffer(0, csg_norm_vbh_);
+  bgfx::setIndexBuffer(csg_norm_ibh_);
+  bgfx::setState(BGFX_STATE_DEFAULT | BGFX_STATE_CULL_CCW);
+  bgfx::submit(main_view_, program_norm_);
+}
+
+void csg_scene_t::teardown() {
+  bgfx::destroy(u_light_pos_);
+  bgfx::destroy(u_camera_pos_);
+  bgfx::destroy(u_model_color_);
+  bgfx::destroy(program_norm_);
+  bgfx::destroy(csg_norm_ibh_);
+  bgfx::destroy(csg_norm_vbh_);
 }
