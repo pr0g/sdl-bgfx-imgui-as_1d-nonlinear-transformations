@@ -19,8 +19,9 @@ struct bec::EnableBitMaskOperators<polygon_type_e> {
 };
 
 void csg_split_polygon_by_plane(
-  const csg_polygon_t& polygon, const plane_t& plane, csg_polygons_t& coplanarFront,
-  csg_polygons_t& coplanarBack, csg_polygons_t& front, csg_polygons_t& back) {
+  const csg_polygon_t& polygon, const plane_t& plane,
+  csg_polygons_t& coplanarFront, csg_polygons_t& coplanarBack,
+  csg_polygons_t& front, csg_polygons_t& back) {
 
   using bec::operator|=;
   using bec::operator|;
@@ -87,6 +88,9 @@ csg_polygon_t csg_flip_polygon(const csg_polygon_t& polygon) {
   flipped_polygon.vertices = polygon.vertices;
   std::reverse(
     flipped_polygon.vertices.begin(), flipped_polygon.vertices.end());
+  std::for_each(
+    flipped_polygon.vertices.begin(), flipped_polygon.vertices.end(),
+    [](csg_vertex_t& v) { v.normal = -v.normal; });
   flipped_polygon.plane = csg_flip_plane(polygon.plane);
   return flipped_polygon;
 }
@@ -99,13 +103,15 @@ csg_polygon_t csg_polygon_from_vertices(
       csg_plane_from_points(vertices[0].pos, vertices[1].pos, vertices[2].pos)};
 }
 
-csg_polygons_t csg_clip_polygons(const csg_node_t& node, const csg_polygons_t& polygons) {
+csg_polygons_t csg_clip_polygons(
+  const csg_node_t& node, const csg_polygons_t& polygons) {
   if (!node.plane.has_value()) {
     return polygons;
   }
   csg_polygons_t front, back;
   for (int i = 0; i < polygons.size(); i++) {
-    csg_split_polygon_by_plane(polygons[i], *node.plane, front, back, front, back);
+    csg_split_polygon_by_plane(
+      polygons[i], *node.plane, front, back, front, back);
   }
   if (node.front) {
     front = csg_clip_polygons(*node.front, front);
@@ -167,6 +173,60 @@ void csg_build_node(csg_node_t& node, const csg_polygons_t& polygons) {
   }
 }
 
+void csg_invert(csg_node_t& node) {
+  for (int i = 0; i < node.polygons.size(); i++) {
+    node.polygons[i] = csg_flip_polygon(node.polygons[i]);
+  }
+  node.plane = csg_flip_plane(*node.plane);
+  if (node.front) {
+    csg_invert(*node.front);
+  }
+  if (node.back) {
+    csg_invert(*node.back);
+  }
+  std::swap(node.front, node.back);
+}
+
+csg_t csg_union(const csg_t& lhs, const csg_t& rhs) {
+  csg_node_t a, b;
+  csg_build_node(a, lhs.polygons);
+  csg_build_node(b, rhs.polygons);
+  csg_clip_to(a, b);
+  csg_clip_to(b, a);
+  csg_invert(b);
+  csg_clip_to(b, a);
+  csg_invert(b);
+  csg_build_node(a, csg_all_polygons(b));
+  return csg_from_polygons(a.polygons);
+}
+
+// shapes
+
+csg_t csg_cube(const as::vec3f& center, const as::vec3f& radius) {
+  using info_t = std::pair<std::array<int, 4>, as::vec3f>;
+  std::vector<info_t> info = {
+    {{0, 4, 6, 2}, {-1.0f, 0.0f, 0.0f}}, {{1, 3, 7, 5}, {1.0f, 0.0f, 0.0f}},
+    {{0, 1, 5, 4}, {0.0f, -1.0f, 0.0f}}, {{2, 6, 7, 3}, {0.0f, 1.0f, 0.0f}},
+    {{0, 2, 3, 1}, {0.0f, 0.0f, -1.0f}}, {{4, 5, 7, 6}, {0.0f, 0.0f, 1.0f}}};
+  csg_polygons_t polygons;
+  std::transform(
+    info.begin(), info.end(), std::back_inserter(polygons),
+    [&center, &radius](const info_t& info) {
+      std::vector<csg_vertex_t> vertices;
+      std::transform(
+        info.first.begin(), info.first.end(), std::back_inserter(vertices),
+        [&center, &radius, &info](const int i) {
+          const auto pos = as::vec3f(
+            center.x + radius.x * (2.0f * (i & 1) - 1.0f),
+            center.y + radius.y * (2.0f * (i & 2) - 1.0f),
+            center.z + radius.z * (2.0f * (i & 4) - 1.0f));
+          return csg_vertex_t{.pos = pos, .normal = info.second};
+        });
+      return csg_polygon_from_vertices(vertices);
+    });
+  return csg_t{.polygons = polygons};
+}
+
 void csg_scene_t::setup(
   const bgfx::ViewId main_view, const bgfx::ViewId ortho_view,
   const uint16_t width, const uint16_t height) {
@@ -185,6 +245,8 @@ void csg_scene_t::setup(
   target_camera_.pitch = as::radians(30.0f);
   target_camera_.yaw = as::radians(45.0f);
   camera_ = target_camera_;
+
+  cube_ = csg_cube(as::vec3f::zero(), as::vec3f(0.5f, 0.5f, 0.5f));
 }
 
 void csg_scene_t::input(const SDL_Event& current_event) {
