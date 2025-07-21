@@ -82,8 +82,8 @@ void csg_split_polygon_by_plane(
       back.push_back(polygon);
       break;
     case polygon_type_e::spanning: {
-      std::vector<csg_vertex_t> f;
-      std::vector<csg_vertex_t> b;
+      csg_vertices_t f;
+      csg_vertices_t b;
       for (int i = 0; i < polygon.vertices.size(); i++) {
         const int j = (i + 1) % polygon.vertices.size();
         const polygon_type_e ti = types[i];
@@ -126,8 +126,7 @@ csg_polygon_t csg_flip_polygon(const csg_polygon_t& polygon) {
   return flipped_polygon;
 }
 
-csg_polygon_t csg_polygon_from_vertices(
-  const std::vector<csg_vertex_t>& vertices) {
+csg_polygon_t csg_polygon_from_vertices(const csg_vertices_t& vertices) {
   return csg_polygon_t{
     .vertices = vertices,
     .plane =
@@ -275,7 +274,7 @@ csg_t csg_cube(const as::vec3f& center, const as::vec3f& radius) {
   std::transform(
     info.begin(), info.end(), std::back_inserter(polygons),
     [&center, &radius](const info_t& info) {
-      std::vector<csg_vertex_t> vertices;
+      csg_vertices_t vertices;
       std::transform(
         info.first.begin(), info.first.end(), std::back_inserter(vertices),
         [&center, &radius, &info](const int i) {
@@ -290,14 +289,52 @@ csg_t csg_cube(const as::vec3f& center, const as::vec3f& radius) {
   return csg_t{.polygons = polygons};
 }
 
+csg_t csg_sphere(const as::vec3f& center, float radius) {
+  csg_polygons_t polygons;
+  const auto vertex =
+    [&center,
+     radius](const float theta, const float phi, csg_vertices_t& vertices) {
+      const float theta_rad = theta * as::k_two_pi;
+      const float phi_rad = phi * as::k_pi;
+      const as::vec3f dir = as::vec3f(
+        std::cos(theta_rad) * std::sin(phi_rad), std::cos(phi_rad),
+        std::sin(theta_rad) * std::sin(phi_rad));
+      vertices.push_back(
+        csg_vertex_t{.pos = center + dir * radius, .normal = dir});
+    };
+  const int slices = 16;
+  const int stacks = 8;
+  for (int i = 0; i < slices; i++) {
+    for (int j = 0; j < stacks; j++) {
+      csg_vertices_t vertices;
+      vertex(i / (float)slices, j / (float)stacks, vertices);
+      if (j > 0) {
+        vertex((i + 1) / (float)slices, j / (float)stacks, vertices);
+      }
+      if (j < stacks - 1) {
+        vertex((i + 1) / (float)slices, (j + 1) / (float)stacks, vertices);
+      }
+      vertex(i / (float)slices, (j + 1) / (float)stacks, vertices);
+      polygons.push_back(csg_polygon_from_vertices(vertices));
+    }
+  }
+  return csg_from_polygons(std::move(polygons));
+}
+
 static void setup_cube(
   std::vector<PosNormalVertex>& csg_vertices,
   std::vector<uint16_t>& csg_indices) {
   const auto csg_cube_1 =
-    csg_cube(as::vec3f::zero(), as::vec3f(0.5f, 1.5f, 0.5f));
+    // csg_cube(as::vec3f::zero(), as::vec3f(0.5f, 1.5f, 0.5f));
+    csg_sphere(as::vec3f::zero(), 1.0f);
   const auto csg_cube_2 =
-    csg_cube(as::vec3f::zero(), as::vec3f(2.5f, 0.5f, 0.5f));
-  const auto csg_result = csg_intersect(csg_cube_1, csg_cube_2);
+    // csg_cube(as::vec3f::zero(), as::vec3f(2.5f, 0.2f, 0.2f));
+    csg_sphere(as::vec3f(0.5f, 0.0f, 0.5f), 0.8f);
+  const auto csg_cube_3 =
+    // csg_cube(as::vec3f::zero(), as::vec3f(2.5f, 0.2f, 0.2f));
+    csg_sphere(as::vec3f(-0.5, 0.0, -0.5), 0.8f);
+  const auto temp = csg_subtract(csg_cube_1, csg_cube_2);
+  const auto csg_result = csg_subtract(temp, csg_cube_3);
 
   std::unordered_map<csg_vertex_t, int, csg_vertex_hash_t, csg_vertex_equals_t>
     indexer;

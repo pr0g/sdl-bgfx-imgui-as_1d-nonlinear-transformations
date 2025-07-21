@@ -20,8 +20,10 @@ struct csg_vertex_t {
   as::vec3f normal;
 };
 
+using csg_vertices_t = std::vector<csg_vertex_t>;
+
 struct csg_polygon_t {
-  std::vector<csg_vertex_t> vertices;
+  csg_vertices_t vertices;
   plane_t plane;
 };
 
@@ -60,8 +62,7 @@ inline csg_vertex_t csg_interpolate(
 
 csg_polygon_t csg_flip_polygon(const csg_polygon_t& polygon);
 
-csg_polygon_t csg_polygon_from_vertices(
-  const std::vector<csg_vertex_t>& vertices);
+csg_polygon_t csg_polygon_from_vertices(const csg_vertices_t& vertices);
 
 void csg_split_polygon_by_plane(
   const csg_polygon_t& polygon_t, const plane_t& plane,
@@ -86,6 +87,7 @@ csg_t csg_intersect(const csg_t& lhs, const csg_t& rhs);
 // shapes
 
 csg_t csg_cube(const as::vec3f& position, float radius);
+csg_t csg_sphere(const as::vec3f& position, float radius);
 
 struct csg_scene_t : public scene_t {
   void setup(
