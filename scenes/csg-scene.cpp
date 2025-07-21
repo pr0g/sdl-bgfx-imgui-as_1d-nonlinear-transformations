@@ -10,6 +10,9 @@
 #include <thh-bgfx-debug/debug-cube.hpp>
 #include <thh-bgfx-debug/debug-quad.hpp>
 
+#include <format>
+#include <iostream>
+
 namespace ei = easy_iterator;
 
 template<class T>
@@ -146,6 +149,8 @@ csg_polygons_t csg_clip_polygons(
   }
   if (node.back) {
     back = csg_clip_polygons(*node.back, back);
+  } else {
+    back.clear();
   }
   front.insert(front.end(), back.begin(), back.end());
   return front;
@@ -226,7 +231,7 @@ csg_t csg_union(const csg_t& lhs, const csg_t& rhs) {
   csg_clip_to(b, a);
   csg_invert(b);
   csg_build_node(a, csg_all_polygons(b));
-  return csg_from_polygons(a.polygons);
+  return csg_from_polygons(csg_all_polygons(a));
 }
 
 // shapes
@@ -256,6 +261,37 @@ csg_t csg_cube(const as::vec3f& center, const as::vec3f& radius) {
   return csg_t{.polygons = polygons};
 }
 
+static void setup_cube(
+  std::vector<PosNormalVertex>& csg_vertices,
+  std::vector<uint16_t>& csg_indices) {
+  const auto csg_cube_1 =
+    csg_cube(as::vec3f::zero(), as::vec3f(0.5f, 1.5f, 0.5f));
+  const auto csg_cube_2 =
+    csg_cube(as::vec3f::zero(), as::vec3f(2.5f, 0.5f, 0.5f));
+  const auto cube_union = csg_union(csg_cube_1, csg_cube_2);
+
+  std::unordered_map<csg_vertex_t, int, csg_vertex_hash_t, csg_vertex_equals_t>
+    indexer;
+  for (const csg_polygon_t& polygon : cube_union.polygons) {
+    std::vector<int> indices;
+    for (const csg_vertex_t vertex : polygon.vertices) {
+      if (const auto index = indexer.find(vertex); index == indexer.end()) {
+        indices.push_back(indexer.size());
+        indexer.insert({vertex, indexer.size()});
+        csg_vertices.push_back(
+          PosNormalVertex{.position_ = vertex.pos, .normal_ = vertex.normal});
+      } else {
+        indices.push_back(index->second);
+      }
+    }
+    for (int i = 2; i < indices.size(); i++) {
+      csg_indices.push_back(indices[0]);
+      csg_indices.push_back(indices[i - 1]);
+      csg_indices.push_back(indices[i]);
+    }
+  }
+}
+
 void csg_scene_t::setup(
   const bgfx::ViewId main_view, const bgfx::ViewId ortho_view,
   const uint16_t width, const uint16_t height) {
@@ -280,32 +316,7 @@ void csg_scene_t::setup(
     .add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float, true)
     .end();
 
-  const auto csg_cube_1 =
-    csg_cube(as::vec3f::zero(), as::vec3f(0.5f, 1.5f, 0.5f));
-  const auto csg_cube_2 =
-    csg_cube(as::vec3f::zero(), as::vec3f(2.5f, 0.5f, 0.5f));
-  const auto cube_union = csg_union(csg_cube_1, csg_cube_2);
-
-  std::unordered_map<csg_vertex_t, int, csg_vertex_hash_t, csg_vertex_equals_t>
-    indexer;
-  for (const csg_polygon_t& polygon : cube_union.polygons) {
-    std::vector<int> indices;
-    for (const csg_vertex_t vertex : polygon.vertices) {
-      if (const auto index = indexer.find(vertex); index == indexer.end()) {
-        indices.push_back(indexer.size());
-        indexer.insert({vertex, indexer.size()});
-        csg_vertices_.push_back(
-          PosNormalVertex{.position_ = vertex.pos, .normal_ = vertex.normal});
-      } else {
-        indices.push_back(index->second);
-      }
-    }
-    for (int i = 2; i < indices.size(); i++) {
-      csg_indices_.push_back(indices[0]);
-      csg_indices_.push_back(indices[i - 1]);
-      csg_indices_.push_back(indices[i]);
-    }
-  }
+  setup_cube(csg_vertices_, csg_indices_);
 
   csg_norm_vbh_ = bgfx::createVertexBuffer(
     bgfx::makeRef(
