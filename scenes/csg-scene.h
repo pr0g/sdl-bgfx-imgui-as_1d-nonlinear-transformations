@@ -80,6 +80,8 @@ csg_polygons_t csg_all_polygons(const csg_node_t& node);
 void csg_build_node(csg_node_t& node, const csg_polygons_t& polygons);
 
 csg_t csg_union(const csg_t& lhs, const csg_t& rhs);
+csg_t csg_subtract(const csg_t& lhs, const csg_t& rhs);
+csg_t csg_intersect(const csg_t& lhs, const csg_t& rhs);
 
 // shapes
 

@@ -234,6 +234,35 @@ csg_t csg_union(const csg_t& lhs, const csg_t& rhs) {
   return csg_from_polygons(csg_all_polygons(a));
 }
 
+csg_t csg_subtract(const csg_t& lhs, const csg_t& rhs) {
+  csg_node_t a, b;
+  csg_build_node(a, lhs.polygons);
+  csg_build_node(b, rhs.polygons);
+  csg_invert(a);
+  csg_clip_to(a, b);
+  csg_clip_to(b, a);
+  csg_invert(b);
+  csg_clip_to(b, a);
+  csg_invert(b);
+  csg_build_node(a, csg_all_polygons(b));
+  csg_invert(a);
+  return csg_from_polygons(csg_all_polygons(a));
+}
+
+csg_t csg_intersect(const csg_t& lhs, const csg_t& rhs) {
+  csg_node_t a, b;
+  csg_build_node(a, lhs.polygons);
+  csg_build_node(b, rhs.polygons);
+  csg_invert(a);
+  csg_clip_to(b, a);
+  csg_invert(b);
+  csg_clip_to(a, b);
+  csg_clip_to(b, a);
+  csg_build_node(a, csg_all_polygons(b));
+  csg_invert(a);
+  return csg_from_polygons(csg_all_polygons(a));
+}
+
 // shapes
 
 csg_t csg_cube(const as::vec3f& center, const as::vec3f& radius) {
@@ -268,11 +297,11 @@ static void setup_cube(
     csg_cube(as::vec3f::zero(), as::vec3f(0.5f, 1.5f, 0.5f));
   const auto csg_cube_2 =
     csg_cube(as::vec3f::zero(), as::vec3f(2.5f, 0.5f, 0.5f));
-  const auto cube_union = csg_union(csg_cube_1, csg_cube_2);
+  const auto csg_result = csg_intersect(csg_cube_1, csg_cube_2);
 
   std::unordered_map<csg_vertex_t, int, csg_vertex_hash_t, csg_vertex_equals_t>
     indexer;
-  for (const csg_polygon_t& polygon : cube_union.polygons) {
+  for (const csg_polygon_t& polygon : csg_result.polygons) {
     std::vector<int> indices;
     for (const csg_vertex_t vertex : polygon.vertices) {
       if (const auto index = indexer.find(vertex); index == indexer.end()) {
