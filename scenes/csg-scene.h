@@ -86,8 +86,11 @@ csg_t csg_intersect(const csg_t& lhs, const csg_t& rhs);
 
 // shapes
 
-csg_t csg_cube(const as::vec3f& position, float radius);
+csg_t csg_cube(const as::vec3f& position, const as::vec3f& radius);
 csg_t csg_sphere(const as::vec3f& position, float radius);
+csg_t csg_cylinder(
+  const as::vec3f& start = -as::vec3f::axis_y(),
+  const as::vec3f& end = as::vec3f::axis_y(), float radius = 1.0f);
 
 struct csg_scene_t : public scene_t {
   void setup(

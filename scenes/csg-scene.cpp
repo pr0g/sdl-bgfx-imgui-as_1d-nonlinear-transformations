@@ -321,6 +321,43 @@ csg_t csg_sphere(const as::vec3f& center, float radius) {
   return csg_from_polygons(std::move(polygons));
 }
 
+csg_t csg_cylinder(const as::vec3f& start, const as::vec3f& end, float radius) {
+  const as::vec3f ray = end - start;
+  int slices = 16;
+  const auto axis_z = as::vec_normalize(ray);
+  const bool is_y = std::abs(axis_z.y) > 0.5f;
+  const auto axis_x = as::vec_normalize(
+    as::vec3_cross(as::vec3f((float)!!is_y, (float)!!!is_y, 0.0f), axis_z));
+  const auto axis_y = as::vec3_cross(axis_x, axis_z);
+  const auto start_vertex = csg_vertex_t{.pos = start, .normal = -axis_z};
+  const auto end_vertex = csg_vertex_t{.pos = end, .normal = axis_z};
+  csg_polygons_t polygons;
+  const auto point = [&axis_x, &axis_y, &axis_z, &start, &ray,
+                      radius](float stack, float slice, float normal_blend) {
+    const auto angle = slice * as::k_two_pi;
+    const auto out = (axis_x * std::cos(angle)) + (axis_y * std::sin(angle));
+    const auto pos = (start + ray * stack) + out * radius;
+    const auto normal =
+      (out * (1.0f - std::abs(normal_blend))) + (axis_z * normal_blend);
+    return csg_vertex_t{.pos = pos, .normal = normal};
+  };
+  for (int i = 0; i < slices; i++) {
+    const float t0 = i / (float)slices;
+    const float t1 = (i + 1) / (float)slices;
+    polygons.push_back(csg_polygon_from_vertices(
+      csg_vertices_t{
+        start_vertex, point(0.0f, t0, -1.0f), point(0.0f, t1, -1.0f)}));
+    polygons.push_back(csg_polygon_from_vertices(
+      csg_vertices_t{
+        point(0.0f, t1, 0.0f), point(0.0f, t0, 0.0f), point(1.0f, t0, 0.0f),
+        point(1.0f, t1, 0.0f)}));
+    polygons.push_back(csg_polygon_from_vertices(
+      csg_vertices_t{
+        end_vertex, point(1.0f, t1, 1.0f), point(1.0f, t0, 1.0f)}));
+  }
+  return csg_from_polygons(std::move(polygons));
+}
+
 static void setup_cube(
   std::vector<PosNormalVertex>& csg_vertices,
   std::vector<uint16_t>& csg_indices) {
@@ -334,7 +371,7 @@ static void setup_cube(
     // csg_cube(as::vec3f::zero(), as::vec3f(2.5f, 0.2f, 0.2f));
     csg_sphere(as::vec3f(-0.5, 0.0, -0.5), 0.8f);
   const auto temp = csg_subtract(csg_cube_1, csg_cube_2);
-  const auto csg_result = csg_subtract(temp, csg_cube_3);
+  const auto csg_result = csg_cylinder(); // csg_subtract(temp, csg_cube_3);
 
   std::unordered_map<csg_vertex_t, int, csg_vertex_hash_t, csg_vertex_equals_t>
     indexer;
