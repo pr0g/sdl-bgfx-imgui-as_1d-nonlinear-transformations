@@ -362,8 +362,8 @@ static void setup_cube(
   std::vector<PosNormalVertex>& csg_vertices,
   std::vector<uint16_t>& csg_indices) {
   const auto csg_cube_1 =
-    // csg_cube(as::vec3f::zero(), as::vec3f(0.5f, 1.5f, 0.5f));
-    csg_sphere(as::vec3f::zero(), 1.0f);
+    csg_cube(as::vec3f::zero(), as::vec3f(0.5f, 1.5f, 0.5f));
+  // csg_sphere(as::vec3f::zero(), 1.0f);
   const auto csg_cube_2 =
     // csg_cube(as::vec3f::zero(), as::vec3f(2.5f, 0.2f, 0.2f));
     csg_sphere(as::vec3f(0.5f, 0.0f, 0.5f), 0.8f);
@@ -371,7 +371,8 @@ static void setup_cube(
     // csg_cube(as::vec3f::zero(), as::vec3f(2.5f, 0.2f, 0.2f));
     csg_sphere(as::vec3f(-0.5, 0.0, -0.5), 0.8f);
   const auto temp = csg_subtract(csg_cube_1, csg_cube_2);
-  const auto csg_result = csg_cylinder(); // csg_subtract(temp, csg_cube_3);
+  const auto csg_result =
+    csg_subtract(csg_cylinder(), csg_cube_1); // csg_subtract(temp, csg_cube_3);
 
   std::unordered_map<csg_vertex_t, int, csg_vertex_hash_t, csg_vertex_equals_t>
     indexer;
