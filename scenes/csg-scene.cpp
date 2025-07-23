@@ -8,11 +8,14 @@
 
 #include <thh-bgfx-debug/debug-color.hpp>
 #include <thh-bgfx-debug/debug-cube.hpp>
+#include <thh-bgfx-debug/debug-line.hpp>
 #include <thh-bgfx-debug/debug-quad.hpp>
+
+#include <ranges>
 
 static void setup_scene(
   std::vector<PosNormalVertex>& csg_vertices,
-  std::vector<uint16_t>& csg_indices) {
+  std::vector<uint16_t>& csg_indices, lines_indices_t& csg_lines) {
   const auto csg_cube_1 = csg_cube(
     csg_cube_config_t{
       .center = as::vec3f::zero(), .radius = as::vec3f(0.5f, 1.5f, 0.5f)});
@@ -32,8 +35,8 @@ static void setup_scene(
   // const auto csg_result =
   //   csg_subtract(csg_cylinder(), csg_cube_1); // csg_subtract(temp,
   //   csg_cube_3);
-  const auto polygons =
-    csg_subtract(csg_subtract(temp, csg_cube_3), csg_cube_1).polygons;
+  const auto polygons = temp.polygons;
+  // csg_subtract(csg_subtract(temp, csg_cube_3), csg_cube_1).polygons;
   // csg_subtract(csg_cylinder(csg_cylinder_config_t{}), csg_cube_1)
   //   .polygons; // csg_subtract(temp, csg_cube_3);
 
@@ -55,6 +58,10 @@ static void setup_scene(
       csg_indices.push_back(indices[0]);
       csg_indices.push_back(indices[i - 1]);
       csg_indices.push_back(indices[i]);
+
+      csg_lines.push_back({indices[0], indices[i - 1]});
+      csg_lines.push_back({indices[i - 1], indices[i]});
+      csg_lines.push_back({indices[i], indices[0]});
     }
   }
 }
@@ -83,7 +90,7 @@ void csg_scene_t::setup(
     .add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float, true)
     .end();
 
-  setup_scene(csg_vertices_, csg_indices_);
+  setup_scene(csg_vertices_, csg_indices_, csg_lines_);
 
   csg_norm_vbh_ = bgfx::createVertexBuffer(
     bgfx::makeRef(
@@ -119,6 +126,16 @@ void csg_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
   target_camera_ = camera_system_.stepCamera(target_camera_, delta_time);
   camera_ = asci::smoothCamera(
     camera_, target_camera_, asci::SmoothProps{}, delta_time);
+
+  const float adjustment = 0.005f;
+  for (const auto line : csg_lines_) {
+    debug_draw.debug_lines->addLine(
+      csg_vertices_[line.begin].position_
+        + csg_vertices_[line.begin].normal_ * adjustment,
+      csg_vertices_[line.end].position_
+        + csg_vertices_[line.end].normal_ * adjustment,
+      0xffaaaaaa);
+  }
 
   float view[16];
   as::mat_to_arr(as::mat4_from_affine(camera_.view()), view);

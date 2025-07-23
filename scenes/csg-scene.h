@@ -7,6 +7,12 @@
 
 #include <bgfx/bgfx.h>
 
+struct line_indices_t {
+  int begin;
+  int end;
+};
+using lines_indices_t = std::vector<line_indices_t>;
+
 struct csg_scene_t : public scene_t {
   void setup(
     bgfx::ViewId main_view, bgfx::ViewId ortho_view, uint16_t width,
@@ -29,6 +35,7 @@ struct csg_scene_t : public scene_t {
 
   std::vector<PosNormalVertex> csg_vertices_;
   std::vector<uint16_t> csg_indices_;
+  lines_indices_t csg_lines_;
 
   bgfx::VertexLayout pos_norm_vert_layout_;
   bgfx::VertexBufferHandle csg_norm_vbh_;
