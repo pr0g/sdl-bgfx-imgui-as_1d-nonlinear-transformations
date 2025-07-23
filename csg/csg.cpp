@@ -4,6 +4,9 @@
 
 #include <bec/bitfield-enum-class.hpp>
 
+// @evanw (@thh edit)
+// `g_plane_epsilon` is the tolerance used by `csg_split_polygon_by_plane()` to
+// decide if a point is on the plane.
 static constexpr float g_plane_epsilon = 1e-5f;
 
 std::size_t csg_vertex_hash_t::operator()(
@@ -29,6 +32,8 @@ void csg_split_polygon_by_plane(
   csg_polygons_t& coplanar_front, csg_polygons_t& coplanar_back,
   csg_polygons_t& front, csg_polygons_t& back) {
 
+  // classify each point as well as the entire polygon into one of the above
+  // four classes.
   using bec::operator|=;
   using bec::operator|;
   polygon_type_e polygon_type = polygon_type_e::coplanar;
@@ -239,7 +244,8 @@ csg_t csg_intersect(const csg_t& lhs, const csg_t& rhs) {
 
 // shapes
 
-csg_t csg_cube(const as::vec3f& center, const as::vec3f& radius) {
+csg_t csg_cube(const csg_cube_config_t& config) {
+  const auto& [center, radius] = config;
   using info_t = std::pair<std::array<int, 4>, as::vec3f>;
   std::vector<info_t> info = {
     {{0, 4, 6, 2}, {-1.0f, 0.0f, 0.0f}}, {{1, 3, 7, 5}, {1.0f, 0.0f, 0.0f}},
@@ -264,7 +270,8 @@ csg_t csg_cube(const as::vec3f& center, const as::vec3f& radius) {
   return csg_t{.polygons = polygons};
 }
 
-csg_t csg_sphere(const as::vec3f& center, float radius) {
+csg_t csg_sphere(const csg_sphere_config_t& config) {
+  const auto& [center, radius, slices, stacks] = config;
   csg_polygons_t polygons;
   const auto vertex =
     [&center,
@@ -277,8 +284,6 @@ csg_t csg_sphere(const as::vec3f& center, float radius) {
       vertices.push_back(
         csg_vertex_t{.pos = center + dir * radius, .normal = dir});
     };
-  const int slices = 16;
-  const int stacks = 8;
   for (int i = 0; i < slices; i++) {
     for (int j = 0; j < stacks; j++) {
       csg_vertices_t vertices;
@@ -296,9 +301,9 @@ csg_t csg_sphere(const as::vec3f& center, float radius) {
   return csg_t{.polygons = std::move(polygons)};
 }
 
-csg_t csg_cylinder(const as::vec3f& start, const as::vec3f& end, float radius) {
+csg_t csg_cylinder(const csg_cylinder_config_t& config) {
+  const auto& [start, end, radius, slices] = config;
   const as::vec3f ray = end - start;
-  int slices = 16;
   const auto axis_z = as::vec_normalize(ray);
   const bool is_y = std::abs(axis_z.y) > 0.5f;
   const auto axis_x = as::vec_normalize(

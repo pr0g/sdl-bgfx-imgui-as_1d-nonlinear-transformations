@@ -10,24 +10,32 @@
 #include <thh-bgfx-debug/debug-cube.hpp>
 #include <thh-bgfx-debug/debug-quad.hpp>
 
-static void setup_cube(
+static void setup_scene(
   std::vector<PosNormalVertex>& csg_vertices,
   std::vector<uint16_t>& csg_indices) {
-  const auto csg_cube_1 =
-    csg_cube(as::vec3f::zero(), as::vec3f(0.5f, 1.5f, 0.5f));
+  const auto csg_cube_1 = csg_cube(
+    csg_cube_config_t{
+      .center = as::vec3f::zero(), .radius = as::vec3f(0.5f, 1.5f, 0.5f)});
   // csg_sphere(as::vec3f::zero(), 1.0f);
   const auto csg_cube_2 =
     // csg_cube(as::vec3f::zero(), as::vec3f(2.5f, 0.2f, 0.2f));
-    csg_sphere(as::vec3f(0.5f, 0.0f, 0.5f), 0.8f);
+    csg_sphere(
+      csg_sphere_config_t{
+        .position = as::vec3f(0.5f, 0.0f, 0.5f), .radius = 0.8f});
   const auto csg_cube_3 =
     // csg_cube(as::vec3f::zero(), as::vec3f(2.5f, 0.2f, 0.2f));
-    csg_sphere(as::vec3f(-0.5, 0.0, -0.5), 0.8f);
-  const auto temp = csg_subtract(csg_cube_1, csg_cube_2);
+    csg_sphere(
+      csg_sphere_config_t{
+        .position = as::vec3f(-0.5, 0.0, -0.5), .radius = 0.8f});
+  const auto temp =
+    csg_subtract(csg_cylinder(csg_cylinder_config_t{}), csg_cube_2);
   // const auto csg_result =
   //   csg_subtract(csg_cylinder(), csg_cube_1); // csg_subtract(temp,
   //   csg_cube_3);
-  const auto polygons = csg_subtract(csg_cylinder(), csg_cube_1)
-                          .polygons; // csg_subtract(temp, csg_cube_3);
+  const auto polygons =
+    csg_subtract(csg_subtract(temp, csg_cube_3), csg_cube_1).polygons;
+  // csg_subtract(csg_cylinder(csg_cylinder_config_t{}), csg_cube_1)
+  //   .polygons; // csg_subtract(temp, csg_cube_3);
 
   std::unordered_map<csg_vertex_t, int, csg_vertex_hash_t, csg_vertex_equals_t>
     indexer;
@@ -75,7 +83,7 @@ void csg_scene_t::setup(
     .add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float, true)
     .end();
 
-  setup_cube(csg_vertices_, csg_indices_);
+  setup_scene(csg_vertices_, csg_indices_);
 
   csg_norm_vbh_ = bgfx::createVertexBuffer(
     bgfx::makeRef(
