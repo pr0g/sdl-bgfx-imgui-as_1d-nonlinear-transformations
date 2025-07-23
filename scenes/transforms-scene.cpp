@@ -3,6 +3,7 @@
 #include "1d-nonlinear-transformations.h"
 #include "debug.h"
 #include "noise.h"
+#include "plane.h"
 #include "smooth-line.h"
 
 #include <SDL.h>
@@ -16,12 +17,6 @@
 #include <thh-bgfx-debug/debug-line.hpp>
 #include <thh-bgfx-debug/debug-quad.hpp>
 #include <thh-bgfx-debug/debug-sphere.hpp>
-
-static float intersectPlane(
-  const as::vec3& origin, const as::vec3& direction, const as::vec4& plane) {
-  return -(as::vec_dot(origin, as::vec3_from_vec4(plane)) + plane.w)
-       / as::vec_dot(direction, as::vec3_from_vec4(plane));
-}
 
 void transforms_scene_t::setup(
   const bgfx::ViewId main_view, const bgfx::ViewId ortho_view,
@@ -140,8 +135,8 @@ void transforms_scene_t::update(
     as::vec2(0.0f, 1.0f));
   ray_origin = camera.transform().translation;
   ray_direction = as::vec_normalize(world_position - ray_origin);
-  hit_distance =
-    intersectPlane(ray_origin, ray_direction, as::vec4(as::vec3::axis_z()));
+  hit_distance = intersect_plane(
+    ray_origin, ray_direction, plane_t{.normal = as::vec3::axis_z()});
 
   if (curve_handles.dragging() && hit_distance > 0.0f) {
     const auto next_hit = ray_origin + ray_direction * hit_distance;

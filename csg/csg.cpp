@@ -97,7 +97,7 @@ csg_polygon_t csg_flip_polygon(const csg_polygon_t& polygon) {
   std::for_each(
     flipped_polygon.vertices.begin(), flipped_polygon.vertices.end(),
     [](csg_vertex_t& v) { v.normal = -v.normal; });
-  flipped_polygon.plane = csg_flip_plane(polygon.plane);
+  flipped_polygon.plane = flip_plane(polygon.plane);
   return flipped_polygon;
 }
 
@@ -105,7 +105,7 @@ csg_polygon_t csg_polygon_from_vertices(const csg_vertices_t& vertices) {
   return csg_polygon_t{
     .vertices = vertices,
     .plane =
-      csg_plane_from_points(vertices[0].pos, vertices[1].pos, vertices[2].pos)};
+      plane_from_points(vertices[0].pos, vertices[1].pos, vertices[2].pos)};
 }
 
 csg_polygons_t csg_clip_polygons(
@@ -185,7 +185,7 @@ void csg_invert(csg_node_t& node) {
   for (int i = 0; i < node.polygons.size(); i++) {
     node.polygons[i] = csg_flip_polygon(node.polygons[i]);
   }
-  node.plane = csg_flip_plane(*node.plane);
+  node.plane = flip_plane(*node.plane);
   if (node.front) {
     csg_invert(*node.front);
   }

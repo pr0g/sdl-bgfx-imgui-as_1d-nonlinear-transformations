@@ -1,13 +1,10 @@
 #pragma once
 
+#include "plane.h"
+
 #include <as/as-math-ops.hpp>
 
 #include <vector>
-
-struct plane_t {
-  as::vec3f normal;
-  float w;
-};
 
 struct csg_vertex_t {
   as::vec3f pos;
@@ -47,16 +44,6 @@ struct csg_node_t {
 
 inline csg_t csg_from_polygons(csg_polygons_t polygons) {
   return csg_t{.polygons = std::move(polygons)};
-}
-
-inline plane_t csg_plane_from_points(
-  const as::vec3f& a, const as::vec3f& b, const as::vec3f& c) {
-  const auto n = as::vec_normalize(as::vec3_cross(b - a, c - a));
-  return {n, as::vec_dot(n, a)};
-}
-
-inline plane_t csg_flip_plane(const plane_t& plane) {
-  return {-plane.normal, -plane.w};
 }
 
 inline csg_vertex_t csg_interpolate(
