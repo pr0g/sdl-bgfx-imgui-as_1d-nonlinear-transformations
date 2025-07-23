@@ -26,7 +26,7 @@ struct bec::EnableBitMaskOperators<polygon_type_e> {
 
 void csg_split_polygon_by_plane(
   const csg_polygon_t& polygon, const plane_t& plane,
-  csg_polygons_t& coplanarFront, csg_polygons_t& coplanarBack,
+  csg_polygons_t& coplanar_front, csg_polygons_t& coplanar_back,
   csg_polygons_t& front, csg_polygons_t& back) {
 
   using bec::operator|=;
@@ -46,8 +46,8 @@ void csg_split_polygon_by_plane(
   // put the polygon in the correct list, splitting when necessary
   switch (polygon_type) {
     case polygon_type_e::coplanar:
-      ((as::vec_dot(plane.normal, polygon.plane.normal) > 0.0f) ? coplanarFront
-                                                                : coplanarBack)
+      ((as::vec_dot(plane.normal, polygon.plane.normal) > 0.0f) ? coplanar_front
+                                                                : coplanar_back)
         .push_back(polygon);
       break;
     case polygon_type_e::front:
@@ -205,7 +205,7 @@ csg_t csg_union(const csg_t& lhs, const csg_t& rhs) {
   csg_clip_to(b, a);
   csg_invert(b);
   csg_build_node(a, csg_all_polygons(b));
-  return csg_from_polygons(csg_all_polygons(a));
+  return csg_t{.polygons = csg_all_polygons(a)};
 }
 
 csg_t csg_subtract(const csg_t& lhs, const csg_t& rhs) {
@@ -220,7 +220,7 @@ csg_t csg_subtract(const csg_t& lhs, const csg_t& rhs) {
   csg_invert(b);
   csg_build_node(a, csg_all_polygons(b));
   csg_invert(a);
-  return csg_from_polygons(csg_all_polygons(a));
+  return csg_t{.polygons = csg_all_polygons(a)};
 }
 
 csg_t csg_intersect(const csg_t& lhs, const csg_t& rhs) {
@@ -234,7 +234,7 @@ csg_t csg_intersect(const csg_t& lhs, const csg_t& rhs) {
   csg_clip_to(b, a);
   csg_build_node(a, csg_all_polygons(b));
   csg_invert(a);
-  return csg_from_polygons(csg_all_polygons(a));
+  return csg_t{.polygons = csg_all_polygons(a)};
 }
 
 // shapes
@@ -293,7 +293,7 @@ csg_t csg_sphere(const as::vec3f& center, float radius) {
       polygons.push_back(csg_polygon_from_vertices(vertices));
     }
   }
-  return csg_from_polygons(std::move(polygons));
+  return csg_t{.polygons = std::move(polygons)};
 }
 
 csg_t csg_cylinder(const as::vec3f& start, const as::vec3f& end, float radius) {
@@ -330,5 +330,5 @@ csg_t csg_cylinder(const as::vec3f& start, const as::vec3f& end, float radius) {
       csg_vertices_t{
         end_vertex, point(1.0f, t1, 1.0f), point(1.0f, t0, 1.0f)}));
   }
-  return csg_from_polygons(std::move(polygons));
+  return csg_t{.polygons = std::move(polygons)};
 }

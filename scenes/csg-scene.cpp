@@ -23,12 +23,15 @@ static void setup_cube(
     // csg_cube(as::vec3f::zero(), as::vec3f(2.5f, 0.2f, 0.2f));
     csg_sphere(as::vec3f(-0.5, 0.0, -0.5), 0.8f);
   const auto temp = csg_subtract(csg_cube_1, csg_cube_2);
-  const auto csg_result =
-    csg_subtract(csg_cylinder(), csg_cube_1); // csg_subtract(temp, csg_cube_3);
+  // const auto csg_result =
+  //   csg_subtract(csg_cylinder(), csg_cube_1); // csg_subtract(temp,
+  //   csg_cube_3);
+  const auto polygons = csg_subtract(csg_cylinder(), csg_cube_1)
+                          .polygons; // csg_subtract(temp, csg_cube_3);
 
   std::unordered_map<csg_vertex_t, int, csg_vertex_hash_t, csg_vertex_equals_t>
     indexer;
-  for (const csg_polygon_t& polygon : csg_result.polygons) {
+  for (const csg_polygon_t& polygon : polygons) {
     std::vector<int> indices;
     for (const csg_vertex_t vertex : polygon.vertices) {
       if (const auto index = indexer.find(vertex); index == indexer.end()) {
