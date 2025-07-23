@@ -61,6 +61,7 @@ target_sources(
           debug.cpp
           list.cpp
           marching-cubes/marching-cubes.cpp
+          csg/csg.cpp
           scenes/marching-cube-scene.cpp
           scenes/transforms-scene.cpp
           scenes/hierarchy-scene.cpp

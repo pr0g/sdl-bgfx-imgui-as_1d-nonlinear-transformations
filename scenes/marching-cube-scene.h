@@ -1,6 +1,7 @@
 #pragma once
 
 #include "fps.h"
+#include "hash-combine.h"
 #include "scene.h"
 
 #include <as-camera-input/as-camera-input.hpp>
@@ -10,30 +11,17 @@
 
 #include <unordered_map>
 
-namespace mc
-{
-
+namespace mc {
 struct Point;
 struct CellValues;
 struct CellPositions;
-
 } // namespace mc
 
-template<class T>
-inline void hash_combine(std::size_t& seed, const T& v)
-{
-  std::hash<T> hasher;
-  seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-}
-
-namespace std
-{
+namespace std {
 
 template<>
-struct hash<as::vec3>
-{
-  std::size_t operator()(const as::vec3& vec) const
-  {
+struct hash<as::vec3> {
+  std::size_t operator()(const as::vec3& vec) const {
     size_t seed = 0;
     hash_combine(seed, vec.x);
     hash_combine(seed, vec.y);
@@ -44,22 +32,15 @@ struct hash<as::vec3>
 
 } // namespace std
 
-struct Vec3EqualFn
-{
-  bool operator()(const as::vec3& lhs, const as::vec3& rhs) const
-  {
+struct Vec3EqualFn {
+  bool operator()(const as::vec3& lhs, const as::vec3& rhs) const {
     return as::vec_near(lhs, rhs);
   }
 };
 
-enum class Scene
-{
-  Noise,
-  Sphere
-};
+enum class Scene { Noise, Sphere };
 
-struct marching_cube_scene_t : public scene_t
-{
+struct marching_cube_scene_t : public scene_t {
   void setup(
     bgfx::ViewId main_view, bgfx::ViewId ortho_view, uint16_t width,
     uint16_t height) override;
