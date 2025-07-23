@@ -40,8 +40,8 @@ struct csg_t {
 
 struct csg_node_t {
   std::optional<plane_t> plane;
-  csg_node_t* front = nullptr;
-  csg_node_t* back = nullptr;
+  std::unique_ptr<csg_node_t> front;
+  std::unique_ptr<csg_node_t> back;
   csg_polygons_t polygons;
 };
 

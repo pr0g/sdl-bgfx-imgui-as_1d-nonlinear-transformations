@@ -169,13 +169,13 @@ void csg_build_node(csg_node_t& node, const csg_polygons_t& polygons) {
   }
   if (!front.empty()) {
     if (!node.front) {
-      node.front = new csg_node_t();
+      node.front = std::make_unique<csg_node_t>();
     }
     csg_build_node(*node.front, front);
   }
   if (!back.empty()) {
     if (!node.back) {
-      node.back = new csg_node_t();
+      node.back = std::make_unique<csg_node_t>();
     }
     csg_build_node(*node.back, back);
   }
