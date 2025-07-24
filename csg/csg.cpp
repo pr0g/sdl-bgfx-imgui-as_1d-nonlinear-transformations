@@ -242,6 +242,15 @@ csg_t csg_intersect(const csg_t& lhs, const csg_t& rhs) {
   return csg_t{.polygons = csg_all_polygons(a)};
 }
 
+csg_t csg_inverse(const csg_t& csg) {
+  csg_t inverted_csg;
+  inverted_csg.polygons.resize(csg.polygons.size());
+  std::transform(
+    csg.polygons.begin(), csg.polygons.end(), inverted_csg.polygons.begin(),
+    [](const csg_polygon_t& polygon) { return csg_flip_polygon(polygon); });
+  return inverted_csg;
+}
+
 // shapes
 
 csg_t csg_cube(const csg_cube_config_t& config) {

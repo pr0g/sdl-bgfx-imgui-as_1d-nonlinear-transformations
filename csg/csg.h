@@ -259,7 +259,7 @@ csg_t csg_intersect(const csg_t& lhs, const csg_t& rhs);
 // @evanw
 // Return a new CSG solid with solid and empty space switched. This solid is
 // not modified.
-// todo - implement csg_inverse
+csg_t csg_inverse(const csg_t& csg);
 
 // Primitive shapes
 
@@ -278,7 +278,7 @@ struct csg_cube_config_t {
 // csg_cube(
 //   csg_cube_config_t{
 //     .center = as::vec3f::zero(), .radius = as::vec3f(0.5f, 1.5f, 0.5f)})
-csg_t csg_cube(const csg_cube_config_t& config);
+csg_t csg_cube(const csg_cube_config_t& config = csg_cube_config_t{});
 
 struct csg_sphere_config_t {
   as::vec3f position = as::vec3f::zero();
@@ -299,7 +299,7 @@ struct csg_sphere_config_t {
 // csg_sphere(
 //   csg_sphere_config_t{
 //     .position = as::vec3f(0.5f, 0.0f, 0.5f), .radius = 0.8f});
-csg_t csg_sphere(const csg_sphere_config_t& config);
+csg_t csg_sphere(const csg_sphere_config_t& config = csg_sphere_config_t{});
 
 struct csg_cylinder_config_t {
   as::vec3f start = -as::vec3f::axis_y();
@@ -321,4 +321,5 @@ struct csg_cylinder_config_t {
 //       .start = -as::vec3f::axis_y(),
 //       .end = as::vec3f::axis_y(),
 //       .radius = 0.5f})
-csg_t csg_cylinder(const csg_cylinder_config_t& config);
+csg_t csg_cylinder(
+  const csg_cylinder_config_t& config = csg_cylinder_config_t{});

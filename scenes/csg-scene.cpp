@@ -37,7 +37,16 @@ static csg_t create_csg() {
   // csg_subtract(csg_subtract(temp, csg_cube_3), csg_cube_1).polygons;
   // csg_subtract(csg_cylinder(csg_cylinder_config_t{}), csg_cube_1)
   //   .polygons; // csg_subtract(temp, csg_cube_3);
-  return temp;
+
+  const auto a = csg_cube();
+  const auto b = csg_cylinder();
+  const auto c = csg_cylinder(
+    {.start = {-as::vec3f::axis_x()}, .end = {as::vec3f::axis_x()}});
+  const auto d = csg_cylinder(
+    {.start = {-as::vec3f::axis_z()}, .end = {as::vec3f::axis_z()}});
+  auto inverse = csg_inverse(csg_union(csg_union(b, c), d));
+
+  return inverse;
 }
 
 static void build_mesh_from_csg(
