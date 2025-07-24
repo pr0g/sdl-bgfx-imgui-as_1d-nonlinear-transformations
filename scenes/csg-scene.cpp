@@ -35,52 +35,22 @@ static csg_t create_csg_intersect() {
   return csg_intersect(a, b);
 }
 
-static csg_t create_csg() {
-
-  const auto csg_1 = csg_cube(
-    csg_cube_config_t{
-      .min = as::vec3f(-5.0f, -10.0f, -2.5f),
-      .max = as::vec3f(5.0f, 10.0f, 2.5f),
-      .transform = as::affine_from_mat3_vec3(
-        as::mat3_rotation_x(as::k_half_pi * 0.5f),
-        as::vec3(0.0f, 0.0f, 5.0f))});
-
-  const auto csg_2 = csg_sphere(
-    csg_sphere_config_t{
-      .center = as::vec3f(0.0f, 3.0f, -0.5f), .radius = 1.5f});
-
-  const auto csg_3 = csg_cube(
-    csg_cube_config_t{
-      .min = as::vec3f(-5.0f, -5.0f, 0.0f),
-      .max = as::vec3f(5.0f, 5.0f, 10.0f),
-      .transform =
-        as::affine_from_mat3(as::mat3_rotation_z(as::k_half_pi * 0.5f))});
-
-  return csg_union(csg_union(csg_1, csg_2), csg_3);
-
-  const auto csg_4 =
-    // csg_cube(as::vec3f::zero(), as::vec3f(2.5f, 0.2f, 0.2f));
-    csg_sphere(
-      csg_sphere_config_t{
-        .center = as::vec3f(-0.5, 0.0, -0.5), .radius = 0.8f});
-  const auto temp = csg_subtract(csg_cylinder(csg_cylinder_config_t{}), csg_2);
-  // const auto csg_result =
-  //   csg_subtract(csg_cylinder(), csg_1); // csg_subtract(temp,
-  //   csg_4);
-  // const auto polygons = temp.polygons;
-  // csg_subtract(csg_subtract(temp, csg_4), csg_1).polygons;
-  // csg_subtract(csg_cylinder(csg_cylinder_config_t{}), csg_1)
-  //   .polygons; // csg_subtract(temp, csg_4);
-
+static csg_t create_csg_classic() {
   const auto a = csg_cube();
-  const auto b = csg_cylinder();
+  const auto b = csg_sphere({.radius = 1.35f, .stacks = 12});
   const auto c = csg_cylinder(
-    {.start = {-as::vec3f::axis_x()}, .end = {as::vec3f::axis_x()}});
+    {.radius = 0.7f,
+     .start = as::vec3f(-1.0f, 0.0f, 0.0f),
+     .end = as::vec3f(1.0f, 0.0f, 0.0f)});
   const auto d = csg_cylinder(
-    {.start = {-as::vec3f::axis_z()}, .end = {as::vec3f::axis_z()}});
-  auto inverse = csg_inverse(csg_union(csg_union(b, c), d));
-
-  return inverse;
+    {.radius = 0.7f,
+     .start = as::vec3f(0.0f, -1.0f, 0.0f),
+     .end = as::vec3f(0.0f, 1.0f, 0.0f)});
+  const auto e = csg_cylinder(
+    {.radius = 0.7f,
+     .start = as::vec3f(0.0f, 0.0f, -1.0f),
+     .end = as::vec3f(0.0f, 0.0f, 1.0f)});
+  return csg_subtract(csg_intersect(a, b), csg_union(csg_union(c, d), e));
 }
 
 void csg_scene_t::setup(
@@ -97,7 +67,7 @@ void csg_scene_t::setup(
   cameras.addCamera(&first_person_rotate_camera_);
   cameras.addCamera(&first_person_translate_camera_);
 
-  target_camera_.pivot = as::vec3(0.0f, 5.0f, -10.0f);
+  target_camera_.pivot = as::vec3(0.0f, 8.0f, -10.0f);
   target_camera_.pitch = as::radians(30.0f);
   camera_ = target_camera_;
 
@@ -115,6 +85,11 @@ void csg_scene_t::setup(
     create_csg_intersect(),
     as::mat4_from_mat3_vec3(
       as::mat3_rotation_y(as::k_half_pi), as::vec3f::axis_x(5.0f)),
+    as::vec3f(1.0f, 1.0f, 0.0f)));
+  render_things_.push_back(render_thing_from_csg(
+    create_csg_classic(),
+    as::mat4_from_mat3_vec3(
+      as::mat3_rotation_y(as::k_half_pi), as::vec3f::axis_y(5.0f)),
     as::vec3f(1.0f, 1.0f, 0.0f)));
 
   u_light_pos_ = bgfx::createUniform("u_lightPos", bgfx::UniformType::Vec4, 1);
