@@ -254,25 +254,34 @@ csg_t csg_inverse(const csg_t& csg) {
 // shapes
 
 csg_t csg_cube(const csg_cube_config_t& config) {
-  const auto& [center, radius] = config;
+  auto [min, max, orientation] = config;
+  const std::array<as::vec3f, 8> corners = {{
+    // b - bottom, t - top, n - near, f - far, l - left, r - right
+    {min}, // bnl
+    {max.x, min.y, min.z}, // bnr
+    {min.x, max.y, min.z}, // tnl
+    {max.x, max.y, min.z}, // tnr
+    {max}, // tfr
+    {max.x, min.y, max.z}, // bfr
+    {min.x, max.y, max.z}, // tfl
+    {min.x, min.y, max.z}, // bfl
+  }};
   using info_t = std::pair<std::array<int, 4>, as::vec3f>;
   std::vector<info_t> info = {
-    {{0, 4, 6, 2}, {-1.0f, 0.0f, 0.0f}}, {{1, 3, 7, 5}, {1.0f, 0.0f, 0.0f}},
-    {{0, 1, 5, 4}, {0.0f, -1.0f, 0.0f}}, {{2, 6, 7, 3}, {0.0f, 1.0f, 0.0f}},
-    {{0, 2, 3, 1}, {0.0f, 0.0f, -1.0f}}, {{4, 5, 7, 6}, {0.0f, 0.0f, 1.0f}}};
+    {{0, 7, 6, 2}, {-1.0f, 0.0f, 0.0f}}, {{1, 3, 4, 5}, {1.0f, 0.0f, 0.0f}},
+    {{0, 1, 5, 7}, {0.0f, -1.0f, 0.0f}}, {{2, 6, 4, 3}, {0.0f, 1.0f, 0.0f}},
+    {{0, 2, 3, 1}, {0.0f, 0.0f, -1.0f}}, {{4, 6, 7, 5}, {0.0f, 0.0f, 1.0f}}};
   csg_polygons_t polygons;
   std::transform(
     info.begin(), info.end(), std::back_inserter(polygons),
-    [&center, &radius](const info_t& info) {
+    [&corners, &orientation](const info_t& info) {
       csg_vertices_t vertices;
       std::transform(
         info.first.begin(), info.first.end(), std::back_inserter(vertices),
-        [&center, &radius, &info](const int i) {
-          const auto pos = as::vec3f(
-            center.x + radius.x * (2.0f * !!(i & 1) - 1.0f),
-            center.y + radius.y * (2.0f * !!(i & 2) - 1.0f),
-            center.z + radius.z * (2.0f * !!(i & 4) - 1.0f));
-          return csg_vertex_t{.pos = pos, .normal = info.second};
+        [&info, &corners, &orientation](const int i) {
+          return csg_vertex_t{
+            .pos = orientation * corners[i],
+            .normal = orientation * info.second};
         });
       return csg_polygon_from_vertices(vertices);
     });

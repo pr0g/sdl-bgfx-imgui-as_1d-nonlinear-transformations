@@ -264,8 +264,9 @@ csg_t csg_inverse(const csg_t& csg);
 // Primitive shapes
 
 struct csg_cube_config_t {
-  as::vec3f center = as::vec3f::zero();
-  as::vec3f radius = as::vec3f::one();
+  as::vec3f min = -as::vec3f::one();
+  as::vec3f max = as::vec3f::one();
+  as::mat3f orientation = as::mat3f::identity();
 };
 
 // csg_cube

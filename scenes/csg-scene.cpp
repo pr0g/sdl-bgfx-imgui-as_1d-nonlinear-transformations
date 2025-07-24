@@ -1,6 +1,7 @@
 #include "csg-scene.h"
 
 #include "csg/csg.h"
+#include "debug.h"
 
 #include <as-camera-input-sdl/as-camera-input-sdl.hpp>
 #include <as/as-view.hpp>
@@ -14,15 +15,29 @@
 #include <ranges>
 
 static csg_t create_csg() {
+
   const auto csg_cube_1 = csg_cube(
     csg_cube_config_t{
-      .center = as::vec3f::zero(), .radius = as::vec3f(0.5f, 1.5f, 0.5f)});
+      .min = as::vec3f(-5.0f, -10.0f, -2.5f),
+      .max = as::vec3f(5.0f, 10.0f, 2.5f),
+      .orientation = as::mat3_rotation_x(as::k_half_pi * 0.5f)});
+  // return csg_cube_1;
+
   // csg_sphere(as::vec3f::zero(), 1.0f);
   const auto csg_cube_2 =
     // csg_cube(as::vec3f::zero(), as::vec3f(2.5f, 0.2f, 0.2f));
     csg_sphere(
       csg_sphere_config_t{
-        .position = as::vec3f(0.5f, 0.0f, 0.5f), .radius = 0.8f});
+        .position = as::vec3f(0.0f, 3.0f, -0.5f), .radius = 1.5f});
+
+  const auto csg_cube_3a = csg_cube(
+    csg_cube_config_t{
+      .min = as::vec3f(-5.0f, -5.0f, 0.0f),
+      .max = as::vec3f(5.0f, 5.0f, 10.0f),
+      .orientation = as::mat3_rotation_z(as::k_half_pi * 0.5f)});
+
+  return csg_union(csg_union(csg_cube_1, csg_cube_2), csg_cube_3a);
+
   const auto csg_cube_3 =
     // csg_cube(as::vec3f::zero(), as::vec3f(2.5f, 0.2f, 0.2f));
     csg_sphere(
@@ -93,7 +108,7 @@ void csg_scene_t::setup(
 
   target_camera_.offset = as::vec3(0.0f, 0.0f, -10.0f);
   target_camera_.pitch = as::radians(30.0f);
-  target_camera_.yaw = as::radians(45.0f);
+  // target_camera_.yaw = as::radians(45.0f);
   camera_ = target_camera_;
 
   pos_norm_vert_layout_.begin()
@@ -154,6 +169,8 @@ void csg_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
   as::mat_to_arr(perspective_projection_, proj);
 
   bgfx::setViewTransform(main_view_, view, proj);
+
+  drawGrid(*debug_draw.debug_lines, as::vec3::zero());
 
   const auto offset = as::mat4::identity();
 
