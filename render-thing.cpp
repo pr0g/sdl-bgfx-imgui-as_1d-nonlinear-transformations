@@ -52,9 +52,11 @@ void render_thing_t::deinit() {
   bgfx::destroy(render_thing_t::program_);
 }
 
-render_thing_t render_thing_from_csg(const csg_t& csg, const as::vec3f& color) {
+render_thing_t render_thing_from_csg(
+  const csg_t& csg, const as::mat4f& transform, const as::vec3f& color) {
   render_thing_t render_thing;
   render_thing.color_ = color;
+  render_thing.transform_ = transform;
   build_mesh_from_csg(csg, render_thing.vertices_, render_thing.indices_);
   render_thing.norm_vbh_ = bgfx::createVertexBuffer(
     bgfx::makeRef(
@@ -72,6 +74,9 @@ render_thing_t render_thing_from_csg(const csg_t& csg, const as::vec3f& color) {
 
 void render_thing_draw(
   const render_thing_t& render_thing, const bgfx::ViewId view) {
+  float model[16];
+  as::mat_to_arr(render_thing.transform_, model);
+  bgfx::setTransform(model);
   bgfx::setUniform(render_thing.color_uniform_, (void*)&render_thing.color_, 1);
   bgfx::setVertexBuffer(0, render_thing.norm_vbh_);
   bgfx::setIndexBuffer(render_thing.norm_ibh_);
@@ -83,42 +88,49 @@ void render_thing_draw(
 
 void render_thing_debug(
   const render_thing_t& render_thing, dbg::DebugLines& debug_lines) {
+  // normals
+  const auto inverse_transpose = as::mat_transpose(
+    as::mat_inverse(as::mat3_from_mat4(render_thing.transform_)));
   for (const auto index : render_thing.indices_) {
-    // normals
-    debug_lines.addLine(
-      render_thing.vertices_[index].position_,
-      render_thing.vertices_[index].position_
-        + render_thing.vertices_[index].normal_ * 0.5f,
-      0xff55dd55);
+    const auto position = as::vec3_from_vec4(
+      render_thing.transform_
+      * as::vec4_translation(render_thing.vertices_[index].position_));
+    const auto normal =
+      inverse_transpose * render_thing.vertices_[index].normal_;
+    debug_lines.addLine(position, position + normal * 0.5f, 0xff55dd55);
   }
 
+  // triangles (lines)
   const float adjustment = 0.005f;
   for (int index = 2; index < render_thing.indices_.size(); index += 3) {
-    // triangles (lines)
-    debug_lines.addLine(
-      render_thing.vertices_[render_thing.indices_[index - 2]].position_
-        + render_thing.vertices_[render_thing.indices_[index - 2]].normal_
-            * adjustment,
-      render_thing.vertices_[render_thing.indices_[index - 1]].position_
-        + render_thing.vertices_[render_thing.indices_[index - 1]].normal_
-            * adjustment,
-      0xffaaaaaa);
-    debug_lines.addLine(
-      render_thing.vertices_[render_thing.indices_[index - 1]].position_
-        + render_thing.vertices_[render_thing.indices_[index - 1]].normal_
-            * adjustment,
-      render_thing.vertices_[render_thing.indices_[index]].position_
-        + render_thing.vertices_[render_thing.indices_[index]].normal_
-            * adjustment,
-      0xffaaaaaa);
-    debug_lines.addLine(
-      render_thing.vertices_[render_thing.indices_[index]].position_
-        + render_thing.vertices_[render_thing.indices_[index]].normal_
-            * adjustment,
-      render_thing.vertices_[render_thing.indices_[index - 2]].position_
-        + render_thing.vertices_[render_thing.indices_[index - 2]].normal_
-            * adjustment,
-      0xffaaaaaa);
+    const auto p0 = as::vec3_from_vec4(
+      render_thing.transform_
+      * as::vec4_translation(
+        render_thing.vertices_[render_thing.indices_[index]].position_));
+    const auto p1 = as::vec3_from_vec4(
+      render_thing.transform_
+      * as::vec4_translation(
+        render_thing.vertices_[render_thing.indices_[index - 1]].position_));
+    const auto p2 = as::vec3_from_vec4(
+      render_thing.transform_
+      * as::vec4_translation(
+        render_thing.vertices_[render_thing.indices_[index - 2]].position_));
+    const auto n0 = as::vec3_from_vec4(
+      render_thing.transform_
+      * as::vec4_direction(
+        render_thing.vertices_[render_thing.indices_[index]].normal_));
+    const auto n1 = as::vec3_from_vec4(
+      render_thing.transform_
+      * as::vec4_direction(
+        render_thing.vertices_[render_thing.indices_[index - 1]].normal_));
+    const auto n2 = as::vec3_from_vec4(
+      render_thing.transform_
+      * as::vec4_direction(
+        render_thing.vertices_[render_thing.indices_[index - 2]].normal_));
+
+    debug_lines.addLine(p2 + n2 * adjustment, p1 + n1 * adjustment, 0xffaaaaaa);
+    debug_lines.addLine(p1 + n1 * adjustment, p0 + n0 * adjustment, 0xffaaaaaa);
+    debug_lines.addLine(p0 + n0 * adjustment, p2 + n2 * adjustment, 0xffaaaaaa);
   }
 }
 

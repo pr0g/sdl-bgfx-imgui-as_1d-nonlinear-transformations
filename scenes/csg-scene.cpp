@@ -14,6 +14,27 @@
 
 #include <ranges>
 
+static csg_t create_csg_union() {
+  const auto a =
+    csg_cube({.min = {-1.25f, -1.25f, -1.25f}, .max = {0.75f, 0.75f, 0.75f}});
+  const auto b = csg_sphere({.center = {0.25f, 0.25f, 0.25f}, .radius = 1.3f});
+  return csg_union(a, b);
+}
+
+static csg_t create_csg_subtract() {
+  const auto a =
+    csg_cube({.min = {-1.25f, -1.25f, -1.25f}, .max = {0.75f, 0.75f, 0.75f}});
+  const auto b = csg_sphere({.center = {0.25f, 0.25f, 0.25f}, .radius = 1.3f});
+  return csg_subtract(a, b);
+}
+
+static csg_t create_csg_intersect() {
+  const auto a =
+    csg_cube({.min = {-1.25, -1.25, -1.25}, .max = {0.75f, 0.75f, 0.75f}});
+  const auto b = csg_sphere({.center = {0.25f, 0.25f, 0.25f}, .radius = 1.3f});
+  return csg_intersect(a, b);
+}
+
 static csg_t create_csg() {
 
   const auto csg_1 = csg_cube(
@@ -26,7 +47,7 @@ static csg_t create_csg() {
 
   const auto csg_2 = csg_sphere(
     csg_sphere_config_t{
-      .position = as::vec3f(0.0f, 3.0f, -0.5f), .radius = 1.5f});
+      .center = as::vec3f(0.0f, 3.0f, -0.5f), .radius = 1.5f});
 
   const auto csg_3 = csg_cube(
     csg_cube_config_t{
@@ -41,7 +62,7 @@ static csg_t create_csg() {
     // csg_cube(as::vec3f::zero(), as::vec3f(2.5f, 0.2f, 0.2f));
     csg_sphere(
       csg_sphere_config_t{
-        .position = as::vec3f(-0.5, 0.0, -0.5), .radius = 0.8f});
+        .center = as::vec3f(-0.5, 0.0, -0.5), .radius = 0.8f});
   const auto temp = csg_subtract(csg_cylinder(csg_cylinder_config_t{}), csg_2);
   // const auto csg_result =
   //   csg_subtract(csg_cylinder(), csg_1); // csg_subtract(temp,
@@ -81,8 +102,20 @@ void csg_scene_t::setup(
   camera_ = target_camera_;
 
   render_thing_t::init();
-  render_things_.push_back(
-    render_thing_from_csg(create_csg(), as::vec3f(1.0f, 1.0f, 0.0f)));
+  render_things_.push_back(render_thing_from_csg(
+    create_csg_union(),
+    as::mat4_from_mat3_vec3(
+      as::mat3_rotation_y(as::k_half_pi), as::vec3f::axis_x(-5.0f)),
+    as::vec3f(1.0f, 1.0f, 0.0f)));
+  render_things_.push_back(render_thing_from_csg(
+    create_csg_subtract(),
+    as::mat4_from_mat3(as::mat3_rotation_y(as::k_half_pi)),
+    as::vec3f(1.0f, 1.0f, 0.0f)));
+  render_things_.push_back(render_thing_from_csg(
+    create_csg_intersect(),
+    as::mat4_from_mat3_vec3(
+      as::mat3_rotation_y(as::k_half_pi), as::vec3f::axis_x(5.0f)),
+    as::vec3f(1.0f, 1.0f, 0.0f)));
 
   u_light_pos_ = bgfx::createUniform("u_lightPos", bgfx::UniformType::Vec4, 1);
   u_camera_pos_ =
@@ -115,10 +148,6 @@ void csg_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
   drawGrid(*debug_draw.debug_lines, as::vec3::zero());
 
   const auto offset = as::mat4::identity();
-
-  float model[16];
-  as::mat_to_arr(offset, model);
-  bgfx::setTransform(model);
 
   bgfx::setUniform(u_light_pos_, (void*)&light_pos_, 1);
   bgfx::setUniform(u_camera_pos_, (void*)&camera_.pivot, 1);

@@ -282,7 +282,7 @@ struct csg_cube_config_t {
 csg_t csg_cube(const csg_cube_config_t& config = csg_cube_config_t{});
 
 struct csg_sphere_config_t {
-  as::vec3f position = as::vec3f::zero();
+  as::vec3f center = as::vec3f::zero();
   float radius = 1.0f;
   int slices = 16;
   int stacks = 8;
@@ -299,7 +299,7 @@ struct csg_sphere_config_t {
 //
 // csg_sphere(
 //   csg_sphere_config_t{
-//     .position = as::vec3f(0.5f, 0.0f, 0.5f), .radius = 0.8f});
+//     .center = as::vec3f(0.5f, 0.0f, 0.5f), .radius = 0.8f});
 csg_t csg_sphere(const csg_sphere_config_t& config = csg_sphere_config_t{});
 
 struct csg_cylinder_config_t {

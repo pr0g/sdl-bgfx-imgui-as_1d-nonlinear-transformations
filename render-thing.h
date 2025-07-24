@@ -2,6 +2,7 @@
 
 #include "bgfx-helpers.h"
 
+#include <as/as-mat4.hpp>
 #include <bgfx/bgfx.h>
 
 #include <vector>
@@ -16,6 +17,7 @@ struct render_thing_t {
   std::vector<PosNormalVertex> vertices_;
   std::vector<uint16_t> indices_;
   as::vec3f color_;
+  as::mat4f transform_;
 
   bgfx::VertexBufferHandle norm_vbh_;
   bgfx::IndexBufferHandle norm_ibh_;
@@ -28,7 +30,8 @@ struct render_thing_t {
   static bgfx::ProgramHandle program_;
 };
 
-render_thing_t render_thing_from_csg(const csg_t& csg, const as::vec3f& color);
+render_thing_t render_thing_from_csg(
+  const csg_t& csg, const as::mat4f& transform, const as::vec3f& color);
 
 void render_thing_debug(
   const render_thing_t& render_thing, dbg::DebugLines& debug_lines);
