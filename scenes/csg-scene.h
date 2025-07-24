@@ -1,7 +1,7 @@
 #pragma once
 
-#include "scene.h"
 #include "render-thing.h"
+#include "scene.h"
 
 #include <as-camera-input/as-camera-input.hpp>
 
@@ -28,14 +28,9 @@ struct csg_scene_t : public scene_t {
   bgfx::ViewId main_view_;
   bgfx::ViewId ortho_view_;
 
-  bgfx::VertexLayout pos_norm_vert_layout_;
-  bgfx::ProgramHandle program_norm_;
-  
   render_thing_t render_thing;
 
   bgfx::UniformHandle u_light_pos_;
   bgfx::UniformHandle u_camera_pos_;
-  bgfx::UniformHandle u_model_color_;
   as::vec3 light_pos_{0.0f, 8.0f, 8.0f};
-  as::vec3 model_color_{1.0f, 1.0f, 0.0f};
 };
