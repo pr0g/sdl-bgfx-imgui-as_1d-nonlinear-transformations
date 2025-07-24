@@ -1,5 +1,6 @@
 #include "csg-scene.h"
 
+#include "bgfx-helpers.h"
 #include "csg/csg.h"
 #include "debug.h"
 
@@ -63,8 +64,8 @@ static csg_t create_csg() {
 }
 
 static void build_mesh_from_csg(
-  const csg_t csg, std::vector<PosNormalVertex>& csg_vertices,
-  std::vector<uint16_t>& csg_indices, lines_indices_t& csg_lines) {
+  const csg_t& csg, std::vector<PosNormalVertex>& csg_vertices,
+  std::vector<uint16_t>& csg_indices) {
   std::unordered_map<csg_vertex_t, int, csg_vertex_hash_t, csg_vertex_equals_t>
     indexer;
   for (const csg_polygon_t& polygon : csg.polygons) {
@@ -83,9 +84,6 @@ static void build_mesh_from_csg(
       csg_indices.push_back(indices[0]);
       csg_indices.push_back(indices[i - 1]);
       csg_indices.push_back(indices[i]);
-      csg_lines.push_back({indices[0], indices[i - 1]});
-      csg_lines.push_back({indices[i - 1], indices[i]});
-      csg_lines.push_back({indices[i], indices[0]});
     }
   }
 }
@@ -113,14 +111,18 @@ void csg_scene_t::setup(
     .add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float, true)
     .end();
 
-  build_mesh_from_csg(create_csg(), csg_vertices_, csg_indices_, csg_lines_);
+  build_mesh_from_csg(
+    create_csg(), render_thing.csg_vertices_, render_thing.indices_);
 
-  csg_norm_vbh_ = bgfx::createVertexBuffer(
+  render_thing.norm_vbh_ = bgfx::createVertexBuffer(
     bgfx::makeRef(
-      csg_vertices_.data(), csg_vertices_.size() * sizeof(PosNormalVertex)),
+      render_thing.csg_vertices_.data(),
+      render_thing.csg_vertices_.size() * sizeof(PosNormalVertex)),
     pos_norm_vert_layout_);
-  csg_norm_ibh_ = bgfx::createIndexBuffer(
-    bgfx::makeRef(csg_indices_.data(), csg_indices_.size() * sizeof(uint16_t)));
+  render_thing.norm_ibh_ = bgfx::createIndexBuffer(
+    bgfx::makeRef(
+      render_thing.indices_.data(),
+      render_thing.indices_.size() * sizeof(uint16_t)));
 
   program_norm_ =
     createShaderProgram(
@@ -150,20 +152,41 @@ void csg_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
   camera_ = asci::smoothCamera(
     camera_, target_camera_, asci::SmoothProps{}, delta_time);
 
-  const float adjustment = 0.005f;
-  for (const auto line : csg_lines_) {
+  for (const auto index : render_thing.indices_) {
     // normals
     debug_draw.debug_lines->addLine(
-      csg_vertices_[line.begin].position_,
-      csg_vertices_[line.begin].position_
-        + csg_vertices_[line.begin].normal_ * 0.5f,
+      render_thing.csg_vertices_[index].position_,
+      render_thing.csg_vertices_[index].position_
+        + render_thing.csg_vertices_[index].normal_ * 0.5f,
       0xff55dd55);
-    // wireframe
+  }
+
+  const float adjustment = 0.005f;
+  for (int index = 2; index < render_thing.indices_.size(); index += 3) {
+    // triangles (lines)
     debug_draw.debug_lines->addLine(
-      csg_vertices_[line.begin].position_
-        + csg_vertices_[line.begin].normal_ * adjustment,
-      csg_vertices_[line.end].position_
-        + csg_vertices_[line.end].normal_ * adjustment,
+      render_thing.csg_vertices_[render_thing.indices_[index - 2]].position_
+        + render_thing.csg_vertices_[render_thing.indices_[index - 2]].normal_
+            * adjustment,
+      render_thing.csg_vertices_[render_thing.indices_[index - 1]].position_
+        + render_thing.csg_vertices_[render_thing.indices_[index - 1]].normal_
+            * adjustment,
+      0xffaaaaaa);
+    debug_draw.debug_lines->addLine(
+      render_thing.csg_vertices_[render_thing.indices_[index - 1]].position_
+        + render_thing.csg_vertices_[render_thing.indices_[index - 1]].normal_
+            * adjustment,
+      render_thing.csg_vertices_[render_thing.indices_[index]].position_
+        + render_thing.csg_vertices_[render_thing.indices_[index]].normal_
+            * adjustment,
+      0xffaaaaaa);
+    debug_draw.debug_lines->addLine(
+      render_thing.csg_vertices_[render_thing.indices_[index]].position_
+        + render_thing.csg_vertices_[render_thing.indices_[index]].normal_
+            * adjustment,
+      render_thing.csg_vertices_[render_thing.indices_[index - 2]].position_
+        + render_thing.csg_vertices_[render_thing.indices_[index - 2]].normal_
+            * adjustment,
       0xffaaaaaa);
   }
 
@@ -187,8 +210,8 @@ void csg_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
   bgfx::setUniform(u_camera_pos_, (void*)&camera_.pivot, 1);
   bgfx::setUniform(u_model_color_, (void*)&model_color_, 1);
 
-  bgfx::setVertexBuffer(0, csg_norm_vbh_);
-  bgfx::setIndexBuffer(csg_norm_ibh_);
+  bgfx::setVertexBuffer(0, render_thing.norm_vbh_);
+  bgfx::setIndexBuffer(render_thing.norm_ibh_);
   bgfx::setState(
     BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z
     | BGFX_STATE_DEPTH_TEST_LESS | BGFX_STATE_MSAA | BGFX_STATE_CULL_CCW);
@@ -200,6 +223,6 @@ void csg_scene_t::teardown() {
   bgfx::destroy(u_camera_pos_);
   bgfx::destroy(u_model_color_);
   bgfx::destroy(program_norm_);
-  bgfx::destroy(csg_norm_ibh_);
-  bgfx::destroy(csg_norm_vbh_);
+  bgfx::destroy(render_thing.norm_ibh_);
+  bgfx::destroy(render_thing.norm_vbh_);
 }

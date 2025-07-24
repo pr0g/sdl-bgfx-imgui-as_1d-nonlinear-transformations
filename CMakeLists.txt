@@ -60,6 +60,7 @@ target_sources(
           bgfx-helpers.cpp
           debug.cpp
           list.cpp
+          render-thing.cpp
           marching-cubes/marching-cubes.cpp
           csg/csg.cpp
           scenes/marching-cube-scene.cpp

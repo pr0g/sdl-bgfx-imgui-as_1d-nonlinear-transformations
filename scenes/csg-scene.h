@@ -1,17 +1,11 @@
 #pragma once
 
-#include "bgfx-helpers.h"
 #include "scene.h"
+#include "render-thing.h"
 
 #include <as-camera-input/as-camera-input.hpp>
 
 #include <bgfx/bgfx.h>
-
-struct line_indices_t {
-  int begin;
-  int end;
-};
-using lines_indices_t = std::vector<line_indices_t>;
 
 struct csg_scene_t : public scene_t {
   void setup(
@@ -34,14 +28,10 @@ struct csg_scene_t : public scene_t {
   bgfx::ViewId main_view_;
   bgfx::ViewId ortho_view_;
 
-  std::vector<PosNormalVertex> csg_vertices_;
-  std::vector<uint16_t> csg_indices_;
-  lines_indices_t csg_lines_;
-
   bgfx::VertexLayout pos_norm_vert_layout_;
-  bgfx::VertexBufferHandle csg_norm_vbh_;
-  bgfx::IndexBufferHandle csg_norm_ibh_;
   bgfx::ProgramHandle program_norm_;
+  
+  render_thing_t render_thing;
 
   bgfx::UniformHandle u_light_pos_;
   bgfx::UniformHandle u_camera_pos_;
