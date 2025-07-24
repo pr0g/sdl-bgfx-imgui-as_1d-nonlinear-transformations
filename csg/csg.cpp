@@ -254,7 +254,7 @@ csg_t csg_inverse(const csg_t& csg) {
 // shapes
 
 csg_t csg_cube(const csg_cube_config_t& config) {
-  auto [min, max, orientation] = config;
+  auto [min, max, transform] = config;
   const std::array<as::vec3f, 8> corners = {{
     // b - bottom, t - top, n - near, f - far, l - left, r - right
     {min}, // bnl
@@ -274,14 +274,14 @@ csg_t csg_cube(const csg_cube_config_t& config) {
   csg_polygons_t polygons;
   std::transform(
     info.begin(), info.end(), std::back_inserter(polygons),
-    [&corners, &orientation](const info_t& info) {
+    [&corners, &transform](const info_t& info) {
       csg_vertices_t vertices;
       std::transform(
         info.first.begin(), info.first.end(), std::back_inserter(vertices),
-        [&info, &corners, &orientation](const int i) {
+        [&info, &corners, &transform](const int i) {
           return csg_vertex_t{
-            .pos = orientation * corners[i],
-            .normal = orientation * info.second};
+            .pos = as::affine_transform_pos(transform, corners[i]),
+            .normal = as::affine_transform_dir(transform, info.second)};
         });
       return csg_polygon_from_vertices(vertices);
     });

@@ -16,42 +16,40 @@
 
 static csg_t create_csg() {
 
-  const auto csg_cube_1 = csg_cube(
+  const auto csg_1 = csg_cube(
     csg_cube_config_t{
       .min = as::vec3f(-5.0f, -10.0f, -2.5f),
       .max = as::vec3f(5.0f, 10.0f, 2.5f),
-      .orientation = as::mat3_rotation_x(as::k_half_pi * 0.5f)});
-  // return csg_cube_1;
+      .transform = as::affine_from_mat3_vec3(
+        as::mat3_rotation_x(as::k_half_pi * 0.5f),
+        as::vec3(0.0f, 0.0f, 5.0f))});
 
-  // csg_sphere(as::vec3f::zero(), 1.0f);
-  const auto csg_cube_2 =
-    // csg_cube(as::vec3f::zero(), as::vec3f(2.5f, 0.2f, 0.2f));
-    csg_sphere(
-      csg_sphere_config_t{
-        .position = as::vec3f(0.0f, 3.0f, -0.5f), .radius = 1.5f});
+  const auto csg_2 = csg_sphere(
+    csg_sphere_config_t{
+      .position = as::vec3f(0.0f, 3.0f, -0.5f), .radius = 1.5f});
 
-  const auto csg_cube_3a = csg_cube(
+  const auto csg_3 = csg_cube(
     csg_cube_config_t{
       .min = as::vec3f(-5.0f, -5.0f, 0.0f),
       .max = as::vec3f(5.0f, 5.0f, 10.0f),
-      .orientation = as::mat3_rotation_z(as::k_half_pi * 0.5f)});
+      .transform =
+        as::affine_from_mat3(as::mat3_rotation_z(as::k_half_pi * 0.5f))});
 
-  return csg_union(csg_union(csg_cube_1, csg_cube_2), csg_cube_3a);
+  return csg_union(csg_union(csg_1, csg_2), csg_3);
 
-  const auto csg_cube_3 =
+  const auto csg_4 =
     // csg_cube(as::vec3f::zero(), as::vec3f(2.5f, 0.2f, 0.2f));
     csg_sphere(
       csg_sphere_config_t{
         .position = as::vec3f(-0.5, 0.0, -0.5), .radius = 0.8f});
-  const auto temp =
-    csg_subtract(csg_cylinder(csg_cylinder_config_t{}), csg_cube_2);
+  const auto temp = csg_subtract(csg_cylinder(csg_cylinder_config_t{}), csg_2);
   // const auto csg_result =
-  //   csg_subtract(csg_cylinder(), csg_cube_1); // csg_subtract(temp,
-  //   csg_cube_3);
+  //   csg_subtract(csg_cylinder(), csg_1); // csg_subtract(temp,
+  //   csg_4);
   // const auto polygons = temp.polygons;
-  // csg_subtract(csg_subtract(temp, csg_cube_3), csg_cube_1).polygons;
-  // csg_subtract(csg_cylinder(csg_cylinder_config_t{}), csg_cube_1)
-  //   .polygons; // csg_subtract(temp, csg_cube_3);
+  // csg_subtract(csg_subtract(temp, csg_4), csg_1).polygons;
+  // csg_subtract(csg_cylinder(csg_cylinder_config_t{}), csg_1)
+  //   .polygons; // csg_subtract(temp, csg_4);
 
   const auto a = csg_cube();
   const auto b = csg_cylinder();
