@@ -13,9 +13,7 @@
 
 #include <ranges>
 
-static void setup_scene(
-  std::vector<PosNormalVertex>& csg_vertices,
-  std::vector<uint16_t>& csg_indices, lines_indices_t& csg_lines) {
+static csg_t create_csg() {
   const auto csg_cube_1 = csg_cube(
     csg_cube_config_t{
       .center = as::vec3f::zero(), .radius = as::vec3f(0.5f, 1.5f, 0.5f)});
@@ -35,14 +33,19 @@ static void setup_scene(
   // const auto csg_result =
   //   csg_subtract(csg_cylinder(), csg_cube_1); // csg_subtract(temp,
   //   csg_cube_3);
-  const auto polygons = temp.polygons;
+  // const auto polygons = temp.polygons;
   // csg_subtract(csg_subtract(temp, csg_cube_3), csg_cube_1).polygons;
   // csg_subtract(csg_cylinder(csg_cylinder_config_t{}), csg_cube_1)
   //   .polygons; // csg_subtract(temp, csg_cube_3);
+  return temp;
+}
 
+static void build_mesh_from_csg(
+  const csg_t csg, std::vector<PosNormalVertex>& csg_vertices,
+  std::vector<uint16_t>& csg_indices, lines_indices_t& csg_lines) {
   std::unordered_map<csg_vertex_t, int, csg_vertex_hash_t, csg_vertex_equals_t>
     indexer;
-  for (const csg_polygon_t& polygon : polygons) {
+  for (const csg_polygon_t& polygon : csg.polygons) {
     std::vector<int> indices;
     for (const csg_vertex_t vertex : polygon.vertices) {
       if (const auto index = indexer.find(vertex); index == indexer.end()) {
@@ -58,7 +61,6 @@ static void setup_scene(
       csg_indices.push_back(indices[0]);
       csg_indices.push_back(indices[i - 1]);
       csg_indices.push_back(indices[i]);
-
       csg_lines.push_back({indices[0], indices[i - 1]});
       csg_lines.push_back({indices[i - 1], indices[i]});
       csg_lines.push_back({indices[i], indices[0]});
@@ -90,7 +92,7 @@ void csg_scene_t::setup(
     .add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float, true)
     .end();
 
-  setup_scene(csg_vertices_, csg_indices_, csg_lines_);
+  build_mesh_from_csg(create_csg(), csg_vertices_, csg_indices_, csg_lines_);
 
   csg_norm_vbh_ = bgfx::createVertexBuffer(
     bgfx::makeRef(
