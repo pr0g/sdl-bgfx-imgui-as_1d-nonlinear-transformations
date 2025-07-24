@@ -97,7 +97,7 @@ void csg_scene_t::setup(
   cameras.addCamera(&first_person_rotate_camera_);
   cameras.addCamera(&first_person_translate_camera_);
 
-  target_camera_.pivot = as::vec3(0.0f, 15.0f, -20.0f);
+  target_camera_.pivot = as::vec3(0.0f, 5.0f, -10.0f);
   target_camera_.pitch = as::radians(30.0f);
   camera_ = target_camera_;
 
