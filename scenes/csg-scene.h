@@ -27,8 +27,9 @@ struct csg_scene_t : public scene_t {
   asc::Camera camera_;
   asc::Camera target_camera_;
   asci::CameraSystem camera_system_;
-  asci::RotateCameraInput orbit_rotate_camera_{asci::MouseButton::Left};
-  asci::PivotDollyScrollCameraInput orbit_dolly_camera_{};
+  asci::RotateCameraInput first_person_rotate_camera_{asci::MouseButton::Left};
+  asci::TranslateCameraInput first_person_translate_camera_{
+    asci::lookTranslation, asci::translatePivot};
 
   bgfx::ViewId main_view_;
   bgfx::ViewId ortho_view_;

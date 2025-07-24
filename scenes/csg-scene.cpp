@@ -101,12 +101,11 @@ void csg_scene_t::setup(
     as::radians(60.0f), float(width) / float(height), 0.01f, 1000.0f);
 
   asci::Cameras& cameras = camera_system_.cameras_;
-  cameras.addCamera(&orbit_rotate_camera_);
-  cameras.addCamera(&orbit_dolly_camera_);
+  cameras.addCamera(&first_person_rotate_camera_);
+  cameras.addCamera(&first_person_translate_camera_);
 
-  target_camera_.offset = as::vec3(0.0f, 0.0f, -10.0f);
+  target_camera_.pivot = as::vec3(0.0f, 15.0f, -20.0f);
   target_camera_.pitch = as::radians(30.0f);
-  // target_camera_.yaw = as::radians(45.0f);
   camera_ = target_camera_;
 
   pos_norm_vert_layout_.begin()
