@@ -304,21 +304,23 @@ csg_t csg_sphere(const csg_sphere_config_t& config) {
 csg_t csg_cylinder(const csg_cylinder_config_t& config) {
   const auto& [start, end, radius, slices] = config;
   const as::vec3f ray = end - start;
-  const auto axis_z = as::vec_normalize(ray);
-  const bool is_y = std::abs(axis_z.y) > 0.5f;
-  const auto axis_x = as::vec_normalize(
-    as::vec3_cross(as::vec3f((float)!!is_y, (float)!!!is_y, 0.0f), axis_z));
-  const auto axis_y = as::vec3_cross(axis_x, axis_z);
-  const auto start_vertex = csg_vertex_t{.pos = start, .normal = -axis_z};
-  const auto end_vertex = csg_vertex_t{.pos = end, .normal = axis_z};
+  const as::mat3f basis = as::orthonormal_basis(as::vec_normalize(ray));
+  // direction of cylinder
+  const as::vec3f main_axis = as::mat3_basis_x(basis);
+  // axes orthogonal to main_axis, and each other
+  const as::vec3f side_axis_1 = as::mat3_basis_y(basis);
+  const as::vec3f side_axis_2 = as::mat3_basis_z(basis);
+  const auto start_vertex = csg_vertex_t{.pos = start, .normal = -main_axis};
+  const auto end_vertex = csg_vertex_t{.pos = end, .normal = main_axis};
   csg_polygons_t polygons;
-  const auto point = [&axis_x, &axis_y, &axis_z, &start, &ray,
+  const auto point = [&side_axis_2, &side_axis_1, &main_axis, &start, &ray,
                       radius](float stack, float slice, float normal_blend) {
     const auto angle = slice * as::k_two_pi;
-    const auto out = (axis_x * std::cos(angle)) + (axis_y * std::sin(angle));
+    const auto out =
+      side_axis_2 * std::cos(angle) + side_axis_1 * std::sin(angle);
     const auto pos = (start + ray * stack) + out * radius;
     const auto normal =
-      (out * (1.0f - std::abs(normal_blend))) + (axis_z * normal_blend);
+      (out * (1.0f - std::abs(normal_blend))) + (main_axis * normal_blend);
     return csg_vertex_t{.pos = pos, .normal = normal};
   };
   for (int i = 0; i < slices; i++) {
