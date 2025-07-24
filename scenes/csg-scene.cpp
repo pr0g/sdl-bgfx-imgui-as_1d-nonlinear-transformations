@@ -153,6 +153,13 @@ void csg_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
 
   const float adjustment = 0.005f;
   for (const auto line : csg_lines_) {
+    // normals
+    debug_draw.debug_lines->addLine(
+      csg_vertices_[line.begin].position_,
+      csg_vertices_[line.begin].position_
+        + csg_vertices_[line.begin].normal_ * 0.5f,
+      0xff55dd55);
+    // wireframe
     debug_draw.debug_lines->addLine(
       csg_vertices_[line.begin].position_
         + csg_vertices_[line.begin].normal_ * adjustment,
