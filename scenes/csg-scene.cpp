@@ -81,8 +81,8 @@ void csg_scene_t::setup(
   camera_ = target_camera_;
 
   render_thing_t::init();
-  render_thing =
-    render_thing_from_csg(create_csg(), as::vec3f(1.0f, 1.0f, 0.0f));
+  render_things_.push_back(
+    render_thing_from_csg(create_csg(), as::vec3f(1.0f, 1.0f, 0.0f)));
 
   u_light_pos_ = bgfx::createUniform("u_lightPos", bgfx::UniformType::Vec4, 1);
   u_camera_pos_ =
@@ -101,7 +101,9 @@ void csg_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
   camera_ = asci::smoothCamera(
     camera_, target_camera_, asci::SmoothProps{}, delta_time);
 
-  render_thing_debug(render_thing, *debug_draw.debug_lines);
+  for (const auto& render_thing : render_things_) {
+    render_thing_debug(render_thing, *debug_draw.debug_lines);
+  }
 
   float view[16];
   as::mat_to_arr(as::mat4_from_affine(camera_.view()), view);
@@ -118,15 +120,19 @@ void csg_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
   as::mat_to_arr(offset, model);
   bgfx::setTransform(model);
 
-  render_thing_draw(render_thing, main_view_);
-
   bgfx::setUniform(u_light_pos_, (void*)&light_pos_, 1);
   bgfx::setUniform(u_camera_pos_, (void*)&camera_.pivot, 1);
+
+  for (const auto& render_thing : render_things_) {
+    render_thing_draw(render_thing, main_view_);
+  }
 }
 
 void csg_scene_t::teardown() {
   bgfx::destroy(u_light_pos_);
   bgfx::destroy(u_camera_pos_);
-  destroy_render_thing(render_thing);
+  for (const auto& render_thing : render_things_) {
+    destroy_render_thing(render_thing);
+  }
   render_thing_t::deinit();
 }

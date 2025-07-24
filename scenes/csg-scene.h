@@ -28,7 +28,7 @@ struct csg_scene_t : public scene_t {
   bgfx::ViewId main_view_;
   bgfx::ViewId ortho_view_;
 
-  render_thing_t render_thing;
+  std::vector<render_thing_t> render_things_;
 
   bgfx::UniformHandle u_light_pos_;
   bgfx::UniformHandle u_camera_pos_;
