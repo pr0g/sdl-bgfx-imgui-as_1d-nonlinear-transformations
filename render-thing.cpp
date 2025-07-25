@@ -87,50 +87,58 @@ void render_thing_draw(
 }
 
 void render_thing_debug(
-  const render_thing_t& render_thing, dbg::DebugLines& debug_lines) {
+  const render_thing_t& render_thing, dbg::DebugLines& debug_lines,
+  render_thing_debug_config_t config) {
   // normals
-  const auto inverse_transpose = as::mat_transpose(
-    as::mat_inverse(as::mat3_from_mat4(render_thing.transform_)));
-  for (const auto index : render_thing.indices_) {
-    const auto position = as::vec3_from_vec4(
-      render_thing.transform_
-      * as::vec4_translation(render_thing.vertices_[index].position_));
-    const auto normal =
-      inverse_transpose * render_thing.vertices_[index].normal_;
-    debug_lines.addLine(position, position + normal * 0.5f, 0xff55dd55);
+  if (config.normals) {
+    const auto inverse_transpose = as::mat_transpose(
+      as::mat_inverse(as::mat3_from_mat4(render_thing.transform_)));
+    for (const auto index : render_thing.indices_) {
+      const auto position = as::vec3_from_vec4(
+        render_thing.transform_
+        * as::vec4_translation(render_thing.vertices_[index].position_));
+      const auto normal =
+        inverse_transpose * render_thing.vertices_[index].normal_;
+      debug_lines.addLine(position, position + normal * 0.5f, 0xff55dd55);
+    }
   }
 
-  // triangles (lines)
-  const float adjustment = 0.005f;
-  for (int index = 2; index < render_thing.indices_.size(); index += 3) {
-    const auto p0 = as::vec3_from_vec4(
-      render_thing.transform_
-      * as::vec4_translation(
-        render_thing.vertices_[render_thing.indices_[index]].position_));
-    const auto p1 = as::vec3_from_vec4(
-      render_thing.transform_
-      * as::vec4_translation(
-        render_thing.vertices_[render_thing.indices_[index - 1]].position_));
-    const auto p2 = as::vec3_from_vec4(
-      render_thing.transform_
-      * as::vec4_translation(
-        render_thing.vertices_[render_thing.indices_[index - 2]].position_));
-    const auto n0 = as::vec3_from_vec4(
-      render_thing.transform_
-      * as::vec4_direction(
-        render_thing.vertices_[render_thing.indices_[index]].normal_));
-    const auto n1 = as::vec3_from_vec4(
-      render_thing.transform_
-      * as::vec4_direction(
-        render_thing.vertices_[render_thing.indices_[index - 1]].normal_));
-    const auto n2 = as::vec3_from_vec4(
-      render_thing.transform_
-      * as::vec4_direction(
-        render_thing.vertices_[render_thing.indices_[index - 2]].normal_));
+  if (config.wireframe) {
+    // triangles (lines)
+    const float adjustment = 0.005f;
+    for (int index = 2; index < render_thing.indices_.size(); index += 3) {
+      const auto p0 = as::vec3_from_vec4(
+        render_thing.transform_
+        * as::vec4_translation(
+          render_thing.vertices_[render_thing.indices_[index]].position_));
+      const auto p1 = as::vec3_from_vec4(
+        render_thing.transform_
+        * as::vec4_translation(
+          render_thing.vertices_[render_thing.indices_[index - 1]].position_));
+      const auto p2 = as::vec3_from_vec4(
+        render_thing.transform_
+        * as::vec4_translation(
+          render_thing.vertices_[render_thing.indices_[index - 2]].position_));
+      const auto n0 = as::vec3_from_vec4(
+        render_thing.transform_
+        * as::vec4_direction(
+          render_thing.vertices_[render_thing.indices_[index]].normal_));
+      const auto n1 = as::vec3_from_vec4(
+        render_thing.transform_
+        * as::vec4_direction(
+          render_thing.vertices_[render_thing.indices_[index - 1]].normal_));
+      const auto n2 = as::vec3_from_vec4(
+        render_thing.transform_
+        * as::vec4_direction(
+          render_thing.vertices_[render_thing.indices_[index - 2]].normal_));
 
-    debug_lines.addLine(p2 + n2 * adjustment, p1 + n1 * adjustment, 0xffaaaaaa);
-    debug_lines.addLine(p1 + n1 * adjustment, p0 + n0 * adjustment, 0xffaaaaaa);
-    debug_lines.addLine(p0 + n0 * adjustment, p2 + n2 * adjustment, 0xffaaaaaa);
+      debug_lines.addLine(
+        p2 + n2 * adjustment, p1 + n1 * adjustment, 0xffaaaaaa);
+      debug_lines.addLine(
+        p1 + n1 * adjustment, p0 + n0 * adjustment, 0xffaaaaaa);
+      debug_lines.addLine(
+        p0 + n0 * adjustment, p2 + n2 * adjustment, 0xffaaaaaa);
+    }
   }
 }
 

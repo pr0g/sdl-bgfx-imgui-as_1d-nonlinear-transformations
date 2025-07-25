@@ -105,12 +105,21 @@ void csg_scene_t::input(const SDL_Event& current_event) {
 }
 
 void csg_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
+  ImGui::Begin("CSG");
+
+  ImGui::Checkbox("Wireframe", &wireframe_);
+  ImGui::Checkbox("Normals", &normals_);
+
+  ImGui::End();
+
   target_camera_ = camera_system_.stepCamera(target_camera_, delta_time);
   camera_ = asci::smoothCamera(
     camera_, target_camera_, asci::SmoothProps{}, delta_time);
 
   for (const auto& render_thing : render_things_) {
-    render_thing_debug(render_thing, *debug_draw.debug_lines);
+    render_thing_debug(
+      render_thing, *debug_draw.debug_lines,
+      {.normals = normals_, .wireframe = wireframe_});
   }
 
   float view[16];

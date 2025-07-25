@@ -33,4 +33,7 @@ struct csg_scene_t : public scene_t {
   bgfx::UniformHandle u_light_pos_;
   bgfx::UniformHandle u_camera_pos_;
   as::vec3 light_pos_{0.0f, 8.0f, 8.0f};
+  
+  bool wireframe_ = true;
+  bool normals_ = false;
 };

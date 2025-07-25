@@ -33,8 +33,13 @@ struct render_thing_t {
 render_thing_t render_thing_from_csg(
   const csg_t& csg, const as::mat4f& transform, const as::vec3f& color);
 
+struct render_thing_debug_config_t {
+  bool normals = false;
+  bool wireframe = true;
+};
+  
 void render_thing_debug(
-  const render_thing_t& render_thing, dbg::DebugLines& debug_lines);
+  const render_thing_t& render_thing, dbg::DebugLines& debug_lines, render_thing_debug_config_t config = render_thing_debug_config_t{});
 void render_thing_draw(const render_thing_t& render_thing, bgfx::ViewId view);
 
 void destroy_render_thing(const render_thing_t& render_thing);
