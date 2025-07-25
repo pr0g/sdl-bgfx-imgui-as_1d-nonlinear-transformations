@@ -12,7 +12,20 @@
 #include <thh-bgfx-debug/debug-cube.hpp>
 #include <thh-bgfx-debug/debug-quad.hpp>
 
+#include <format>
 #include <ranges>
+
+std::string operation_name(int operation) {
+  switch (operation) {
+    case 0:
+      return "union";
+    case 1:
+      return "intersection";
+    case 2:
+      return "difference";
+  }
+  return "";
+}
 
 static csg_t create_csg_union() {
   const auto a =
@@ -102,21 +115,21 @@ void csg_scene_t::setup(
       as::mat3_rotation_y(as::k_half_pi), as::vec3f::axis_x(5.0f)));
 
   render_thing_t::init();
-  render_things_.push_back(render_thing_from_csg(
-    union_csg, as::mat4f::identity(), as::vec3f(1.0f, 1.0f, 0.0f)));
-  render_things_.push_back(render_thing_from_csg(
-    subtract_csg, as::mat4f::identity(), as::vec3f(1.0f, 1.0f, 0.0f)));
-  render_things_.push_back(render_thing_from_csg(
-    intersect_csg, as::mat4f::identity(), as::vec3f(1.0f, 1.0f, 0.0f)));
-  render_things_.push_back(render_thing_from_csg(
-    create_csg_classic(),
-    as::mat4_from_mat3_vec3(
-      as::mat3_rotation_y(as::k_half_pi), as::vec3f::axis_y(5.0f)),
-    as::vec3f(1.0f, 1.0f, 0.0f)));
-  render_things_.push_back(render_thing_from_csg(
-    create_csg_transform_test(),
-    as::mat4_from_vec3(as::vec3f(-5.0f, 5.0f, 0.0f)),
-    as::vec3f(0.0f, 1.0f, 1.0f)));
+  // render_things_.push_back(render_thing_from_csg(
+  //   union_csg, as::mat4f::identity(), as::vec3f(1.0f, 1.0f, 0.0f)));
+  // render_things_.push_back(render_thing_from_csg(
+  //   subtract_csg, as::mat4f::identity(), as::vec3f(1.0f, 1.0f, 0.0f)));
+  // render_things_.push_back(render_thing_from_csg(
+  //   intersect_csg, as::mat4f::identity(), as::vec3f(1.0f, 1.0f, 0.0f)));
+  // render_things_.push_back(render_thing_from_csg(
+  //   create_csg_classic(),
+  //   as::mat4_from_mat3_vec3(
+  //     as::mat3_rotation_y(as::k_half_pi), as::vec3f::axis_y(5.0f)),
+  //   as::vec3f(1.0f, 1.0f, 0.0f)));
+  // render_things_.push_back(render_thing_from_csg(
+  //   create_csg_transform_test(),
+  //   as::mat4_from_vec3(as::vec3f(-5.0f, 5.0f, 0.0f)),
+  //   as::vec3f(0.0f, 1.0f, 1.0f)));
 
   u_light_pos_ = bgfx::createUniform("u_lightPos", bgfx::UniformType::Vec4, 1);
   u_camera_pos_ =
@@ -135,6 +148,115 @@ void csg_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
 
   ImGui::Checkbox("Wireframe", &wireframe_);
   ImGui::Checkbox("Normals", &normals_);
+
+  // if (ImGui::Button("Add operation")) {
+  //   operations_.insert(
+  //     {std::string("operation-") + std::to_string(csgs_.size()),
+  //      operation_t{.operation = (operation_e)operation_}});
+  // }
+
+  // ImGui::Text("Operations");
+  // for (const auto operation : operations_) {
+  //   ImGui::Text("%s", operation.first.c_str());
+  // }
+
+  ImGui::Combo("Shape", &shape_, "Cube\0Sphere\0Cylinder\0");
+  ImGui::InputText("Shape name", shape_name_buffer_, 64);
+  if (ImGui::Button("Add shape")) {
+    const auto csg_handle = csg_kinds_.add(csg_shape_t{});
+    csg_kinds_lookup_.insert({shape_name_buffer_, csg_handle});
+    csg_kinds_.call(csg_handle, [this](csg_kind_t& csg_kind) {
+      auto* csg = std::get_if<csg_shape_t>(&csg_kind);
+      switch (shape_) {
+        case 0: {
+          *csg = csg_cube();
+        } break;
+        case 1: {
+          *csg = csg_sphere();
+        } break;
+        case 2: {
+          *csg = csg_cylinder();
+        } break;
+      }
+      csg_transform_csg_inplace(
+        *csg, as::mat4_from_vec3(
+                camera_.pivot + as::mat3_basis_z(camera_.rotation()) * 10.0f));
+      render_things_.push_back(render_thing_from_csg(
+        *csg, as::mat4f::identity(), as::vec3f(1.0f, 0.0f, 0.0f)));
+    });
+  }
+
+  ImGui::Combo("Operation", &operation_, "Union\0Intersection\0Difference\0");
+  ImGui::InputText("lhs", lhs_operation_buffer_, 64);
+  ImGui::InputText("rhs", rhs_operation_buffer_, 64);
+  if (ImGui::Button("Add operation")) {
+    const auto csg_handle = csg_kinds_.add(csg_operation_t{});
+    const auto op = std::format(
+      "{} {} {}", std::string(lhs_operation_buffer_),
+      operation_name(operation_), std::string(rhs_operation_buffer_));
+    csg_kinds_lookup_.insert({op, csg_handle});
+    csg_kinds_.call(csg_handle, [this](csg_kind_t& csg_kind) {
+      auto lhs = csg_kinds_lookup_.find(lhs_operation_buffer_);
+      auto rhs = csg_kinds_lookup_.find(rhs_operation_buffer_);
+
+      if (lhs == csg_kinds_lookup_.end() || rhs == csg_kinds_lookup_.end()) {
+        return;
+      }
+
+      auto* csg = std::get_if<csg_operation_t>(&csg_kind);
+      csg->lhs = lhs->second;
+      csg->rhs = rhs->second;
+      switch (shape_) {
+        case 0: {
+          csg->operation = csg_union;
+        } break;
+        case 1: {
+          csg->operation = csg_intersect;
+        } break;
+        case 2: {
+          csg->operation = csg_subtract;
+        } break;
+      }
+
+      csg_kinds_.call(csg->lhs, [this, csg](csg_kind_t& lhs) {
+        csg_kinds_.call(csg->rhs, [this, csg, lhs](csg_kind_t& rhs) {
+          const auto* l = std::get_if<csg_shape_t>(&lhs);
+          const auto* r = std::get_if<csg_shape_t>(&rhs);
+          auto next_csg = csg->operation(*l, *r);
+
+          const auto csg_handle = csg_kinds_.add(next_csg);
+          const auto shape_op = std::format(
+            "{} {}-{} {}", std::string(lhs_operation_buffer_), "shape",
+            operation_name(operation_), std::string(rhs_operation_buffer_));
+          csg_kinds_lookup_.insert({shape_op, csg_handle});
+
+          render_things_.push_back(render_thing_from_csg(
+            next_csg, as::mat4f::identity(), as::vec3f(1.0f, 0.0f, 0.0f)));
+
+          // csg_kinds_lookup_.erase(csg->lhs);
+        });
+      });
+    });
+  }
+
+  // ImGui::Text("CSGs");
+  // for (const auto csg : csgs_) {
+  //   ImGui::Text("%s", csg.first.c_str());
+  // }
+
+  // if (ImGui::Button("Process")) {
+  //   // need to be ordered
+  //   const auto a = csgs_.find("shape-0");
+  //   const auto b = csgs_.find("shape-1");
+  //   if (a != csgs_.end() && b != csgs_.end()) {
+  //     auto csg = csg_union(a->second, b->second);
+  //     csgs_.insert(
+  //       {std::string("operation-" + std::to_string(csgs_.size())), csg});
+
+  //     render_things_.push_back(render_thing_from_csg(
+  //       csg, as::mat4f::identity(), as::vec3f(1.0f, 0.0f, 0.0f)));
+  //   }
+  // }
 
   ImGui::End();
 
