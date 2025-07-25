@@ -29,3 +29,11 @@ third-party\build\bin\shaderc.exe ^
 -f shader/basic-lighting/f_basic.sc -o shader/basic-lighting/f_basic.bin ^
 --platform windows --type fragment --verbose -i ./ -p ps_5_0
 
+REM basic (normal) lighting shader with vertex colors
+third-party\build\bin\shaderc.exe ^
+-f shader\basic-lighting-vert-col\v_basic_vc.sc -o shader\basic-lighting-vert-col\v_basic_vc.bin ^
+--platform windows --type vertex --verbose -i ./ -p vs_5_0
+
+third-party\build\bin\shaderc.exe ^
+-f shader/basic-lighting-vert-col/f_basic_vc.sc -o shader/basic-lighting-vert-col/f_basic_vc.bin ^
+--platform windows --type fragment --verbose -i ./ -p ps_5_0

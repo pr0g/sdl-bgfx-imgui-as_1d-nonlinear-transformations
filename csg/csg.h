@@ -98,6 +98,7 @@ using csg_vertices_t = std::vector<csg_vertex_t>;
 struct csg_polygon_t {
   csg_vertices_t vertices;
   plane_t plane;
+  uint32_t color;
 };
 
 using csg_polygons_t = std::vector<csg_polygon_t>;
@@ -158,7 +159,8 @@ csg_polygon_t csg_flip_polygon(const csg_polygon_t& polygon);
 // csg_polygon_from_vertices
 // Returns a new polygon from vertices (vertices must be coplanar, convex and
 // have a minumum of 3 points)
-csg_polygon_t csg_polygon_from_vertices(const csg_vertices_t& vertices);
+csg_polygon_t csg_polygon_from_vertices(
+  const csg_vertices_t& vertices, uint32_t color);
 
 // csg_split_polygon_by_plane
 // @evanw (@thh edit)
@@ -267,6 +269,7 @@ struct csg_cube_config_t {
   as::vec3f min = -as::vec3f::one();
   as::vec3f max = as::vec3f::one();
   as::affine transform = as::affine::identity();
+  uint32_t color = 0xff0000ff;
 };
 
 // csg_cube
@@ -286,6 +289,7 @@ struct csg_sphere_config_t {
   float radius = 1.0f;
   int slices = 16;
   int stacks = 8;
+  uint32_t color = 0xffff0000;
 };
 
 // csg_sphere
@@ -307,6 +311,7 @@ struct csg_cylinder_config_t {
   as::vec3f end = as::vec3f::axis_y();
   float radius = 1.0f;
   int slices = 16;
+  uint32_t color = 0xff00ff00;
 };
 
 // csg_cylinder

@@ -85,10 +85,10 @@ void csg_split_polygon_by_plane(
         }
       }
       if (f.size() >= 3) {
-        front.push_back(csg_polygon_from_vertices(f));
+        front.push_back(csg_polygon_from_vertices(f, polygon.color));
       }
       if (b.size() >= 3) {
-        back.push_back(csg_polygon_from_vertices(b));
+        back.push_back(csg_polygon_from_vertices(b, polygon.color));
       }
     } break;
   }
@@ -103,14 +103,17 @@ csg_polygon_t csg_flip_polygon(const csg_polygon_t& polygon) {
     flipped_polygon.vertices.begin(), flipped_polygon.vertices.end(),
     [](csg_vertex_t& v) { v.normal = -v.normal; });
   flipped_polygon.plane = flip_plane(polygon.plane);
+  flipped_polygon.color = polygon.color;
   return flipped_polygon;
 }
 
-csg_polygon_t csg_polygon_from_vertices(const csg_vertices_t& vertices) {
+csg_polygon_t csg_polygon_from_vertices(
+  const csg_vertices_t& vertices, const uint32_t color) {
   return csg_polygon_t{
     .vertices = vertices,
     .plane =
-      plane_from_points(vertices[0].pos, vertices[1].pos, vertices[2].pos)};
+      plane_from_points(vertices[0].pos, vertices[1].pos, vertices[2].pos),
+    .color = color};
 }
 
 csg_polygons_t csg_clip_polygons(
@@ -254,7 +257,7 @@ csg_t csg_inverse(const csg_t& csg) {
 // shapes
 
 csg_t csg_cube(const csg_cube_config_t& config) {
-  auto [min, max, transform] = config;
+  auto [min, max, transform, color] = config;
   const std::array<as::vec3f, 8> corners = {{
     // b - bottom, t - top, n - near, f - far, l - left, r - right
     {min}, // bnl
@@ -274,7 +277,7 @@ csg_t csg_cube(const csg_cube_config_t& config) {
   csg_polygons_t polygons;
   std::transform(
     info.begin(), info.end(), std::back_inserter(polygons),
-    [&corners, &transform](const info_t& info) {
+    [&corners, &transform, color](const info_t& info) {
       csg_vertices_t vertices;
       std::transform(
         info.first.begin(), info.first.end(), std::back_inserter(vertices),
@@ -283,13 +286,13 @@ csg_t csg_cube(const csg_cube_config_t& config) {
             .pos = as::affine_transform_pos(transform, corners[i]),
             .normal = as::affine_transform_dir(transform, info.second)};
         });
-      return csg_polygon_from_vertices(vertices);
+      return csg_polygon_from_vertices(vertices, color);
     });
   return csg_t{.polygons = polygons};
 }
 
 csg_t csg_sphere(const csg_sphere_config_t& config) {
-  const auto& [center, radius, slices, stacks] = config;
+  const auto& [center, radius, slices, stacks, color] = config;
   csg_polygons_t polygons;
   const auto vertex =
     [&center,
@@ -313,14 +316,14 @@ csg_t csg_sphere(const csg_sphere_config_t& config) {
         vertex((i + 1) / (float)slices, (j + 1) / (float)stacks, vertices);
       }
       vertex(i / (float)slices, (j + 1) / (float)stacks, vertices);
-      polygons.push_back(csg_polygon_from_vertices(vertices));
+      polygons.push_back(csg_polygon_from_vertices(vertices, color));
     }
   }
   return csg_t{.polygons = std::move(polygons)};
 }
 
 csg_t csg_cylinder(const csg_cylinder_config_t& config) {
-  const auto& [start, end, radius, slices] = config;
+  const auto& [start, end, radius, slices, color] = config;
   const as::vec3f ray = end - start;
   const as::mat3f basis = as::orthonormal_basis(as::vec_normalize(ray));
   // direction of cylinder
@@ -346,14 +349,16 @@ csg_t csg_cylinder(const csg_cylinder_config_t& config) {
     const float t1 = (i + 1) / (float)slices;
     polygons.push_back(csg_polygon_from_vertices(
       csg_vertices_t{
-        start_vertex, point(0.0f, t0, -1.0f), point(0.0f, t1, -1.0f)}));
+        start_vertex, point(0.0f, t0, -1.0f), point(0.0f, t1, -1.0f)},
+      color));
     polygons.push_back(csg_polygon_from_vertices(
       csg_vertices_t{
         point(0.0f, t1, 0.0f), point(0.0f, t0, 0.0f), point(1.0f, t0, 0.0f),
-        point(1.0f, t1, 0.0f)}));
+        point(1.0f, t1, 0.0f)},
+      color));
     polygons.push_back(csg_polygon_from_vertices(
-      csg_vertices_t{
-        end_vertex, point(1.0f, t1, 1.0f), point(1.0f, t0, 1.0f)}));
+      csg_vertices_t{end_vertex, point(1.0f, t1, 1.0f), point(1.0f, t0, 1.0f)},
+      color));
   }
   return csg_t{.polygons = std::move(polygons)};
 }

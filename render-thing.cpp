@@ -8,7 +8,7 @@ bgfx::VertexLayout render_thing_t::vertex_layout_;
 bgfx::ProgramHandle render_thing_t::program_;
 
 static void build_mesh_from_csg(
-  const csg_t& csg, std::vector<PosNormalVertex>& csg_vertices,
+  const csg_t& csg, std::vector<PosNormalColorVertex>& csg_vertices,
   std::vector<uint16_t>& csg_indices) {
   std::unordered_map<csg_vertex_t, int, csg_vertex_hash_t, csg_vertex_equals_t>
     indexer;
@@ -19,7 +19,10 @@ static void build_mesh_from_csg(
         indices.push_back(indexer.size());
         indexer.insert({vertex, indexer.size()});
         csg_vertices.push_back(
-          PosNormalVertex{.position_ = vertex.pos, .normal_ = vertex.normal});
+          PosNormalColorVertex{
+            .position_ = vertex.pos,
+            .normal_ = vertex.normal,
+            .abgr_ = polygon.color});
       } else {
         indices.push_back(index->second);
       }
@@ -36,12 +39,13 @@ void render_thing_t::init() {
   vertex_layout_.begin()
     .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
     .add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float, true)
+    .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
     .end();
 
-  program_ =
-    createShaderProgram(
-      "shader/basic-lighting/v_basic.bin", "shader/basic-lighting/f_basic.bin")
-      .value_or(bgfx::ProgramHandle(BGFX_INVALID_HANDLE));
+  program_ = createShaderProgram(
+               "shader/basic-lighting-vert-col/v_basic_vc.bin",
+               "shader/basic-lighting-vert-col/f_basic_vc.bin")
+               .value_or(bgfx::ProgramHandle(BGFX_INVALID_HANDLE));
 
   if (!bgfx::isValid(program_)) {
     std::terminate();
@@ -61,14 +65,12 @@ render_thing_t render_thing_from_csg(
   render_thing.norm_vbh_ = bgfx::createVertexBuffer(
     bgfx::makeRef(
       render_thing.vertices_.data(),
-      render_thing.vertices_.size() * sizeof(PosNormalVertex)),
+      render_thing.vertices_.size() * sizeof(PosNormalColorVertex)),
     render_thing_t::vertex_layout_);
   render_thing.norm_ibh_ = bgfx::createIndexBuffer(
     bgfx::makeRef(
       render_thing.indices_.data(),
       render_thing.indices_.size() * sizeof(uint16_t)));
-  render_thing.color_uniform_ =
-    bgfx::createUniform("u_modelColor", bgfx::UniformType::Vec4, 1);
   return render_thing;
 }
 
@@ -77,7 +79,6 @@ void render_thing_draw(
   float model[16];
   as::mat_to_arr(render_thing.transform_, model);
   bgfx::setTransform(model);
-  bgfx::setUniform(render_thing.color_uniform_, (void*)&render_thing.color_, 1);
   bgfx::setVertexBuffer(0, render_thing.norm_vbh_);
   bgfx::setIndexBuffer(render_thing.norm_ibh_);
   bgfx::setState(
@@ -143,7 +144,6 @@ void render_thing_debug(
 }
 
 void destroy_render_thing(const render_thing_t& render_thing) {
-  bgfx::destroy(render_thing.color_uniform_);
   bgfx::destroy(render_thing.norm_ibh_);
   bgfx::destroy(render_thing.norm_vbh_);
 }

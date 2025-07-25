@@ -28,3 +28,12 @@
 ./third-party/build/bin/shaderc \
 -f shader/basic-lighting/f_basic.sc -o shader/basic-lighting/f_basic.bin \
 --platform osx --type fragment --verbose -i ./ -p metal
+
+# basic (normal) lighting shader with vertex colors
+./third-party/build/bin/shaderc \
+-f shader/basic-lighting-vert-col/v_basic_vc.sc -o shader/basic-lighting-vert-col/v_basic_vc.bin \
+--platform osx --type vertex --verbose -i ./ -p metal
+
+./third-party/build/bin/shaderc \
+-f shader/basic-lighting-vert-col/f_basic_vc.sc -o shader/basic-lighting-vert-col/f_basic_vc.bin \
+--platform osx --type fragment --verbose -i ./ -p metal
