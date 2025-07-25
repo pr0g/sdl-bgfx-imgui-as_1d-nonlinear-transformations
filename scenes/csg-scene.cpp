@@ -53,6 +53,21 @@ static csg_t create_csg_classic() {
   return csg_subtract(csg_intersect(a, b), csg_union(csg_union(c, d), e));
 }
 
+static csg_t create_csg_transform_test() {
+  auto a = csg_cube();
+  auto b = csg_cube();
+  auto c = csg_cube();
+  csg_transform_csg_inplace(
+    b,
+    as::mat4_from_mat3_vec3(
+      as::mat3_rotation_z(as::k_half_pi * 0.5f), as::vec3f(1.5f, 0.0f, 0.0f)));
+  csg_transform_csg_inplace(
+    c, as::mat4_from_mat3_vec3(
+         as::mat3_rotation_z(-as::k_half_pi * 0.5f),
+         as::vec3f(-1.5f, 0.0f, 0.0f)));
+  return csg_subtract(csg_subtract(a, b), c);
+}
+
 void csg_scene_t::setup(
   const bgfx::ViewId main_view, const bgfx::ViewId ortho_view,
   const uint16_t width, const uint16_t height) {
@@ -71,26 +86,37 @@ void csg_scene_t::setup(
   target_camera_.pitch = as::radians(30.0f);
   camera_ = target_camera_;
 
+  csg_t union_csg = create_csg_union();
+  csg_transform_csg_inplace(
+    union_csg, as::mat4_from_mat3_vec3(
+                 as::mat3_rotation_y(as::k_half_pi), as::vec3f::axis_x(-5.0f)));
+
+  csg_t subtract_csg = create_csg_subtract();
+  csg_transform_csg_inplace(
+    subtract_csg, as::mat4_from_mat3(as::mat3_rotation_y(as::k_half_pi)));
+
+  csg_t intersect_csg = create_csg_intersect();
+  csg_transform_csg_inplace(
+    intersect_csg,
+    as::mat4_from_mat3_vec3(
+      as::mat3_rotation_y(as::k_half_pi), as::vec3f::axis_x(5.0f)));
+
   render_thing_t::init();
   render_things_.push_back(render_thing_from_csg(
-    create_csg_union(),
-    as::mat4_from_mat3_vec3(
-      as::mat3_rotation_y(as::k_half_pi), as::vec3f::axis_x(-5.0f)),
-    as::vec3f(1.0f, 1.0f, 0.0f)));
+    union_csg, as::mat4f::identity(), as::vec3f(1.0f, 1.0f, 0.0f)));
   render_things_.push_back(render_thing_from_csg(
-    create_csg_subtract(),
-    as::mat4_from_mat3(as::mat3_rotation_y(as::k_half_pi)),
-    as::vec3f(1.0f, 1.0f, 0.0f)));
+    subtract_csg, as::mat4f::identity(), as::vec3f(1.0f, 1.0f, 0.0f)));
   render_things_.push_back(render_thing_from_csg(
-    create_csg_intersect(),
-    as::mat4_from_mat3_vec3(
-      as::mat3_rotation_y(as::k_half_pi), as::vec3f::axis_x(5.0f)),
-    as::vec3f(1.0f, 1.0f, 0.0f)));
+    intersect_csg, as::mat4f::identity(), as::vec3f(1.0f, 1.0f, 0.0f)));
   render_things_.push_back(render_thing_from_csg(
     create_csg_classic(),
     as::mat4_from_mat3_vec3(
       as::mat3_rotation_y(as::k_half_pi), as::vec3f::axis_y(5.0f)),
     as::vec3f(1.0f, 1.0f, 0.0f)));
+  render_things_.push_back(render_thing_from_csg(
+    create_csg_transform_test(),
+    as::mat4_from_vec3(as::vec3f(-5.0f, 5.0f, 0.0f)),
+    as::vec3f(0.0f, 1.0f, 1.0f)));
 
   u_light_pos_ = bgfx::createUniform("u_lightPos", bgfx::UniformType::Vec4, 1);
   u_camera_pos_ =

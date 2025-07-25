@@ -357,3 +357,27 @@ csg_t csg_cylinder(const csg_cylinder_config_t& config) {
   }
   return csg_t{.polygons = std::move(polygons)};
 }
+
+void csg_transform_csg_inplace(csg_t& csg, const as::mat4f& transform) {
+  const auto inverse_transpose =
+    as::mat_transpose(as::mat_inverse(as::mat3_from_mat4(transform)));
+  for (auto& polygon : csg.polygons) {
+    const auto point = polygon.plane.normal * polygon.plane.w;
+    const auto transformed_point = transform * as::vec4_translation(point);
+    const auto transformed_normal = inverse_transpose * polygon.plane.normal;
+    polygon.plane.normal = transformed_normal;
+    polygon.plane.w =
+      as::vec_dot(as::vec3_from_vec4(transformed_point), transformed_normal);
+    for (auto& vertex : polygon.vertices) {
+      vertex.normal = inverse_transpose * vertex.normal;
+      vertex.pos =
+        as::vec3_from_vec4(transform * as::vec4_translation(vertex.pos));
+    }
+  }
+}
+
+csg_t csg_transform_csg(const csg_t& csg, const as::mat4f& transform) {
+  csg_t transformed_csg = csg;
+  csg_transform_csg_inplace(transformed_csg, transform);
+  return transformed_csg;
+}

@@ -162,7 +162,7 @@ csg_polygon_t csg_polygon_from_vertices(const csg_vertices_t& vertices);
 
 // csg_split_polygon_by_plane
 // @evanw (@thh edit)
-// Split `polygon` by `plane` if needed, then put the polygon or polygon
+// Splits `polygon` by `plane` if needed, then put the polygon or polygon
 // fragments in the appropriate lists. Coplanar polygons go into either
 // `coplanarFront` or `coplanarBack` depending on their orientation with
 // respect to this plane. Polygons in front or behind this plane go into
@@ -174,36 +174,36 @@ void csg_split_polygon_by_plane(
 
 // csg_clip_polygons
 // @evanw
-// Recursively remove all polygons in `polygons` that are inside this BSP tree.
+// Recursively removes all polygons in `polygons` that are inside this BSP tree.
 csg_polygons_t csg_clip_polygons(
   const csg_node_t& node, const csg_polygons_t& polygons);
 
 // csg_all_polygons
 // @evanw
-// Return a list of all polygons in the BSP tree `node`.
+// Returns a list of all polygons in the BSP tree `node`.
 csg_polygons_t csg_all_polygons(const csg_node_t& node);
 
 // csg_build_node
 // @evanw
-// Build a BSP tree out of `polygons`. When called on an existing tree, the
+// Builds a BSP tree out of `polygons`. When called on an existing tree, the
 // new polygons are filtered down to the bottom of the tree and become new
 // nodes there. Each set of polygons is partitioned using the first polygon
 // (no heuristic is used to pick a good split).
 void csg_build_node(csg_node_t& node, const csg_polygons_t& polygons);
 
 // csg_invert
-// Convert solid space to empty space and empty space to solid space.
+// Converts solid space to empty space and empty space to solid space.
 void csg_invert(csg_node_t& node);
 
 // csg_clip_to
 // @evanw (@thh edit)
-// Remove all polygons in `node_lhs` BSP tree that are inside `node_rhs` BSP
+// Removes all polygons in `node_lhs` BSP tree that are inside `node_rhs` BSP
 // tree.
 void csg_clip_to(csg_node_t& node_lhs, csg_node_t& node_rhs);
 
 // csg_union
 // @evanw
-// Return a new CSG solid representing space in either this solid or in the
+// Returns a new CSG solid representing space in either this solid or in the
 // solid `csg`. Neither this solid nor the solid `csg` are modified.
 //
 //     A.union(B)
@@ -221,7 +221,7 @@ csg_t csg_union(const csg_t& lhs, const csg_t& rhs);
 
 // csg_subtract
 // @evanw
-// Return a new CSG solid representing space in this solid but not in the
+// Returns a new CSG solid representing space in this solid but not in the
 // solid `csg`. Neither this solid nor the solid `csg` are modified.
 //
 //     A.subtract(B)
@@ -239,7 +239,7 @@ csg_t csg_subtract(const csg_t& lhs, const csg_t& rhs);
 
 // csg_intersect
 // @evanw
-// Return a new CSG solid representing space both this solid and in the
+// Returns a new CSG solid representing space both this solid and in the
 // solid `csg`. Neither this solid nor the solid `csg` are modified.
 //
 //     A.intersect(B)
@@ -257,7 +257,7 @@ csg_t csg_intersect(const csg_t& lhs, const csg_t& rhs);
 
 // csg_inverse
 // @evanw
-// Return a new CSG solid with solid and empty space switched. This solid is
+// Returns a new CSG solid with solid and empty space switched. This solid is
 // not modified.
 csg_t csg_inverse(const csg_t& csg);
 
@@ -271,7 +271,7 @@ struct csg_cube_config_t {
 
 // csg_cube
 // @evanw
-// Construct an axis-aligned solid cuboid. Optional parameters are `center` and
+// Constructs an axis-aligned solid cuboid. Optional parameters are `center` and
 // `radius`, which default to `[0, 0, 0]` and `[1, 1, 1]`.
 //
 // Example code:
@@ -290,7 +290,7 @@ struct csg_sphere_config_t {
 
 // csg_sphere
 // @evanw
-// Construct a solid sphere. Optional parameters are `center`, `radius`,
+// Constructs a solid sphere. Optional parameters are `center`, `radius`,
 // `slices`, and `stacks`, which default to `[0, 0, 0]`, `1`, `16`, and `8`.
 // The `slices` and `stacks` parameters control the tessellation along the
 // longitude and latitude directions.
@@ -311,7 +311,7 @@ struct csg_cylinder_config_t {
 
 // csg_cylinder
 // @evanw
-// Construct a solid cylinder. Optional parameters are `start`, `end`,
+// Constructs a solid cylinder. Optional parameters are `start`, `end`,
 // `radius`, and `slices`, which default to `[0, -1, 0]`, `[0, 1, 0]`, `1`, and
 // `16`. The `slices` parameter controls the tessellation.
 //
@@ -324,3 +324,16 @@ struct csg_cylinder_config_t {
 //       .radius = 0.5f})
 csg_t csg_cylinder(
   const csg_cylinder_config_t& config = csg_cylinder_config_t{});
+
+// csg_transform_csg_inplace
+// @thh
+// Transforms a csg in place by mutating it (all planes, vertices and normals
+// are transformed).
+void csg_transform_csg_inplace(csg_t& csg, const as::mat4f& transform);
+
+// csg_transform_csg
+// @thh
+// Returns a new csg after transforming it (all planes, vertices and normals
+// are transformed).
+[[nodiscard]] csg_t csg_transform_csg(
+  const csg_t& csg, const as::mat4f& transform);
