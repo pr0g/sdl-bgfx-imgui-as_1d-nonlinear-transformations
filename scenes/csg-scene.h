@@ -26,8 +26,8 @@ struct csg_operation_t {
   operation_e operation_type = operation_e::csg_union; // default
   std::function<csg_t(const csg_t&, const csg_t&)> operation;
   char name[64];
-  char lhs[64];
-  char rhs[64];
+  char lhs_name[64];
+  char rhs_name[64];
   thh::handle_t render_thing_handle;
   thh::handle_t lhs_handle;
   thh::handle_t rhs_handle;
@@ -66,5 +66,6 @@ struct csg_scene_t : public scene_t {
   bool wireframe_ = true;
   bool normals_ = false;
 
-  csg_kinds_t csg_kinds_;
+  csg_kinds_t root_csg_kinds_;
+  csg_kinds_t child_csg_kinds_;
 };
