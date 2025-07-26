@@ -90,65 +90,27 @@ static csg_t create_csg_transform_test() {
   return csg_subtract(csg_subtract(a, b), c);
 }
 
-// static csg_t build_csg(
-//   const thh::handle_t csg_kind_handle, const csg_kinds_t& csg_kinds) {
-//   const std::optional<const csg_kind_t*> csg_kind = csg_kinds.call_return(
-//     csg_kind_handle, [](csg_kind_t& csg_kind) { return &csg_kind; });
-//   return std::visit(
-//     overloads{
-//       [](const csg_shape_t& shape) {
-//         // base case
-//         return shape.csg;
-//       },
-//       [&csg_kinds](const csg_operation_t& operation) {
-//         csg_t csg_lhs = build_csg(operation.lhs_handle, csg_kinds);
-//         csg_t csg_rhs = build_csg(operation.rhs_handle, csg_kinds);
-//         return operation.operation(csg_lhs, csg_rhs);
-//       }},
-//     **csg_kind);
-// }
-
 csg_t build_csg(const csg_kind_t& csg_kind, const csg_kinds_t& csg_kinds) {
-  const auto* shape = std::get_if<csg_shape_t>(&csg_kind);
-  const auto* op = std::get_if<csg_operation_t>(&csg_kind);
-
-  if (shape) {
-    return shape->csg;
-  }
-
-  if (op) {
-    const std::optional<const csg_kind_t*> lhs_csg_kind = csg_kinds.call_return(
-      op->lhs_handle, [](const csg_kind_t& csg_kind) { return &csg_kind; });
-    csg_t csg_lhs = build_csg(**lhs_csg_kind, csg_kinds);
-    const std::optional<const csg_kind_t*> rhs_csg_kind = csg_kinds.call_return(
-      op->rhs_handle, [](const csg_kind_t& csg_kind) { return &csg_kind; });
-    csg_t csg_rhs = build_csg(**rhs_csg_kind, csg_kinds);
-    return op->operation(csg_lhs, csg_rhs);
-  }
-
-  // panic
-  return csg_t{};
-
-  // return std::visit(
-  //   overloads{
-  //     [](const csg_shape_t& shape) {
-  //       // base case
-  //       return shape.csg;
-  //     },
-  //     [&csg_kinds](const csg_operation_t& operation) {
-  //       const std::optional<const csg_kind_t*> lhs_csg_kind =
-  //         csg_kinds.call_return(
-  //           operation.lhs_handle,
-  //           [](const csg_kind_t& csg_kind) { return &csg_kind; });
-  //       csg_t csg_lhs = build_csg(**lhs_csg_kind, csg_kinds);
-  //       const std::optional<const csg_kind_t*> rhs_csg_kind =
-  //         csg_kinds.call_return(
-  //           operation.rhs_handle,
-  //           [](const csg_kind_t& csg_kind) { return &csg_kind; });
-  //       csg_t csg_rhs = build_csg(**rhs_csg_kind, csg_kinds);
-  //       return operation.operation(csg_lhs, csg_rhs);
-  //     }},
-  //   csg_kind);
+  return std::visit(
+    overloads{
+      [](const csg_shape_t& shape) {
+        // base case
+        return shape.csg;
+      },
+      [&csg_kinds](const csg_operation_t& operation) {
+        const std::optional<const csg_kind_t*> lhs_csg_kind =
+          csg_kinds.call_return(
+            operation.lhs_handle,
+            [](const csg_kind_t& csg_kind) { return &csg_kind; });
+        csg_t csg_lhs = build_csg(**lhs_csg_kind, csg_kinds);
+        const std::optional<const csg_kind_t*> rhs_csg_kind =
+          csg_kinds.call_return(
+            operation.rhs_handle,
+            [](const csg_kind_t& csg_kind) { return &csg_kind; });
+        csg_t csg_rhs = build_csg(**rhs_csg_kind, csg_kinds);
+        return operation.operation(csg_lhs, csg_rhs);
+      }},
+    csg_kind);
 }
 
 void csg_scene_t::setup(
@@ -185,21 +147,21 @@ void csg_scene_t::setup(
       as::mat3_rotation_y(as::k_half_pi), as::vec3f::axis_x(5.0f)));
 
   render_thing_t::init();
-  // render_things_.push_back(render_thing_from_csg(
-  //   union_csg, as::mat4f::identity(), as::vec3f(1.0f, 1.0f, 0.0f)));
-  // render_things_.push_back(render_thing_from_csg(
-  //   subtract_csg, as::mat4f::identity(), as::vec3f(1.0f, 1.0f, 0.0f)));
-  // render_things_.push_back(render_thing_from_csg(
-  //   intersect_csg, as::mat4f::identity(), as::vec3f(1.0f, 1.0f, 0.0f)));
-  // render_things_.push_back(render_thing_from_csg(
-  //   create_csg_classic(),
-  //   as::mat4_from_mat3_vec3(
-  //     as::mat3_rotation_y(as::k_half_pi), as::vec3f::axis_y(5.0f)),
-  //   as::vec3f(1.0f, 1.0f, 0.0f)));
-  // render_things_.push_back(render_thing_from_csg(
-  //   create_csg_transform_test(),
-  //   as::mat4_from_vec3(as::vec3f(-5.0f, 5.0f, 0.0f)),
-  //   as::vec3f(0.0f, 1.0f, 1.0f)));
+  render_things_.add(render_thing_from_csg(
+    union_csg, as::mat4f::identity(), as::vec3f(1.0f, 1.0f, 0.0f)));
+  render_things_.add(render_thing_from_csg(
+    subtract_csg, as::mat4f::identity(), as::vec3f(1.0f, 1.0f, 0.0f)));
+  render_things_.add(render_thing_from_csg(
+    intersect_csg, as::mat4f::identity(), as::vec3f(1.0f, 1.0f, 0.0f)));
+  render_things_.add(render_thing_from_csg(
+    create_csg_classic(),
+    as::mat4_from_mat3_vec3(
+      as::mat3_rotation_y(as::k_half_pi), as::vec3f::axis_y(5.0f)),
+    as::vec3f(1.0f, 1.0f, 0.0f)));
+  render_things_.add(render_thing_from_csg(
+    create_csg_transform_test(),
+    as::mat4_from_vec3(as::vec3f(-5.0f, 5.0f, 0.0f)),
+    as::vec3f(0.0f, 1.0f, 1.0f)));
 
   u_light_pos_ = bgfx::createUniform("u_lightPos", bgfx::UniformType::Vec4, 1);
   u_camera_pos_ =
