@@ -11,24 +11,30 @@
 #include <unordered_map>
 #include <variant>
 
-// enum class operation_e { csg_union, csg_intersection, csg_difference };
+enum class operation_e { csg_union, csg_intersection, csg_difference };
+enum class shape_e { cube, sphere, cylinder };
 
-// struct operation_t {
-//   std::string lhs;
-//   std::string rhs;
-//   std::string name;
-//   operation_e operation;
-// };
-
-using csg_shape_t = csg_t;
-struct csg_operation_t {
-  std::function<csg_t(const csg_t&, const csg_t&)> operation;
-  thh::handle_t lhs;
-  thh::handle_t rhs;
+struct csg_shape_t {
+  shape_e shape = shape_e::cube; // default
+  csg_t csg;
+  char name[64];
+  as::mat4f transform;
+  thh::handle_t render_thing_handle;
 };
+
+struct csg_operation_t {
+  operation_e operation_type = operation_e::csg_union; // default
+  std::function<csg_t(const csg_t&, const csg_t&)> operation;
+  char name[64];
+  char lhs[64];
+  char rhs[64];
+  thh::handle_t render_thing_handle;
+  thh::handle_t lhs_handle;
+  thh::handle_t rhs_handle;
+};
+
 using csg_kind_t = std::variant<csg_shape_t, csg_operation_t>;
 using csg_kinds_t = thh::handle_vector_t<csg_kind_t>;
-using csg_kinds_lookup_t = std::unordered_map<std::string, thh::handle_t>;
 
 struct csg_scene_t : public scene_t {
   void setup(
@@ -51,10 +57,7 @@ struct csg_scene_t : public scene_t {
   bgfx::ViewId main_view_;
   bgfx::ViewId ortho_view_;
 
-  std::vector<render_thing_t> render_things_;
-
-  // std::unordered_map<std::string, csg_t> csgs_;
-  // std::unordered_map<std::string, operation_t> operations_;
+  thh::handle_vector_t<render_thing_t> render_things_;
 
   bgfx::UniformHandle u_light_pos_;
   bgfx::UniformHandle u_camera_pos_;
@@ -62,13 +65,6 @@ struct csg_scene_t : public scene_t {
 
   bool wireframe_ = true;
   bool normals_ = false;
-  int operation_ = 0;
-  int shape_ = 0;
 
   csg_kinds_t csg_kinds_;
-  csg_kinds_lookup_t csg_kinds_lookup_;
-
-  char shape_name_buffer_[64];
-  char lhs_operation_buffer_[64];
-  char rhs_operation_buffer_[64];
 };
