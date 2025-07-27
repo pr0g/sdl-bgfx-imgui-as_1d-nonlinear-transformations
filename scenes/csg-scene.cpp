@@ -8,6 +8,7 @@
 #include <as/as-view.hpp>
 #include <easy_iterator.h>
 #include <imgui.h>
+#include <imgui_stdlib.h>
 
 #include <thh-bgfx-debug/debug-color.hpp>
 #include <thh-bgfx-debug/debug-cube.hpp>
@@ -247,7 +248,7 @@ void csg_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
                 shape.csg, as::mat4f::identity(), as::vec3f(1.0f, 0.0f, 0.0f)));
           }
           shape.shape = (shape_e)shape_type;
-          ImGui::InputText("Shape name", shape.name, 64);
+          ImGui::InputText("Shape name", &shape.name);
           ImGui::PopID();
         },
         [this, i, &handles_to_remove,
@@ -270,23 +271,20 @@ void csg_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
             }
           }
           operation.operation_type = (operation_e)operation_type;
-          ImGui::InputText("Name", operation.name, 64);
-          ImGui::InputText("LHS", operation.lhs_name, 64);
-          ImGui::InputText("RHS", operation.rhs_name, 64);
+          ImGui::InputText("Name", &operation.name);
+          ImGui::InputText("LHS", &operation.lhs_name);
+          ImGui::InputText("RHS", &operation.rhs_name);
           auto root_lhs_it = std::find_if(
             root_csg_kinds_.begin(), root_csg_kinds_.end(),
             [&operation](const csg_kind_t& kind) {
               auto result = std::visit(
                 overloads{
                   [&operation](const csg_shape_t& shape) {
-                    return std::strlen(shape.name) > 0
-                        && std::string(shape.name)
-                             == std::string(operation.lhs_name);
+                    return !shape.name.empty()
+                        && shape.name == operation.lhs_name;
                   },
                   [&operation](const csg_operation_t& op) {
-                    return std::strlen(op.name) > 0
-                        && std::string(op.name)
-                             == std::string(operation.lhs_name);
+                    return !op.name.empty() && op.name == operation.lhs_name;
                   }},
                 kind);
               return result;
@@ -297,14 +295,11 @@ void csg_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
               auto result = std::visit(
                 overloads{
                   [&operation](const csg_shape_t& shape) {
-                    return std::strlen(shape.name) > 0
-                        && std::string(shape.name)
-                             == std::string(operation.rhs_name);
+                    return !shape.name.empty()
+                        && shape.name == operation.rhs_name;
                   },
                   [&operation](const csg_operation_t& op) {
-                    return std::strlen(op.name) > 0
-                        && std::string(op.name)
-                             == std::string(operation.rhs_name);
+                    return !op.name.empty() && op.name == operation.rhs_name;
                   }},
                 kind);
               return result;
@@ -387,14 +382,11 @@ void csg_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
               auto result = std::visit(
                 overloads{
                   [&operation](const csg_shape_t& shape) {
-                    return std::strlen(shape.name) > 0
-                        && std::string(shape.name)
-                             == std::string(operation.lhs_name);
+                    return !shape.name.empty()
+                        && shape.name == operation.lhs_name;
                   },
                   [&operation](const csg_operation_t& op) {
-                    return std::strlen(op.name) > 0
-                        && std::string(op.name)
-                             == std::string(operation.lhs_name);
+                    return !op.name.empty() && op.name == operation.lhs_name;
                   }},
                 kind);
               return result;
@@ -405,14 +397,11 @@ void csg_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
               auto result = std::visit(
                 overloads{
                   [&operation](const csg_shape_t& shape) {
-                    return std::strlen(shape.name) > 0
-                        && std::string(shape.name)
-                             == std::string(operation.rhs_name);
+                    return !shape.name.empty()
+                        && shape.name == operation.rhs_name;
                   },
                   [&operation](const csg_operation_t& op) {
-                    return std::strlen(op.name) > 0
-                        && std::string(op.name)
-                             == std::string(operation.rhs_name);
+                    return !op.name.empty() && op.name == operation.rhs_name;
                   }},
                 kind);
               return result;

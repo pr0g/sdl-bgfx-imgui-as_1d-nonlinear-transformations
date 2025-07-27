@@ -17,7 +17,7 @@ enum class shape_e { cube, sphere, cylinder };
 struct csg_shape_t {
   shape_e shape = shape_e::cube; // default
   csg_t csg;
-  char name[64];
+  std::string name;
   as::mat4f transform;
   thh::handle_t render_thing_handle;
 };
@@ -25,9 +25,9 @@ struct csg_shape_t {
 struct csg_operation_t {
   operation_e operation_type = operation_e::csg_union; // default
   std::function<csg_t(const csg_t&, const csg_t&)> operation;
-  char name[64];
-  char lhs_name[64];
-  char rhs_name[64];
+  std::string name;
+  std::string lhs_name;
+  std::string rhs_name;
   thh::handle_t render_thing_handle;
   thh::handle_t lhs_handle;
   thh::handle_t rhs_handle;
