@@ -216,7 +216,7 @@ void csg_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
   std::vector<thh::handle_t> handles_to_remove;
   std::vector<csg_kind_t> csgs_to_restore;
 
-  ImGui::Text("CSG primitives");
+  ImGui::Text("CSG root primitives");
   for (const auto [i, kind] : ei::enumerate(root_csg_kinds_)) {
     std::visit(
       overloads{
@@ -478,6 +478,32 @@ void csg_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
       },
       kind);
   }
+
+  ImGui::Text("CSG child primitives (in use)");
+  ImGui::BeginDisabled();
+  for (const auto [i, kind] : ei::enumerate(child_csg_kinds_)) {
+    std::visit(
+      overloads{
+        [this, i](csg_shape_t& shape) {
+          ImGui::PushID(i + root_csg_kinds_.size());
+          int shape_type = (int)shape.shape;
+          ImGui::Combo("Shape", &shape_type, "Cube\0Sphere\0Cylinder\0");
+          ImGui::InputText("Shape name", &shape.name);
+          ImGui::PopID();
+        },
+        [this, i](csg_operation_t& operation) {
+          ImGui::PushID(i + root_csg_kinds_.size());
+          int operation_type = (int)operation.operation_type;
+          ImGui::Combo(
+            "Operation", &operation_type, "Union\0Intersection\0Difference\0");
+          ImGui::InputText("Name", &operation.name);
+          ImGui::InputText("LHS", &operation.lhs_name);
+          ImGui::InputText("RHS", &operation.rhs_name);
+          ImGui::PopID();
+        }},
+      kind);
+  }
+  ImGui::EndDisabled();
 
   for (const auto handle : handles_to_remove) {
     root_csg_kinds_.remove(handle);
