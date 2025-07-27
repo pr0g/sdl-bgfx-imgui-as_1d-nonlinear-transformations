@@ -221,10 +221,10 @@ void csg_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
     std::visit(
       overloads{
         [this, i](csg_shape_t& shape) {
-          int shape_type = (int)shape.shape;
+          auto shape_type = static_cast<int>(shape.shape);
           ImGui::PushID(i);
           ImGui::Combo("Shape", &shape_type, "Cube\0Sphere\0Cylinder\0");
-          if (shape_type != (int)shape.shape) {
+          if (shape_type != static_cast<int>(shape.shape)) {
             switch (shape_type) {
               case 0: {
                 shape.csg = csg_cube();
@@ -237,12 +237,14 @@ void csg_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
               } break;
             }
             csg_transform_csg_inplace(shape.csg, shape.transform);
+            // destroy exist render_thing when changing shape
             render_things_.call(
               shape.render_thing_handle,
               [](const render_thing_t& render_thing) {
                 destroy_render_thing(render_thing);
               });
             render_things_.remove(shape.render_thing_handle);
+            // add new render_thing after building csg
             shape.render_thing_handle =
               render_things_.add(render_thing_from_csg(
                 shape.csg, as::mat4f::identity(), as::vec3f(1.0f, 0.0f, 0.0f)));
@@ -254,10 +256,10 @@ void csg_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
         [this, i, &handles_to_remove,
          &csgs_to_restore](csg_operation_t& operation) {
           ImGui::PushID(i);
-          int operation_type = (int)operation.operation_type;
+          auto operation_type = static_cast<int>(operation.operation_type);
           ImGui::Combo(
             "Operation", &operation_type, "Union\0Intersection\0Difference\0");
-          if (operation_type != (int)operation.operation_type) {
+          if (operation_type != static_cast<int>(operation.operation_type)) {
             switch (operation_type) {
               case 0: {
                 operation.operation = csg_union;
@@ -270,7 +272,7 @@ void csg_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
               } break;
             }
           }
-          operation.operation_type = (operation_e)operation_type;
+          operation.operation_type = static_cast<operation_e>(operation_type);
           ImGui::InputText("Name", &operation.name);
           ImGui::InputText("LHS", &operation.lhs_name);
           ImGui::InputText("RHS", &operation.rhs_name);
@@ -329,12 +331,12 @@ void csg_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
               : rhs_operation ? rhs_operation->render_thing_handle
                               : thh::handle_t();
 
+            // remove current left and right render_thing if they exist
             render_things_.call(
               lhs_render_thing_handle, [](const render_thing_t& render_thing) {
                 destroy_render_thing(render_thing);
               });
             render_things_.remove(lhs_render_thing_handle);
-
             render_things_.call(
               rhs_render_thing_handle, [](const render_thing_t& render_thing) {
                 destroy_render_thing(render_thing);
@@ -350,7 +352,6 @@ void csg_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
                   lhs_handle,
                   [](const csg_kind_t& csg_kind) { return csg_kind; })
                 .value();
-
             const csg_kind_t rhs_csg_kind =
               root_csg_kinds_
                 .call_return(
@@ -406,6 +407,8 @@ void csg_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
                 kind);
               return result;
             });
+          // if either lhs or rhs names are cleared from an operation, restore
+          // lhs and rhs to root
           if (
             (child_lhs_it == child_csg_kinds_.end()
              && operation.lhs_handle != thh::handle_t())
@@ -416,7 +419,6 @@ void csg_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
                   operation.lhs_handle,
                   [](const csg_kind_t& csg_kind) { return csg_kind; })
                 .value();
-
             child_csg_kinds_.remove(operation.lhs_handle);
             operation.lhs_handle = thh::handle_t();
 
@@ -426,7 +428,6 @@ void csg_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
                   operation.rhs_handle,
                   [](const csg_kind_t& csg_kind) { return csg_kind; })
                 .value();
-
             child_csg_kinds_.remove(operation.rhs_handle);
             operation.rhs_handle = thh::handle_t();
 
@@ -479,6 +480,8 @@ void csg_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
       kind);
   }
 
+  // show unavailable shapes/operations that are being consumed by root
+  // operations
   ImGui::Text("CSG child primitives (in use)");
   ImGui::BeginDisabled();
   for (const auto [i, kind] : ei::enumerate(child_csg_kinds_)) {
@@ -486,14 +489,14 @@ void csg_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
       overloads{
         [this, i](csg_shape_t& shape) {
           ImGui::PushID(i + root_csg_kinds_.size());
-          int shape_type = (int)shape.shape;
+          auto shape_type = static_cast<int>(shape.shape);
           ImGui::Combo("Shape", &shape_type, "Cube\0Sphere\0Cylinder\0");
           ImGui::InputText("Shape name", &shape.name);
           ImGui::PopID();
         },
         [this, i](csg_operation_t& operation) {
           ImGui::PushID(i + root_csg_kinds_.size());
-          int operation_type = (int)operation.operation_type;
+          int operation_type = static_cast<int>(operation.operation_type);
           ImGui::Combo(
             "Operation", &operation_type, "Union\0Intersection\0Difference\0");
           ImGui::InputText("Name", &operation.name);

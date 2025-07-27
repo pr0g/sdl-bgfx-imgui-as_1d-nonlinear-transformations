@@ -15,22 +15,23 @@ enum class operation_e { csg_union, csg_intersection, csg_difference };
 enum class shape_e { cube, sphere, cylinder };
 
 struct csg_shape_t {
-  shape_e shape = shape_e::cube; // default
-  csg_t csg;
-  std::string name;
+  csg_t csg; // holds csg
   as::mat4f transform;
+  std::string name;
   thh::handle_t render_thing_handle;
+  shape_e shape = shape_e::cube; // default
 };
 
 struct csg_operation_t {
-  operation_e operation_type = operation_e::csg_union; // default
+  // holds operation to create csg
   std::function<csg_t(const csg_t&, const csg_t&)> operation;
   std::string name;
   std::string lhs_name;
   std::string rhs_name;
-  thh::handle_t render_thing_handle;
   thh::handle_t lhs_handle;
   thh::handle_t rhs_handle;
+  thh::handle_t render_thing_handle;
+  operation_e operation_type = operation_e::csg_union; // default
 };
 
 using csg_kind_t = std::variant<csg_shape_t, csg_operation_t>;
