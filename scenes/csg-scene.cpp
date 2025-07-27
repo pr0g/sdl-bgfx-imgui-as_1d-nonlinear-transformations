@@ -25,18 +25,6 @@ struct overloads : Ts... {
   using Ts::operator()...;
 };
 
-std::string operation_name(int operation) {
-  switch (operation) {
-    case 0:
-      return "union";
-    case 1:
-      return "intersection";
-    case 2:
-      return "difference";
-  }
-  return "";
-}
-
 static csg_t create_csg_union() {
   const auto a =
     csg_cube({.min = {-1.25f, -1.25f, -1.25f}, .max = {0.75f, 0.75f, 0.75f}});
@@ -216,11 +204,20 @@ void csg_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
   std::vector<thh::handle_t> handles_to_remove;
   std::vector<csg_kind_t> csgs_to_restore;
 
+  const auto cleanup_render_thing = [this](thh::handle_t& render_thing_handle) {
+    render_things_.call(
+      render_thing_handle, [](const render_thing_t& render_thing) {
+        destroy_render_thing(render_thing);
+      });
+    render_things_.remove(render_thing_handle);
+    render_thing_handle = thh::handle_t();
+  };
+
   ImGui::Text("CSG root primitives");
   for (const auto [i, kind] : ei::enumerate(root_csg_kinds_)) {
     std::visit(
       overloads{
-        [this, i](csg_shape_t& shape) {
+        [this, i, &cleanup_render_thing](csg_shape_t& shape) {
           auto shape_type = static_cast<int>(shape.shape);
           ImGui::PushID(i);
           ImGui::Combo("Shape", &shape_type, "Cube\0Sphere\0Cylinder\0");
@@ -237,13 +234,8 @@ void csg_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
               } break;
             }
             csg_transform_csg_inplace(shape.csg, shape.transform);
-            // destroy exist render_thing when changing shape
-            render_things_.call(
-              shape.render_thing_handle,
-              [](const render_thing_t& render_thing) {
-                destroy_render_thing(render_thing);
-              });
-            render_things_.remove(shape.render_thing_handle);
+            // destroy existing render_thing when changing shape
+            cleanup_render_thing(shape.render_thing_handle);
             // add new render_thing after building csg
             shape.render_thing_handle =
               render_things_.add(render_thing_from_csg(
@@ -253,8 +245,8 @@ void csg_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
           ImGui::InputText("Shape name", &shape.name);
           ImGui::PopID();
         },
-        [this, i, &handles_to_remove,
-         &csgs_to_restore](csg_operation_t& operation) {
+        [this, i, &handles_to_remove, &csgs_to_restore,
+         &cleanup_render_thing](csg_operation_t& operation) {
           ImGui::PushID(i);
           auto operation_type = static_cast<int>(operation.operation_type);
           ImGui::Combo(
@@ -276,36 +268,26 @@ void csg_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
           ImGui::InputText("Name", &operation.name);
           ImGui::InputText("LHS", &operation.lhs_name);
           ImGui::InputText("RHS", &operation.rhs_name);
-          auto root_lhs_it = std::find_if(
-            root_csg_kinds_.begin(), root_csg_kinds_.end(),
-            [&operation](const csg_kind_t& kind) {
-              auto result = std::visit(
-                overloads{
-                  [&operation](const csg_shape_t& shape) {
-                    return !shape.name.empty()
-                        && shape.name == operation.lhs_name;
-                  },
-                  [&operation](const csg_operation_t& op) {
-                    return !op.name.empty() && op.name == operation.lhs_name;
-                  }},
-                kind);
-              return result;
-            });
-          auto root_rhs_it = std::find_if(
-            root_csg_kinds_.begin(), root_csg_kinds_.end(),
-            [&operation](const csg_kind_t& kind) {
-              auto result = std::visit(
-                overloads{
-                  [&operation](const csg_shape_t& shape) {
-                    return !shape.name.empty()
-                        && shape.name == operation.rhs_name;
-                  },
-                  [&operation](const csg_operation_t& op) {
-                    return !op.name.empty() && op.name == operation.rhs_name;
-                  }},
-                kind);
-              return result;
-            });
+
+          const auto find_csg_by_name =
+            [this](const std::string& name, csg_kinds_t& csg_kinds) {
+              return std::find_if(
+                csg_kinds.begin(), csg_kinds.end(),
+                [&name](const csg_kind_t& kind) {
+                  return std::visit(
+                    [&name](const auto& shape_or_op) {
+                      return !shape_or_op.name.empty()
+                          && shape_or_op.name == name;
+                    },
+                    kind);
+                });
+            };
+
+          auto root_lhs_it =
+            find_csg_by_name(operation.lhs_name, root_csg_kinds_);
+          auto root_rhs_it =
+            find_csg_by_name(operation.rhs_name, root_csg_kinds_);
+
           const auto lhs_handle = root_csg_kinds_.handle_from_index(
             std::distance(root_csg_kinds_.begin(), root_lhs_it));
           const auto rhs_handle = root_csg_kinds_.handle_from_index(
@@ -322,42 +304,32 @@ void csg_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
             auto* rhs_shape = std::get_if<csg_shape_t>(&*root_rhs_it);
             auto* rhs_operation = std::get_if<csg_operation_t>(&*root_rhs_it);
 
-            auto lhs_render_thing_handle =
+            thh::handle_t unused_handle;
+            auto& lhs_render_thing_handle =
               lhs_shape       ? lhs_shape->render_thing_handle
               : lhs_operation ? lhs_operation->render_thing_handle
-                              : thh::handle_t();
-            auto rhs_render_thing_handle =
+                              : unused_handle;
+            auto& rhs_render_thing_handle =
               rhs_shape       ? rhs_shape->render_thing_handle
               : rhs_operation ? rhs_operation->render_thing_handle
-                              : thh::handle_t();
+                              : unused_handle;
 
             // remove current left and right render_thing if they exist
-            render_things_.call(
-              lhs_render_thing_handle, [](const render_thing_t& render_thing) {
-                destroy_render_thing(render_thing);
-              });
-            render_things_.remove(lhs_render_thing_handle);
-            render_things_.call(
-              rhs_render_thing_handle, [](const render_thing_t& render_thing) {
-                destroy_render_thing(render_thing);
-              });
-            render_things_.remove(rhs_render_thing_handle);
+            cleanup_render_thing(lhs_render_thing_handle);
+            cleanup_render_thing(rhs_render_thing_handle);
 
             const auto current_csg_handle =
               root_csg_kinds_.handle_from_index(i);
 
-            const csg_kind_t lhs_csg_kind =
-              root_csg_kinds_
+            const auto kind_from_handle = [this](const thh::handle_t handle) {
+              return root_csg_kinds_
                 .call_return(
-                  lhs_handle,
-                  [](const csg_kind_t& csg_kind) { return csg_kind; })
+                  handle, [](const csg_kind_t& csg_kind) { return csg_kind; })
                 .value();
-            const csg_kind_t rhs_csg_kind =
-              root_csg_kinds_
-                .call_return(
-                  rhs_handle,
-                  [](const csg_kind_t& csg_kind) { return csg_kind; })
-                .value();
+            };
+
+            csg_kind_t lhs_csg_kind = kind_from_handle(lhs_handle);
+            csg_kind_t rhs_csg_kind = kind_from_handle(rhs_handle);
 
             // remove from root_csg_kinds_
             handles_to_remove.push_back(lhs_handle);
@@ -376,100 +348,43 @@ void csg_scene_t::update(debug_draw_t& debug_draw, const float delta_time) {
               render_things_.add(render_thing_from_csg(
                 csg, as::mat4f::identity(), as::vec3f(1.0f, 1.0f, 0.0f)));
           }
-          // restore
-          auto child_lhs_it = std::find_if(
-            child_csg_kinds_.begin(), child_csg_kinds_.end(),
-            [&operation](const csg_kind_t& kind) {
-              auto result = std::visit(
-                overloads{
-                  [&operation](const csg_shape_t& shape) {
-                    return !shape.name.empty()
-                        && shape.name == operation.lhs_name;
-                  },
-                  [&operation](const csg_operation_t& op) {
-                    return !op.name.empty() && op.name == operation.lhs_name;
-                  }},
-                kind);
-              return result;
-            });
-          auto child_rhs_it = std::find_if(
-            child_csg_kinds_.begin(), child_csg_kinds_.end(),
-            [&operation](const csg_kind_t& kind) {
-              auto result = std::visit(
-                overloads{
-                  [&operation](const csg_shape_t& shape) {
-                    return !shape.name.empty()
-                        && shape.name == operation.rhs_name;
-                  },
-                  [&operation](const csg_operation_t& op) {
-                    return !op.name.empty() && op.name == operation.rhs_name;
-                  }},
-                kind);
-              return result;
-            });
+          auto child_lhs_it =
+            find_csg_by_name(operation.lhs_name, child_csg_kinds_);
+          auto child_rhs_it =
+            find_csg_by_name(operation.rhs_name, child_csg_kinds_);
           // if either lhs or rhs names are cleared from an operation, restore
           // lhs and rhs to root
           if (
             (child_lhs_it == child_csg_kinds_.end()
              && operation.lhs_handle != thh::handle_t())
             || (child_rhs_it == child_csg_kinds_.end() && operation.rhs_handle != thh::handle_t())) {
-            csg_kind_t lhs_csg_kind =
-              child_csg_kinds_
-                .call_return(
-                  operation.lhs_handle,
-                  [](const csg_kind_t& csg_kind) { return csg_kind; })
-                .value();
-            child_csg_kinds_.remove(operation.lhs_handle);
-            operation.lhs_handle = thh::handle_t();
+            const auto extract_and_remove = [this](thh::handle_t& handle) {
+              csg_kind_t csg_kind =
+                child_csg_kinds_
+                  .call_return(
+                    handle, [](const csg_kind_t& csg_kind) { return csg_kind; })
+                  .value();
+              child_csg_kinds_.remove(handle);
+              handle = thh::handle_t();
+              return csg_kind;
+            };
 
-            csg_kind_t rhs_csg_kind =
-              child_csg_kinds_
-                .call_return(
-                  operation.rhs_handle,
-                  [](const csg_kind_t& csg_kind) { return csg_kind; })
-                .value();
-            child_csg_kinds_.remove(operation.rhs_handle);
-            operation.rhs_handle = thh::handle_t();
+            csg_kind_t lhs_csg_kind = extract_and_remove(operation.lhs_handle);
+            csg_kind_t rhs_csg_kind = extract_and_remove(operation.rhs_handle);
 
-            render_things_.call(
-              operation.render_thing_handle,
-              [](const render_thing_t& render_thing) {
-                destroy_render_thing(render_thing);
-              });
-            render_things_.remove(operation.render_thing_handle);
-            operation.render_thing_handle = thh::handle_t();
+            cleanup_render_thing(operation.render_thing_handle);
 
-            std::visit(
-              overloads{
-                [this, &lhs_csg_kind](csg_shape_t& shape) {
-                  shape.render_thing_handle =
+            for (auto& csg_kind :
+                 {std::ref(lhs_csg_kind), std::ref(rhs_csg_kind)}) {
+              std::visit(
+                [this, &csg_kind](auto& shape_or_op) {
+                  shape_or_op.render_thing_handle =
                     render_things_.add(render_thing_from_csg(
-                      build_csg(lhs_csg_kind, child_csg_kinds_),
+                      build_csg(csg_kind, child_csg_kinds_),
                       as::mat4f::identity(), as::vec3f(1.0f, 0.0f, 0.0f)));
                 },
-                [this, &lhs_csg_kind](csg_operation_t& op) {
-                  op.render_thing_handle =
-                    render_things_.add(render_thing_from_csg(
-                      build_csg(lhs_csg_kind, child_csg_kinds_),
-                      as::mat4f::identity(), as::vec3f(1.0f, 0.0f, 0.0f)));
-                }},
-              lhs_csg_kind);
-
-            std::visit(
-              overloads{
-                [this, &rhs_csg_kind](csg_shape_t& shape) {
-                  shape.render_thing_handle =
-                    render_things_.add(render_thing_from_csg(
-                      build_csg(rhs_csg_kind, child_csg_kinds_),
-                      as::mat4f::identity(), as::vec3f(1.0f, 0.0f, 0.0f)));
-                },
-                [this, &rhs_csg_kind](csg_operation_t& op) {
-                  op.render_thing_handle =
-                    render_things_.add(render_thing_from_csg(
-                      build_csg(rhs_csg_kind, child_csg_kinds_),
-                      as::mat4f::identity(), as::vec3f(1.0f, 0.0f, 0.0f)));
-                }},
-              rhs_csg_kind);
+                csg_kind.get());
+            }
 
             csgs_to_restore.push_back(lhs_csg_kind);
             csgs_to_restore.push_back(rhs_csg_kind);
