@@ -140,7 +140,7 @@ void csg_scene_t::setup(
       .min = {-10.0f, -10.0f},
       .max = {10.0f, 10.0f},
       .transform =
-        as::affine_from_mat3(as::mat3_rotation_x(as::radians(-142.0f)))});
+        as::affine_from_mat3(as::mat3_rotation_x(as::radians(-140.0f)))});
 
   auto sliced_cube = csg_subtract(create_csg_classic(), quad);
 

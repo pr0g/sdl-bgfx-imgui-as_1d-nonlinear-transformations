@@ -160,7 +160,8 @@ csg_polygon_t csg_flip_polygon(const csg_polygon_t& polygon);
 // Returns a new polygon from vertices (vertices must be coplanar, convex and
 // have a minumum of 3 points)
 csg_polygon_t csg_polygon_from_vertices(
-  const csg_vertices_t& vertices, uint32_t color);
+  const csg_vertices_t& vertices, uint32_t color,
+  const std::optional<plane_t>& plane = std::nullopt);
 
 // csg_split_polygon_by_plane
 // @evanw (@thh edit)

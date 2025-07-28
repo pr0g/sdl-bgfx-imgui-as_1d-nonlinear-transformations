@@ -85,10 +85,12 @@ void csg_split_polygon_by_plane(
         }
       }
       if (f.size() >= 3) {
-        front.push_back(csg_polygon_from_vertices(f, polygon.color));
+        front.push_back(
+          csg_polygon_from_vertices(f, polygon.color, polygon.plane));
       }
       if (b.size() >= 3) {
-        back.push_back(csg_polygon_from_vertices(b, polygon.color));
+        back.push_back(
+          csg_polygon_from_vertices(b, polygon.color, polygon.plane));
       }
     } break;
   }
@@ -108,11 +110,12 @@ csg_polygon_t csg_flip_polygon(const csg_polygon_t& polygon) {
 }
 
 csg_polygon_t csg_polygon_from_vertices(
-  const csg_vertices_t& vertices, const uint32_t color) {
+  const csg_vertices_t& vertices, const uint32_t color,
+  const std::optional<plane_t>& plane) {
   return csg_polygon_t{
     .vertices = vertices,
-    .plane =
-      plane_from_points(vertices[0].pos, vertices[1].pos, vertices[2].pos),
+    .plane = plane.value_or(
+      plane_from_points(vertices[0].pos, vertices[1].pos, vertices[2].pos)),
     .color = color};
 }
 
