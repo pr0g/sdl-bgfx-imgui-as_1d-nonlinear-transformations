@@ -246,6 +246,21 @@ csg_t csg_intersect(const csg_t& lhs, const csg_t& rhs) {
   csg_build_node(a, csg_all_polygons(b));
   csg_invert(a);
   return csg_t{.polygons = csg_all_polygons(a)};
+#if 0 // alternate implementation
+  csg_node_t a, b;
+  csg_build_node(a, lhs.polygons);
+  csg_build_node(b, rhs.polygons);
+  csg_invert(a);
+  csg_invert(b);
+  csg_clip_to(a, b);
+  csg_clip_to(b, a);
+  csg_invert(b);
+  csg_clip_to(b, a);
+  csg_invert(b);
+  csg_build_node(a, csg_all_polygons(b));
+  csg_invert(a);
+  return csg_t{.polygons = csg_all_polygons(a)};
+#endif
 }
 
 csg_t csg_inverse(const csg_t& csg) {
