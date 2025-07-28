@@ -206,17 +206,18 @@ void csg_clip_to(csg_node_t& node_lhs, csg_node_t& node_rhs);
 
 // csg_union
 // @evanw
-// Returns a new CSG solid representing space in either this solid or in the
-// solid `csg`. Neither this solid nor the solid `csg` are modified.
+// @thh edit
+// Returns a new CSG solid representing space in either `lhs` or in the
+// solid `rhs`. Neither `lhs` nor `rhs` are modified.
 //
-//     A.union(B)
+//     csg_union(a, b)
 //
 //     +-------+            +-------+
 //     |       |            |       |
-//     |   A   |            |       |
+//     |   a   |            |       |
 //     |    +--+----+   =   |       +----+
 //     +----+--+    |       +----+       |
-//          |   B   |            |       |
+//          |   b   |            |       |
 //          |       |            |       |
 //          +-------+            +-------+
 //
@@ -224,17 +225,18 @@ csg_t csg_union(const csg_t& lhs, const csg_t& rhs);
 
 // csg_subtract
 // @evanw
-// Returns a new CSG solid representing space in this solid but not in the
-// solid `csg`. Neither this solid nor the solid `csg` are modified.
+// @thh edit
+// Returns a new CSG solid representing space in the solid `lhs` but not in the
+// solid `rhs`. Neither `lhs` nor `rhs` are modified.
 //
-//     A.subtract(B)
+//     csg_subtract(a, b);
 //
 //     +-------+            +-------+
 //     |       |            |       |
-//     |   A   |            |       |
+//     |   a   |            |       |
 //     |    +--+----+   =   |    +--+
 //     +----+--+    |       +----+
-//          |   B   |
+//          |   b   |
 //          |       |
 //          +-------+
 //
@@ -242,17 +244,18 @@ csg_t csg_subtract(const csg_t& lhs, const csg_t& rhs);
 
 // csg_intersect
 // @evanw
-// Returns a new CSG solid representing space both this solid and in the
-// solid `csg`. Neither this solid nor the solid `csg` are modified.
+// @thh edit
+// Returns a new CSG solid representing space both the solid `lhs` and in the
+// solid `rhs`. Neither `lhs` nor `rhs` are modified.
 //
-//     A.intersect(B)
+//     csg_intersect(a, b)
 //
 //     +-------+
 //     |       |
-//     |   A   |
+//     |   a   |
 //     |    +--+----+   =   +--+
 //     +----+--+    |       +--+
-//          |   B   |
+//          |   b   |
 //          |       |
 //          +-------+
 //

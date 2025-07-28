@@ -242,7 +242,7 @@ csg_t csg_intersect(const csg_t& lhs, const csg_t& rhs) {
   csg_clip_to(b, a);
   csg_invert(b);
   csg_clip_to(a, b);
-  csg_clip_to(b, a);
+  csg_clip_to(b, a); // (thh note: possibly redundant?)
   csg_build_node(a, csg_all_polygons(b));
   csg_invert(a);
   return csg_t{.polygons = csg_all_polygons(a)};
