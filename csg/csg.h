@@ -141,12 +141,12 @@ struct csg_vertex_equals_t {
 
 // CSG functions
 
-// csg_interpolate
+// csg_interpolate_vertex
 // @evanw (@thh edit)
 // Creates a new vertex between this `lhs` and `rhs` by linearly
 // interpolating all properties using a parameter of `t`.
 // @thh edit - subclassing no longer supported
-inline csg_vertex_t csg_interpolate(
+inline csg_vertex_t csg_interpolate_vertex(
   const csg_vertex_t& lhs, const csg_vertex_t& rhs, const float t) {
   return {
     as::vec_mix(lhs.pos, rhs.pos, t), as::vec_mix(lhs.normal, rhs.normal, t)};
@@ -274,8 +274,10 @@ struct csg_cube_config_t {
 
 // csg_cube
 // @evanw
-// Constructs an axis-aligned solid cuboid. Optional parameters are `center` and
-// `radius`, which default to `[0, 0, 0]` and `[1, 1, 1]`.
+// @thh edit
+// Constructs an axis-aligned solid cuboid. Optional parameters are `min` and
+// `max`, which default to `[-1, -1, -1]` and `[1, 1, 1]`, `transform`, which
+// defaults to affine::identity, and `color`, which defaults to red.
 //
 // Example code:
 //
@@ -329,6 +331,20 @@ struct csg_cylinder_config_t {
 //       .radius = 0.5f})
 csg_t csg_cylinder(
   const csg_cylinder_config_t& config = csg_cylinder_config_t{});
+
+struct csg_quad_config_t {
+  as::vec2f min = -as::vec2f::one();
+  as::vec2f max = as::vec2f::one();
+  as::affine transform = as::affine::identity();
+  uint32_t color = 0xff0000ff;
+};
+
+// csg_quad
+// @thh
+// Constructs a 2d quad shape. Optional parameters are `min` and
+// `max`, which default to `[-1, -1]` and `[1, 1]`, `transform`, which
+// defaults to affine::identity, and `color`, which defaults to red.
+csg_t csg_quad(const csg_quad_config_t& config = csg_quad_config_t{});
 
 // csg_transform_csg_inplace
 // @thh

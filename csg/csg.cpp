@@ -79,7 +79,7 @@ void csg_split_polygon_by_plane(
         if ((ti | tj) == polygon_type_e::spanning) {
           const auto t = (plane.w - as::vec_dot(plane.normal, vi.pos))
                        / as::vec_dot(plane.normal, vj.pos - vi.pos);
-          const auto v = csg_interpolate(vi, vj, t);
+          const auto v = csg_interpolate_vertex(vi, vj, t);
           f.push_back(v);
           b.push_back(v);
         }
@@ -190,8 +190,8 @@ void csg_build_node(csg_node_t& node, const csg_polygons_t& polygons) {
 }
 
 void csg_invert(csg_node_t& node) {
-  for (int i = 0; i < node.polygons.size(); i++) {
-    node.polygons[i] = csg_flip_polygon(node.polygons[i]);
+  for (auto& polygon : node.polygons) {
+    polygon = csg_flip_polygon(polygon);
   }
   node.plane = flip_plane(*node.plane);
   if (node.front) {
@@ -385,4 +385,32 @@ csg_t csg_transform_csg(const csg_t& csg, const as::mat4f& transform) {
   csg_t transformed_csg = csg;
   csg_transform_csg_inplace(transformed_csg, transform);
   return transformed_csg;
+}
+
+csg_t csg_quad(const csg_quad_config_t& config) {
+  auto [min, max, transform, color] = config;
+  const std::array<as::vec3f, 4> corners = {{
+    // b - bottom, t - top, l - left, r - right
+    {min}, // nl
+    {max.x, min.y, 0.0f}, // br
+    {min.x, max.y, 0.0f}, // tl
+    {max}, // tr
+  }};
+  using info_t = std::pair<std::array<int, 4>, as::vec3f>;
+  std::vector<info_t> info = {{{0, 2, 3, 1}, {0.0f, 0.0f, -1.0f}}};
+  csg_polygons_t polygons;
+  std::transform(
+    info.begin(), info.end(), std::back_inserter(polygons),
+    [&corners, &transform, color](const info_t& info) {
+      csg_vertices_t vertices;
+      std::transform(
+        info.first.begin(), info.first.end(), std::back_inserter(vertices),
+        [&info, &corners, &transform](const int i) {
+          return csg_vertex_t{
+            .pos = as::affine_transform_pos(transform, corners[i]),
+            .normal = as::affine_transform_dir(transform, info.second)};
+        });
+      return csg_polygon_from_vertices(vertices, color);
+    });
+  return csg_t{.polygons = polygons};
 }

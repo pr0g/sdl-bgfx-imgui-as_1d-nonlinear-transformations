@@ -135,6 +135,15 @@ void csg_scene_t::setup(
     as::mat4_from_mat3_vec3(
       as::mat3_rotation_y(as::k_half_pi), as::vec3f::axis_x(5.0f)));
 
+  csg_t quad = csg_quad(
+    csg_quad_config_t{
+      .min = {-10.0f, -10.0f},
+      .max = {10.0f, 10.0f},
+      .transform =
+        as::affine_from_mat3(as::mat3_rotation_x(as::radians(-142.0f)))});
+
+  auto sliced_cube = csg_subtract(create_csg_classic(), quad);
+
   render_thing_t::init();
   render_things_.add(render_thing_from_csg(
     union_csg, as::mat4f::identity(), as::vec3f(1.0f, 1.0f, 0.0f)));
@@ -150,6 +159,9 @@ void csg_scene_t::setup(
   render_things_.add(render_thing_from_csg(
     create_csg_transform_test(),
     as::mat4_from_vec3(as::vec3f(-5.0f, 5.0f, 0.0f)),
+    as::vec3f(0.0f, 1.0f, 1.0f)));
+  render_things_.add(render_thing_from_csg(
+    sliced_cube, as::mat4_from_vec3(as::vec3f(5.0f, 5.0f, 0.0f)),
     as::vec3f(0.0f, 1.0f, 1.0f)));
 
   u_light_pos_ = bgfx::createUniform("u_lightPos", bgfx::UniformType::Vec4, 1);

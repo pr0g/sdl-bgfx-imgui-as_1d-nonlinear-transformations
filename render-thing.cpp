@@ -76,6 +76,9 @@ render_thing_t render_thing_from_csg(
 
 void render_thing_draw(
   const render_thing_t& render_thing, const bgfx::ViewId view) {
+  if (render_thing.vertices_.empty() || render_thing.indices_.empty()) {
+    return;
+  }
   float model[16];
   as::mat_to_arr(render_thing.transform_, model);
   bgfx::setTransform(model);
